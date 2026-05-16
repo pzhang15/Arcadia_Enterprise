@@ -7,8 +7,8 @@ Scenario-driven evaluation harness for Mirage agents. Lives in its own folder so
 A graded benchmark for agents that drive a Mirage `Workspace`. For each task we measure:
 
 1. **Programmatic gates** — files written, citations present, banned strings absent, expected resources touched, no `ENOENT`s.
-2. **Trajectory metrics** — turns, commands, ops, bytes, cache-hit rate, wallclock, tokens, $cost (parsed from `/.sessions/<date>/<sid>.jsonl`).
-3. **LLM-as-judge** — rubric-based quality scoring with a stronger model than the agent.
+1. **Trajectory metrics** — turns, commands, ops, bytes, cache-hit rate, wallclock, tokens, $cost (parsed from `/.sessions/<date>/<sid>.jsonl`).
+1. **LLM-as-judge** — rubric-based quality scoring with a stronger model than the agent.
 
 A composite scorecard blends gates first, then quality. Sweeps run `models × seeds × tasks` matrices and emit a per-scenario Cursor canvas dashboard plus a markdown summary.
 
@@ -39,15 +39,15 @@ uv sync
 cp .env.example .env  # fill in OPENAI_API_KEY at minimum
 
 # Phase 1: build the synthetic fixture once
-mirage-eval seed --scenario onboarding_it
+uv run mirage-eval seed --scenario onboarding_it
 
 # Run a single task
-mirage-eval run --scenario onboarding_it --task onboarding_status \
-                --model gpt-5-mini --seed 1
+uv run mirage-eval run --scenario onboarding_it --task onboarding_status \
+                       --model gpt-5-mini --seed 1
 
 # Run the full sweep
-mirage-eval sweep --scenario onboarding_it \
-                  --models gpt-5-mini,gpt-5 --seeds 1,2,3
+uv run mirage-eval sweep --scenario onboarding_it \
+                         --models gpt-5-mini,gpt-5 --seeds 1,2,3
 ```
 
 ## Adding a new scenario
@@ -55,10 +55,10 @@ mirage-eval sweep --scenario onboarding_it \
 The framework treats each scenario as a folder with a `scenario.yaml` manifest. To add `bi_analytics` (or anything else):
 
 1. Copy `scenarios/onboarding_it/` to `scenarios/<your-scenario>/`.
-2. Rewrite `seed.py` to generate your synthetic corpus on disk.
-3. Rewrite `mounts.py::build_l1_workspace` for the mounts you need.
-4. Update `scenario.yaml` (id, builder paths, fixture paths).
-5. Author tasks in `tasks/`.
-6. Run `mirage-eval seed --scenario <your-scenario>` then `mirage-eval run ...`.
+1. Rewrite `seed.py` to generate your synthetic corpus on disk.
+1. Rewrite `mounts.py::build_l1_workspace` for the mounts you need.
+1. Update `scenario.yaml` (id, builder paths, fixture paths).
+1. Author tasks in `tasks/`.
+1. Run `uv run mirage-eval seed --scenario <your-scenario>` then `uv run mirage-eval run ...`.
 
 The framework code under `mirage_eval/` never touches scenario-specific concerns.

@@ -1,9 +1,12 @@
 import tempfile
 from pathlib import Path
 
+import pytest
 from mirage_eval.fixtures.build_snapshot import snapshot_workspace
 from scenarios.onboarding_it import seed
 from scenarios.onboarding_it.mounts import build_l1_workspace
+
+from mirage import Workspace
 
 
 def test_seed_writes_expected_top_level_dirs():
@@ -22,16 +25,14 @@ def test_seed_file_count_is_stable():
         assert n == 37, f"expected 37 files, got {n}"
 
 
-def test_snapshot_roundtrip_preserves_content(disk_root):
+@pytest.mark.asyncio
+async def test_snapshot_roundtrip_preserves_content(disk_root):
     with tempfile.NamedTemporaryFile(suffix=".tar", delete=False) as t:
         snapshot_path = Path(t.name)
     try:
-        ws1 = build_l1_workspace(disk_root=disk_root,
-                                 session_id="snap-source")
-        out = snapshot_workspace(ws1, snapshot_path)
+        ws1 = build_l1_workspace(disk_root=disk_root, session_id="snap-source")
+        out = await snapshot_workspace(ws1, snapshot_path)
         assert out.exists() and out.stat().st_size > 0
-        target_2 = Path(disk_root).parent / (Path(disk_root).name + "-restored")
-        from mirage import Workspace
         ws2 = Workspace.load(str(snapshot_path))
         assert ws2 is not None
     finally:
