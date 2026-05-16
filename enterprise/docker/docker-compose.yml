@@ -7,10 +7,10 @@ services:
     ports:
       - "3000:3000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
       interval: 5s
       timeout: 3s
-      retries: 3
+      retries: 5
 
   mirage-api:
     build:

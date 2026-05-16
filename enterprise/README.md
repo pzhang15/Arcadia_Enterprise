@@ -1,8 +1,6 @@
 # enterprise/ — Mirage Evaluation Harness
 
-Scenario-driven eval for Mirage agents. Measures programmatic gates, trajectory metrics, and LLM-as-judge quality across cross-domain enterprise tasks.
-
-## Setup
+## 1. Install
 
 ```bash
 cd enterprise
@@ -10,45 +8,43 @@ uv sync
 cp .env.example .env          # set OPENAI_API_KEY=sk-...
 ```
 
-## Run an eval
+## 2. Seed (once per scenario)
 
 ```bash
-# Seed the corpus (once per scenario)
 uv run mirage-eval seed --scenario onboarding_it
+uv run mirage-eval seed --scenario meridian_labs
+```
 
-# Run a single task
+## 3. Choose what to run
+
+### Option A — Run eval (needs OPENAI_API_KEY)
+
+```bash
+# Single task
 uv run mirage-eval run \
-  --scenario onboarding_it \
-  --task onboarding_status \
+  --scenario meridian_labs \
+  --task incident_investigation \
   --model gpt-5-mini --seed 1
 
-# Run a full sweep (all tasks x models x seeds)
+# Full sweep
 uv run mirage-eval sweep \
-  --scenario onboarding_it \
-  --models gpt-5-mini,gpt-5 --seeds 1,2,3 --yes
+  --scenario meridian_labs \
+  --models gpt-5-mini --seeds 1 --yes
 ```
 
-Results land in `results/<scenario>/<sweep_id>/` with `scorecard.json`, `SUMMARY.md`, and a Cursor canvas dashboard.
+Results: `results/<scenario>/<sweep_id>/SUMMARY.md`
 
-## Run tests
-
-```bash
-uv run pytest
-```
-
-## MCP server
-
-Expose any scenario as an MCP server so Claude Desktop, Cursor, or any MCP client can interact with the simulated data.
+### Option B — Run MCP server (interactive testing)
 
 ```bash
-# stdio (local agent / Cursor / Claude Desktop)
+# stdio (for Cursor / Claude Desktop / CLI agents)
 uv run mirage-mcp --scenario meridian_labs
 
-# HTTP (Docker / remote)
+# HTTP (for remote / Docker)
 uv run mirage-mcp --scenario meridian_labs --transport streamable-http
 ```
 
-Cursor/Claude Desktop config (`mcp.json`):
+Connect from Cursor or Claude Desktop (`mcp.json`):
 
 ```json
 {
@@ -61,27 +57,49 @@ Cursor/Claude Desktop config (`mcp.json`):
 }
 ```
 
-## Docker mock suite
-
-Run mock backend services (Slack, GitHub, Jira, PagerDuty, Datadog) + Mirage daemon + MCP server:
+### Option C — Run Docker mock suite
 
 ```bash
 cd docker
 docker compose up --build
 ```
 
-| Service | Port | Purpose |
+| Service | Port | What it does |
 |---|---|---|
-| mock-services | 3000 | Mock APIs for all 5 backends |
+| mock-services | 3000 | Fake Slack, GitHub, Jira, PagerDuty, Datadog HTTP APIs |
 | mirage-api | 8080 | Mirage HTTP daemon (workspace CRUD + execute) |
-| mirage-mcp | 8081 | MCP server (Streamable HTTP) |
+| mirage-mcp | 8081 | MCP server over HTTP |
+
+Test the mocks:
+
+```bash
+curl http://localhost:3000/health
+curl http://localhost:3000/slack/api/conversations.list
+curl http://localhost:3000/pagerduty/incidents
+curl http://localhost:3000/github/repos/meridian-labs/payments-api/deployments
+```
+
+### Option D — Run tests
+
+```bash
+uv run pytest
+```
 
 ## Scenarios
 
-| Scenario | Domain | Services |
+| Scenario | Domain | Mounts |
 |---|---|---|
 | `onboarding_it` | HR onboarding + IT helpdesk | Slack, GSheets, GDocs, ITSM |
 | `meridian_labs` | SRE incident response | Slack, Jira, GitHub, PagerDuty, Datadog |
+
+## Adding a scenario
+
+```bash
+uv run mirage-eval scenario new my_scenario
+# Edit scenarios/my_scenario/seed.py, mounts.py, tasks/*.yaml
+uv run mirage-eval seed --scenario my_scenario
+uv run mirage-eval run --scenario my_scenario --task <id>
+```
 
 ## Layout
 
@@ -92,13 +110,4 @@ enterprise/
   docker/               # Dockerfile, docker-compose, mock backend server
   results/              # sweep outputs (gitignored)
   tests/                # framework-level tests
-```
-
-## Adding a scenario
-
-```bash
-uv run mirage-eval scenario new my_scenario
-# Edit scenarios/my_scenario/seed.py, mounts.py, tasks/*.yaml
-uv run mirage-eval seed --scenario my_scenario
-uv run mirage-eval run --scenario my_scenario --task <id>
 ```
