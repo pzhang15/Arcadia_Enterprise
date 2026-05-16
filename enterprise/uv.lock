@@ -895,6 +895,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "jsonschema" },
+    { name = "mcp" },
     { name = "mirage-ai" },
     { name = "openai" },
     { name = "openai-agents" },
@@ -914,6 +915,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "jsonschema", specifier = ">=4.23.0" },
+    { name = "mcp", specifier = ">=1.9.0" },
     { name = "mirage-ai", editable = "../python" },
     { name = "openai", specifier = ">=2.30.0" },
     { name = "openai-agents", specifier = ">=0.14.7" },
