@@ -129,6 +129,10 @@ uv run mirage-eval seed --scenario my_scenario
 uv run mirage-eval run --scenario my_scenario --task <id>
 ```
 
+## Observability UI (planned)
+
+See `app/HANDOFF.md` for a comprehensive spec covering 5 views: live command timeline, resource access map, MCP traffic inspector, mock backend request log, and eval scorecard dashboard.
+
 ## Layout
 
 ```
@@ -136,6 +140,7 @@ enterprise/
   mirage_eval/          # framework: CLI, runner, scorers, report, MCP server
   scenarios/            # per-scenario seed data, mounts, tasks, tests
   docker/               # Dockerfile, docker-compose, mock backend server
+  app/                  # observability UI (planned, see HANDOFF.md)
   results/              # sweep outputs (gitignored)
   tests/                # framework-level tests
 ```
