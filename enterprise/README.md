@@ -1,64 +1,104 @@
 # enterprise/ — Mirage Evaluation Harness
 
-Scenario-driven evaluation harness for Mirage agents. Lives in its own folder so it can be merged back to OSS or kept private cleanly. Never modifies anything outside `enterprise/`.
+Scenario-driven eval for Mirage agents. Measures programmatic gates, trajectory metrics, and LLM-as-judge quality across cross-domain enterprise tasks.
 
-## What this is
+## Setup
 
-A graded benchmark for agents that drive a Mirage `Workspace`. For each task we measure:
+```bash
+cd enterprise
+uv sync
+cp .env.example .env          # set OPENAI_API_KEY=sk-...
+```
 
-1. **Programmatic gates** — files written, citations present, banned strings absent, expected resources touched, no `ENOENT`s.
-1. **Trajectory metrics** — turns, commands, ops, bytes, cache-hit rate, wallclock, tokens, $cost (parsed from `/.sessions/<date>/<sid>.jsonl`).
-1. **LLM-as-judge** — rubric-based quality scoring with a stronger model than the agent.
+## Run an eval
 
-A composite scorecard blends gates first, then quality. Sweeps run `models × seeds × tasks` matrices and emit a per-scenario Cursor canvas dashboard plus a markdown summary.
+```bash
+# Seed the corpus (once per scenario)
+uv run mirage-eval seed --scenario onboarding_it
+
+# Run a single task
+uv run mirage-eval run \
+  --scenario onboarding_it \
+  --task onboarding_status \
+  --model gpt-5-mini --seed 1
+
+# Run a full sweep (all tasks x models x seeds)
+uv run mirage-eval sweep \
+  --scenario onboarding_it \
+  --models gpt-5-mini,gpt-5 --seeds 1,2,3 --yes
+```
+
+Results land in `results/<scenario>/<sweep_id>/` with `scorecard.json`, `SUMMARY.md`, and a Cursor canvas dashboard.
+
+## Run tests
+
+```bash
+uv run pytest
+```
+
+## MCP server
+
+Expose any scenario as an MCP server so Claude Desktop, Cursor, or any MCP client can interact with the simulated data.
+
+```bash
+# stdio (local agent / Cursor / Claude Desktop)
+uv run mirage-mcp --scenario meridian_labs
+
+# HTTP (Docker / remote)
+uv run mirage-mcp --scenario meridian_labs --transport streamable-http
+```
+
+Cursor/Claude Desktop config (`mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "mirage": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/enterprise", "mirage-mcp", "--scenario", "meridian_labs"]
+    }
+  }
+}
+```
+
+## Docker mock suite
+
+Run mock backend services (Slack, GitHub, Jira, PagerDuty, Datadog) + Mirage daemon + MCP server:
+
+```bash
+cd docker
+docker compose up --build
+```
+
+| Service | Port | Purpose |
+|---|---|---|
+| mock-services | 3000 | Mock APIs for all 5 backends |
+| mirage-api | 8080 | Mirage HTTP daemon (workspace CRUD + execute) |
+| mirage-mcp | 8081 | MCP server (Streamable HTTP) |
+
+## Scenarios
+
+| Scenario | Domain | Services |
+|---|---|---|
+| `onboarding_it` | HR onboarding + IT helpdesk | Slack, GSheets, GDocs, ITSM |
+| `meridian_labs` | SRE incident response | Slack, Jira, GitHub, PagerDuty, Datadog |
 
 ## Layout
 
 ```
 enterprise/
-  mirage_eval/                  # scenario-agnostic framework (CLI, runner, scorers, report)
-  scenarios/
-    onboarding_it/              # ACME Corp new-hire onboarding + IT helpdesk (scenario #1)
-    bi_analytics/               # placeholder for the next scenario
-  canvases/<scenario>/          # per-scenario interactive dashboards
-  results/<scenario>/<sweep>/   # per-sweep run artifacts (gitignored)
-  tests/                        # framework-level pytest
-  scripts/                      # convenience wrappers
+  mirage_eval/          # framework: CLI, runner, scorers, report, MCP server
+  scenarios/            # per-scenario seed data, mounts, tasks, tests
+  docker/               # Dockerfile, docker-compose, mock backend server
+  results/              # sweep outputs (gitignored)
+  tests/                # framework-level tests
 ```
 
-## Two evaluation surfaces
-
-- **L1 (synthetic, offline)** — disk-backed fakes that wear the real Slack / GSheets / GDocs prompts. Restored from a snapshot tar so every run is bit-identical. No external services.
-- **L2 (real Slack + Google)** — same task YAMLs, mounts swap to real `SlackResource` / `GSheetsResource` / `GDocsResource`. Tickets stay disk-backed via `FakeTicketingResource` (Linear mapping is a future L3 milestone).
-
-## Quickstart
+## Adding a scenario
 
 ```bash
-cd enterprise
-uv sync
-cp .env.example .env  # fill in OPENAI_API_KEY at minimum
-
-# Phase 1: build the synthetic fixture once
-uv run mirage-eval seed --scenario onboarding_it
-
-# Run a single task
-uv run mirage-eval run --scenario onboarding_it --task onboarding_status \
-                       --model gpt-5-mini --seed 1
-
-# Run the full sweep
-uv run mirage-eval sweep --scenario onboarding_it \
-                         --models gpt-5-mini,gpt-5 --seeds 1,2,3
+uv run mirage-eval scenario new my_scenario
+# Edit scenarios/my_scenario/seed.py, mounts.py, tasks/*.yaml
+uv run mirage-eval seed --scenario my_scenario
+uv run mirage-eval run --scenario my_scenario --task <id>
 ```
-
-## Adding a new scenario
-
-The framework treats each scenario as a folder with a `scenario.yaml` manifest. To add `bi_analytics` (or anything else):
-
-1. Copy `scenarios/onboarding_it/` to `scenarios/<your-scenario>/`.
-1. Rewrite `seed.py` to generate your synthetic corpus on disk.
-1. Rewrite `mounts.py::build_l1_workspace` for the mounts you need.
-1. Update `scenario.yaml` (id, builder paths, fixture paths).
-1. Author tasks in `tasks/`.
-1. Run `uv run mirage-eval seed --scenario <your-scenario>` then `uv run mirage-eval run ...`.
-
-The framework code under `mirage_eval/` never touches scenario-specific concerns.
