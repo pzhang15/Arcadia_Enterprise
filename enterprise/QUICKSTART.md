@@ -2,12 +2,29 @@
 
 The simplest path from zero to seeing a scorecard. Everything below is **L1** (offline, synthetic) so you only need an OpenAI key — no Slack/Google setup.
 
+> **Heads up — the CLI name is `mirage-eval` (hyphen), not `mirage_eval` (underscore).**
+> The Python package is `mirage_eval` (identifiers can't have hyphens), but the
+> installed CLI binary is `mirage-eval`. Always invoke it as:
+>
+> ```bash
+> cd enterprise                                  # the CLI lives in this folder's venv
+> uv run mirage-eval ...                         # uv handles the venv for you
+> ```
+>
+> If you see `command not found: mirage_eval`, it's almost always one of:
+> 1. You typed an underscore instead of a hyphen.
+> 2. You're not in the `enterprise/` directory.
+> 3. You forgot the `uv run` prefix (the binary lives in `.venv/bin/`, not your global `PATH`).
+>
+> Sanity check after step 1: `uv run mirage-eval --help` should print the Typer help.
+
 ## 1. One-time setup
 
 ```bash
 cd enterprise
-uv sync                       # installs mirage-eval + the local mirage-ai
+uv sync                       # installs the mirage-eval CLI + the local mirage-ai package
 cp .env.example .env          # then edit .env and set OPENAI_API_KEY=sk-...
+uv run mirage-eval --help     # verify the CLI is installed (should print Typer help)
 ```
 
 L1 needs only `OPENAI_API_KEY`. Skip the Slack/Google vars unless you also want L2.
@@ -100,7 +117,19 @@ Then look in `enterprise/results/onboarding_it/<timestamp>/runs/.../` for the ag
 
 ## Troubleshooting
 
+- **`command not found: mirage_eval`** — the CLI is `mirage-eval` (hyphen), not `mirage_eval` (underscore). Also make sure you're in `enterprise/` and prefixing with `uv run` (or have `.venv` activated).
+- **`command not found: mirage-eval`** — `uv sync` hasn't been run yet, or you're not in `enterprise/`. Run `cd enterprise && uv sync`, then retry with `uv run mirage-eval --help`.
 - **`OPENAI_API_KEY` not set** — make sure `enterprise/.env` exists and contains `OPENAI_API_KEY=sk-...`. The CLI auto-loads it from there.
-- **`scenario not found`** — run from inside `enterprise/` (or use `uv --directory enterprise run ...`).
-- **Snapshot missing** — re-run `mirage-eval seed --scenario onboarding_it` before the first `run`.
+- **`scenario not found`** — run from inside `enterprise/` (or use `uv --directory enterprise run mirage-eval ...`).
+- **Snapshot missing** — re-run `uv run mirage-eval seed --scenario onboarding_it` before the first `run`.
 - **Want to re-render reports for a past sweep** — `uv run mirage-eval report --scenario onboarding_it --sweep-id <ts>`.
+
+### Alternative invocation styles
+
+All three of these are equivalent — pick whichever you prefer:
+
+```bash
+uv run mirage-eval seed --scenario onboarding_it          # recommended
+./.venv/bin/mirage-eval seed --scenario onboarding_it     # no uv, no activation
+source .venv/bin/activate && mirage-eval seed --scenario onboarding_it
+```
