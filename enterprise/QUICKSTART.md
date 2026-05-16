@@ -51,9 +51,3 @@ Then open:
 
 - `enterprise/results/onboarding_it/<sweep_id>/SUMMARY.md` — per-task / per-model table.
 - `enterprise/canvases/onboarding_it/dashboard.canvas.tsx` — interactive Cursor canvas dashboard.
-
-## Common pitfalls
-
-- `command not found: mirage_eval` → it's `mirage-eval` with a **hyphen**.
-- `command not found: mirage-eval` → you forgot `uv run`, or you're not in `enterprise/`.
-- `OPENAI_API_KEY` errors → check `enterprise/.env`.
