@@ -18,7 +18,7 @@ OPENAI_MODEL=gpt-5-mini
 # Kimi (cheaper for testing)
 OPENAI_API_KEY=your-kimi-key
 OPENAI_BASE_URL=https://api.moonshot.ai/v1
-OPENAI_MODEL=kimi-k2.6
+OPENAI_MODEL=moonshot-v1-128k
 ```
 
 ## 2. Seed (once per scenario)

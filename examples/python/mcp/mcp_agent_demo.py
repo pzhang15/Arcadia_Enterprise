@@ -82,6 +82,7 @@ async def run_agent(mode: str, docker_url: str):
             client = AsyncOpenAI(base_url=base_url)
             model = OpenAIChatCompletionsModel(
                 model=model_name, openai_client=client)
+            os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = "1"
         else:
             model = model_name
 
