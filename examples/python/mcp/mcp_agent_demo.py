@@ -1,31 +1,51 @@
+import argparse
 import asyncio
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(".env.development")
-
-from agents import Agent, Runner
-from agents.mcp import MCPServerStdio
-
 ENTERPRISE_DIR = str(
     (Path(__file__).resolve().parent.parent.parent.parent / "enterprise"))
 
+load_dotenv(Path(ENTERPRISE_DIR) / ".env")
+load_dotenv(".env.development")
+
+from agents import Agent, Runner
+from agents.mcp import MCPServerStdio, MCPServerStreamableHttp
+
+INSTRUCTIONS = (
+    "You are a senior SRE at Meridian Labs, a fintech company running a "
+    "payments API platform. Use the execute tool to run shell commands "
+    "(ls, cat, grep, jq) against the workspace.\n\n"
+    "The workspace is a virtual filesystem with mounted enterprise data:\n"
+    "  /pagerduty/  — incidents and services\n"
+    "  /tickets/    — Jira-style ticket queues (OPS, PAY)\n"
+    "  /slack/      — channel messages and user profiles\n"
+    "  /github/     — deployments, commits, pull requests\n"
+    "  /datadog/    — logs and metrics\n\n"
+    "Always start with `ls` to discover the structure before reading "
+    "files. Cross-reference data across all services before concluding."
+)
+
 TASK_PROMPT = (
-    "Investigate the active critical incident on payments-api. "
-    "Start by checking /pagerduty/incidents/triggered/ for active alerts, "
-    "then find the linked Jira ticket in /tickets/queues/ops/open/, "
-    "read the Slack #incidents channel at /slack/channels/incidents__C001/, "
-    "check recent deployments at /github/repos/meridian-labs/payments-api/"
-    "deployments/, read the commit that correlates, and check Datadog logs "
-    "at /datadog/logs/payments-api/ and metrics at /datadog/metrics/"
-    "payments-api/. Write a root-cause analysis to /incident_report.md."
+    "Investigate the active critical incident on payments-api.\n\n"
+    "1. Check /pagerduty/incidents/triggered/ for active alerts\n"
+    "2. Find the linked Jira ticket in /tickets/queues/ops/open/\n"
+    "3. Read the Slack #incidents channel at "
+    "/slack/channels/incidents__C001/\n"
+    "4. Check recent deployments at "
+    "/github/repos/meridian-labs/payments-api/deployments/\n"
+    "5. Read the commit that correlates with the incident\n"
+    "6. Check Datadog logs at /datadog/logs/payments-api/ and metrics "
+    "at /datadog/metrics/payments-api/\n\n"
+    "Write a root-cause analysis to /incident_report.md with sections: "
+    "Incident Summary, Root Cause, Evidence, Recommended Action."
 )
 
 
-async def main():
-    async with MCPServerStdio(
+def _build_local_server():
+    return MCPServerStdio(
         name="mirage-meridian-labs",
         params={
             "command": "uv",
@@ -34,19 +54,27 @@ async def main():
                 "mirage-mcp", "--scenario", "meridian_labs",
             ],
         },
-    ) as server:
+    )
+
+
+def _build_docker_server(url: str):
+    return MCPServerStreamableHttp(
+        name="mirage-meridian-labs-docker",
+        params={"url": url},
+    )
+
+
+async def run_agent(mode: str, docker_url: str):
+    server_ctx = (_build_docker_server(docker_url) if mode == "docker"
+                  else _build_local_server())
+
+    async with server_ctx as server:
         tools = await server.list_tools()
-        print(f"MCP tools available: {[t.name for t in tools]}")
+        print(f"Connected. Tools: {[t.name for t in tools]}")
 
         agent = Agent(
             name="SRE Investigator",
-            instructions=(
-                "You are a senior SRE at Meridian Labs. Use the execute "
-                "tool to run shell commands (ls, cat, grep, jq) against "
-                "the workspace to investigate incidents. Be thorough: "
-                "cross-reference data across PagerDuty, tickets, Slack, "
-                "GitHub, and Datadog before drawing conclusions."
-            ),
+            instructions=INSTRUCTIONS,
             mcp_servers=[server],
             model=os.environ.get("OPENAI_MODEL", "gpt-4o"),
         )
@@ -57,5 +85,19 @@ async def main():
         print(result.final_output)
 
 
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run an SRE agent against Mirage via MCP")
+    parser.add_argument(
+        "--mode", choices=["local", "docker"], default="local",
+        help="local: spawn mirage-mcp subprocess (stdio). "
+             "docker: connect to running Docker MCP server (HTTP).")
+    parser.add_argument(
+        "--docker-url", default="http://localhost:8081/mcp",
+        help="MCP server URL when using --mode docker")
+    args = parser.parse_args()
+    asyncio.run(run_agent(args.mode, args.docker_url))
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

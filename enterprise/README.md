@@ -15,9 +15,66 @@ uv run mirage-eval seed --scenario onboarding_it
 uv run mirage-eval seed --scenario meridian_labs
 ```
 
-## 3. Choose what to run
+## 3. Start the Docker stack (recommended)
 
-### Option A — Run eval (needs OPENAI_API_KEY)
+Runs mock backend services (Slack, GitHub, Jira, PagerDuty, Datadog), the Mirage HTTP daemon, and the MCP server — all in one command.
+
+```bash
+cd docker
+docker compose up --build
+```
+
+| Service | Port | What it does |
+|---|---|---|
+| mock-services | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog |
+| mirage-api | 8080 | Mirage HTTP daemon (workspace CRUD, execute, sessions) |
+| mirage-mcp | 8081 | MCP server over Streamable HTTP |
+
+Verify the stack is up:
+
+```bash
+curl http://localhost:3000/health
+curl http://localhost:3000/slack/api/conversations.list
+curl http://localhost:3000/pagerduty/incidents
+curl http://localhost:3000/github/repos/meridian-labs/payments-api/deployments
+curl 'http://localhost:3000/jira/rest/api/2/search?jql=project=OPS'
+curl -X POST http://localhost:3000/datadog/api/v1/logs/search \
+  -H 'Content-Type: application/json' \
+  -d '{"filter":{"query":"connection pool"}}'
+```
+
+## 4. Run an agent against the stack
+
+With Docker running and `OPENAI_API_KEY` set:
+
+```bash
+# Against Docker MCP server (HTTP, port 8081)
+./python/.venv/bin/python examples/python/mcp/mcp_agent_demo.py --mode docker
+
+# Against local MCP server (stdio, no Docker needed)
+./python/.venv/bin/python examples/python/mcp/mcp_agent_demo.py --mode local
+```
+
+The agent connects via MCP, discovers the `execute` tool, and uses shell commands (`ls`, `cat`, `jq`, `grep`) to investigate the Meridian Labs incident across all 5 services.
+
+## 5. Connect from Cursor or Claude Desktop
+
+Add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "mirage": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/enterprise", "mirage-mcp", "--scenario", "meridian_labs"]
+    }
+  }
+}
+```
+
+Or connect to the Docker MCP server at `http://localhost:8081/mcp`.
+
+## 6. Run evals
 
 ```bash
 # Single task
@@ -34,52 +91,7 @@ uv run mirage-eval sweep \
 
 Results: `results/<scenario>/<sweep_id>/SUMMARY.md`
 
-### Option B — Run MCP server (interactive testing)
-
-```bash
-# stdio (for Cursor / Claude Desktop / CLI agents)
-uv run mirage-mcp --scenario meridian_labs
-
-# HTTP (for remote / Docker)
-uv run mirage-mcp --scenario meridian_labs --transport streamable-http
-```
-
-Connect from Cursor or Claude Desktop (`mcp.json`):
-
-```json
-{
-  "mcpServers": {
-    "mirage": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/enterprise", "mirage-mcp", "--scenario", "meridian_labs"]
-    }
-  }
-}
-```
-
-### Option C — Run Docker mock suite
-
-```bash
-cd docker
-docker compose up --build
-```
-
-| Service | Port | What it does |
-|---|---|---|
-| mock-services | 3000 | Fake Slack, GitHub, Jira, PagerDuty, Datadog HTTP APIs |
-| mirage-api | 8080 | Mirage HTTP daemon (workspace CRUD + execute) |
-| mirage-mcp | 8081 | MCP server over HTTP |
-
-Test the mocks:
-
-```bash
-curl http://localhost:3000/health
-curl http://localhost:3000/slack/api/conversations.list
-curl http://localhost:3000/pagerduty/incidents
-curl http://localhost:3000/github/repos/meridian-labs/payments-api/deployments
-```
-
-### Option D — Run tests
+## 7. Run tests
 
 ```bash
 uv run pytest
@@ -87,7 +99,7 @@ uv run pytest
 
 ## Scenarios
 
-| Scenario | Domain | Mounts |
+| Scenario | Domain | Services |
 |---|---|---|
 | `onboarding_it` | HR onboarding + IT helpdesk | Slack, GSheets, GDocs, ITSM |
 | `meridian_labs` | SRE incident response | Slack, Jira, GitHub, PagerDuty, Datadog |

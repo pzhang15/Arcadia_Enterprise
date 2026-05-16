@@ -77,4 +77,5 @@ Invoke the venv's `pre-commit` binary directly (not via `uv --directory python r
 - Please don't change any file name unless I ask you to do so.
 - Don't add too many printings or comments in the code.
 - Don't add README.md unless I ask you to do so.
+- When adding features, commands, or configuration to `enterprise/`, always update `enterprise/README.md` to reflect the change. Prioritize the Docker approach in documentation.
 - Use uv add to install new dependencies.
