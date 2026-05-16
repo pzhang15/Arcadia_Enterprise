@@ -5,7 +5,20 @@
 ```bash
 cd enterprise
 uv sync
-cp .env.example .env          # set OPENAI_API_KEY=sk-...
+cp .env.example .env
+```
+
+Edit `.env` and set your LLM API key. OpenAI or any OpenAI-compatible provider works:
+
+```bash
+# OpenAI
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-5-mini
+
+# Kimi (cheaper for testing)
+OPENAI_API_KEY=your-kimi-key
+OPENAI_BASE_URL=https://api.moonshot.ai/v1
+OPENAI_MODEL=kimi-k2.6
 ```
 
 ## 2. Seed (once per scenario)
@@ -45,7 +58,7 @@ curl -X POST http://localhost:3000/datadog/api/v1/logs/search \
 
 ## 4. Run an agent against the stack
 
-Set `OPENAI_API_KEY` in `enterprise/.env`, then:
+With `.env` configured:
 
 ```bash
 cd enterprise
