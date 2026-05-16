@@ -13,7 +13,7 @@ load_dotenv(".env.development")
 
 from openai import AsyncOpenAI
 
-from agents import Agent, Runner
+from agents import Agent, ModelSettings, Runner
 from agents.mcp import MCPServerStdio, MCPServerStreamableHttp
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 
@@ -78,10 +78,13 @@ async def run_agent(mode: str, docker_url: str):
 
         model_name = os.environ.get("OPENAI_MODEL", "gpt-4o")
         base_url = os.environ.get("OPENAI_BASE_URL", "")
+        model_settings = None
         if base_url:
             client = AsyncOpenAI(base_url=base_url)
             model = OpenAIChatCompletionsModel(
                 model=model_name, openai_client=client)
+            model_settings = ModelSettings(
+                extra_body={"thinking": {"type": "disabled"}})
             os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = "1"
         else:
             model = model_name
@@ -91,6 +94,7 @@ async def run_agent(mode: str, docker_url: str):
             instructions=INSTRUCTIONS,
             mcp_servers=[server],
             model=model,
+            model_settings=model_settings,
         )
         result = await Runner.run(agent, TASK_PROMPT)
         print("\n" + "=" * 60)
