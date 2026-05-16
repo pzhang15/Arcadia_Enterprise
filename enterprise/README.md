@@ -45,14 +45,15 @@ curl -X POST http://localhost:3000/datadog/api/v1/logs/search \
 
 ## 4. Run an agent against the stack
 
-With Docker running and `OPENAI_API_KEY` set:
+With Docker running and `OPENAI_API_KEY` set in `enterprise/.env`:
 
 ```bash
 # Against Docker MCP server (HTTP, port 8081)
-./python/.venv/bin/python examples/python/mcp/mcp_agent_demo.py --mode docker
+cd enterprise
+uv run python ../examples/python/mcp/mcp_agent_demo.py --mode docker
 
 # Against local MCP server (stdio, no Docker needed)
-./python/.venv/bin/python examples/python/mcp/mcp_agent_demo.py --mode local
+uv run python ../examples/python/mcp/mcp_agent_demo.py --mode local
 ```
 
 The agent connects via MCP, discovers the `execute` tool, and uses shell commands (`ls`, `cat`, `jq`, `grep`) to investigate the Meridian Labs incident across all 5 services.
