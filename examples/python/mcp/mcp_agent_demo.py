@@ -11,8 +11,11 @@ ENTERPRISE_DIR = str(
 load_dotenv(Path(ENTERPRISE_DIR) / ".env")
 load_dotenv(".env.development")
 
+from openai import AsyncOpenAI
+
 from agents import Agent, Runner
 from agents.mcp import MCPServerStdio, MCPServerStreamableHttp
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 
 INSTRUCTIONS = (
     "You are a senior SRE at Meridian Labs, a fintech company running a "
@@ -73,11 +76,20 @@ async def run_agent(mode: str, docker_url: str):
         tools = await server.list_tools()
         print(f"Connected. Tools: {[t.name for t in tools]}")
 
+        model_name = os.environ.get("OPENAI_MODEL", "gpt-4o")
+        base_url = os.environ.get("OPENAI_BASE_URL", "")
+        if base_url:
+            client = AsyncOpenAI(base_url=base_url)
+            model = OpenAIChatCompletionsModel(
+                model=model_name, openai_client=client)
+        else:
+            model = model_name
+
         agent = Agent(
             name="SRE Investigator",
             instructions=INSTRUCTIONS,
             mcp_servers=[server],
-            model=os.environ.get("OPENAI_MODEL", "gpt-4o"),
+            model=model,
         )
         result = await Runner.run(agent, TASK_PROMPT)
         print("\n" + "=" * 60)
