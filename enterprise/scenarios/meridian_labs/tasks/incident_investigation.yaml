@@ -1,0 +1,85 @@
+id: incident_investigation
+description: Investigate the active critical incident on payments-api, correlate across five services, and write a root-cause analysis.
+prompt: |
+  There is an active critical incident on payments-api. Investigate it by:
+
+  (1) Check /pagerduty/incidents/triggered/ for active incidents. Read the
+      incident details to identify the service and severity.
+  (2) Find the corresponding Jira ticket in /tickets/queues/ops/open/ that
+      references the same incident ID.
+  (3) Read the #incidents Slack channel under /slack/channels/incidents__C001/
+      to see what the on-call team has discussed.
+  (4) Check /github/repos/meridian-labs/payments-api/deployments/ for recent
+      deployments around the incident time. If one correlates, read the
+      commit under /github/repos/meridian-labs/payments-api/commits/ to see
+      what changed.
+  (5) Check /datadog/logs/payments-api/ for error logs and
+      /datadog/metrics/payments-api/ for latency/error-rate spikes.
+
+  Write your findings to /incident_report.md with these sections:
+    - Incident summary (ID, service, severity, timeline)
+    - Root cause (what change, who deployed it, what went wrong)
+    - Evidence (cite specific log messages, metric values, commit diffs)
+    - Recommended action (rollback, config fix, etc.)
+
+  Be specific — cite deployment IDs, commit SHAs, metric values, and log
+  messages from the data you read.
+
+oracles:
+  files_must_exist:
+    - /incident_report.md
+  must_contain_in_file:
+    /incident_report.md:
+      - INC-5521
+      - payments-api
+      - connection pool
+      - d4e5f6
+      - f3a1b2c8
+      - "10"
+  must_not_contain_in_file:
+    /incident_report.md:
+      - INC-5518
+      - auth-service
+  ops_must_touch_prefix:
+    - /pagerduty/incidents/triggered/
+    - /tickets/queues/ops/open/
+    - /slack/channels/incidents__C001
+    - /github/repos/meridian-labs/payments-api/deployments/
+    - /github/repos/meridian-labs/payments-api/commits/
+    - /datadog/logs/payments-api/
+  max_enoent: 2
+
+trajectory_budget:
+  max_turns: 30
+  max_commands: 80
+  max_wallclock_s: 240
+  max_tokens: 200000
+
+judge:
+  model: gpt-5
+  rubric:
+    root_cause_accuracy:
+      weight: 0.35
+      criteria: |
+        The report correctly identifies that deployment d4e5f6 (commit
+        f3a1b2c8 by Frank Osei) reduced the database connection pool from
+        50 to 10, causing connection pool exhaustion and P99 latency spikes
+        above 2000ms on /v1/payments/charge.
+    evidence_grounding:
+      weight: 0.30
+      criteria: |
+        Every claim cites specific evidence from the data: Datadog log
+        messages ("connection pool exhausted"), metric values (P99 from
+        ~200ms to 2147ms), the commit diff (MaxOpenConns 50->10), and Slack
+        discussion confirming the correlation.
+    cross_service_correlation:
+      weight: 0.20
+      criteria: |
+        The report traces the incident across all five services: PagerDuty
+        alert -> Jira ticket -> Slack discussion -> GitHub deployment/commit
+        -> Datadog logs/metrics. Missing any service is a deduction.
+    actionability:
+      weight: 0.15
+      criteria: |
+        The recommended action is concrete (rollback deployment d4e5f6 or
+        restore pool size to 50) rather than vague ("investigate further").
