@@ -45,11 +45,13 @@ curl -X POST http://localhost:3000/datadog/api/v1/logs/search \
 
 ## 4. Run an agent against the stack
 
-With Docker running and `OPENAI_API_KEY` set in `enterprise/.env`:
+Set `OPENAI_API_KEY` in `enterprise/.env`, then:
 
 ```bash
-# Against Docker MCP server (HTTP, port 8081)
 cd enterprise
+uv sync                       # must run after pulling new changes
+
+# Against Docker MCP server (HTTP, port 8081 — Docker must be running)
 uv run python ../examples/python/mcp/mcp_agent_demo.py --mode docker
 
 # Against local MCP server (stdio, no Docker needed)

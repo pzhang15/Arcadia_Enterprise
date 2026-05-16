@@ -51,7 +51,8 @@ def _build_local_server():
             "command": "uv",
             "args": [
                 "run", "--directory", ENTERPRISE_DIR,
-                "mirage-mcp", "--scenario", "meridian_labs",
+                "python", "-m", "mirage_eval.mcp_server",
+                "--scenario", "meridian_labs",
             ],
         },
     )

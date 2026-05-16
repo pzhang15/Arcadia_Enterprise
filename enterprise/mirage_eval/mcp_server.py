@@ -57,17 +57,21 @@ def workspace_guide() -> str:
 
 
 def serve(scenario: str, surface: str = "l1",
-          transport: str = "stdio") -> None:
+          transport: str = "stdio", host: str = "127.0.0.1") -> None:
     """Build a workspace and run the MCP server.
 
     Args:
         scenario (str): Scenario id (e.g. ``meridian_labs``).
         surface (str): ``l1`` (synthetic) or ``l2`` (real APIs).
         transport (str): ``stdio`` (default) or ``streamable-http``.
+        host (str): Bind address for HTTP transports (default 127.0.0.1,
+            use 0.0.0.0 for Docker).
     """
     load_dotenv(ENTERPRISE_ROOT / ".env")
     load_dotenv(ENTERPRISE_ROOT.parent / ".env.development")
     _build_workspace(scenario, surface)
+    if transport != "stdio":
+        _mcp.settings.host = host
     _mcp.run(transport=transport)
 
 
@@ -82,9 +86,12 @@ def main() -> None:
     parser.add_argument("--transport", default="stdio",
                         choices=["stdio", "streamable-http"],
                         help="MCP transport (default: stdio)")
+    parser.add_argument("--host", default="127.0.0.1",
+                        help="Bind address for HTTP (default: 127.0.0.1, "
+                        "use 0.0.0.0 for Docker)")
     args = parser.parse_args()
     serve(scenario=args.scenario, surface=args.surface,
-          transport=args.transport)
+          transport=args.transport, host=args.host)
 
 
 if __name__ == "__main__":
