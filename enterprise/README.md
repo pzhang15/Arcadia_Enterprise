@@ -1,4 +1,20 @@
-# enterprise/ — Mirage Evaluation Harness
+# Mirage Enterprise — Governed AI Workspaces for Heterogeneous Enterprise Environments
+
+Enterprise work is inherently heterogeneous. A single task — investigating a production incident, onboarding a new hire, triaging a support queue — spans five or more services that were never designed to talk to each other: Slack threads, Jira tickets, GitHub deployments, PagerDuty alerts, Datadog dashboards, Google Sheets, internal docs. Humans hold the context together in their heads. AI agents can do it faster, but only if they can access all of these services through a single, governed interface.
+
+**Mirage Enterprise** is the evaluation and testing harness for that interface. It simulates realistic enterprise environments where AI agents navigate cross-domain data under workspace-level governance — the same filesystem abstraction, the same observation pipeline, and the same scoring framework that would run in production, but backed by synthetic seed data so you can iterate without credentials, without cost, and without risk.
+
+What you get:
+
+- **Simulated enterprise scenarios** with coherent, cross-referenced data across 5+ services (Slack, Jira, GitHub, PagerDuty, Datadog, GSheets, GDocs, ITSM). Every ticket references a deployment, every Slack thread references a ticket, every log entry correlates with a commit.
+- **Graded agent evaluation** measuring programmatic correctness (did it find the right data?), trajectory efficiency (how many commands, tokens, dollars?), and LLM-judged quality (is the output actually useful?) — all in a single composite score.
+- **MCP server** exposing any scenario as a standard Model Context Protocol endpoint, so Claude, Cursor, OpenAI agents, or any MCP client can connect and drive the workspace interactively.
+- **Docker mock suite** with fake HTTP backends for all services, a Mirage daemon, and an MCP server — one `docker compose up` to stand up the entire test environment.
+- **Observability pipeline** capturing every command the agent runs, every file it reads, every mount it touches, persisted as JSONL for replay and debugging.
+
+The thesis: if an agent can investigate a production incident across five services in a governed Mirage workspace and score well on the eval, it can do it in your company's real environment with real credentials — because the workspace abstraction, the governance rules, and the scoring criteria are identical.
+
+---
 
 ## 1. Install
 
