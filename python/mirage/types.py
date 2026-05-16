@@ -43,6 +43,7 @@ class FileStat(BaseModel):
     size: int | None = None
     modified: str | None = None
     fingerprint: str | None = None
+    revision: str | None = None
     type: FileType | None = None
     extra: dict = Field(default_factory=dict)
 
@@ -170,6 +171,27 @@ class StateKey(StrEnum):
     CACHE = "cache"
     HISTORY = "history"
     JOBS = "jobs"
+    FINGERPRINTS = "fingerprints"
+    LIVE_ONLY_MOUNTS = "live_only_mounts"
+
+
+class DriftPolicy(StrEnum):
+    """Behaviour when a remote resource's live fingerprint differs from
+    the value recorded at snapshot time.
+
+    Values:
+        STRICT: raise ContentDriftError on mismatch (default).
+        OFF: skip drift checks entirely.
+    """
+    STRICT = "strict"
+    OFF = "off"
+
+
+class FingerprintKey(StrEnum):
+    PATH = "path"
+    MOUNT_PREFIX = "mount_prefix"
+    FINGERPRINT = "fingerprint"
+    REVISION = "revision"
 
 
 class MountKey(StrEnum):

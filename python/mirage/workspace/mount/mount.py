@@ -20,10 +20,56 @@ from mirage.commands.config import RegisteredCommand
 from mirage.commands.resolve import get_extension
 from mirage.commands.spec import CommandSpec
 from mirage.io.types import ByteSource, IOResult
-from mirage.observe.context import set_virtual_prefix
+from mirage.observe.context import (push_mount_prefix, push_revisions,
+                                    reset_revisions, with_mount_prefix,
+                                    with_revisions)
 from mirage.ops.registry import RegisteredOp
 from mirage.resource.base import BaseResource
 from mirage.types import ConsistencyPolicy, MountMode, PathSpec
+
+
+def _wrap_cmd_streams(
+    result: tuple[ByteSource | None, IOResult],
+    mount_prefix: str,
+    revisions: dict[str, str] | None,
+) -> tuple[ByteSource | None, IOResult]:
+    """Wrap any async-iterator streams in ``result`` with the mount
+    prefix and active revisions, so ``record_stream`` and
+    ``revision_for`` calls inside the lazy backend body see the right
+    context when consumed after this frame exits.
+
+    Mirrors the ``exit_on_empty`` pattern: thin async-gen wrapper that
+    side-effects the recorder state as bytes flow through. Same object
+    appearing in both the primary stream and IOResult.reads/writes is
+    wrapped once (dedup by identity).
+
+    Args:
+        result: ``(stream, io)`` as returned by a command handler.
+        mount_prefix: prefix to push during stream consumption.
+        revisions: revisions map to push during stream consumption
+            (None when the mount has no pins installed).
+    """
+    stream, io = result
+    seen: dict[int, ByteSource] = {}
+
+    def _wrap(obj: ByteSource | None) -> ByteSource | None:
+        if obj is None or isinstance(obj, (bytes, bytearray)):
+            return obj
+        oid = id(obj)
+        if oid in seen:
+            return seen[oid]
+        wrapped = with_mount_prefix(mount_prefix, obj)
+        if revisions:
+            wrapped = with_revisions(revisions, wrapped)
+        seen[oid] = wrapped
+        return wrapped
+
+    stream = _wrap(stream)
+    for k, v in list(io.reads.items()):
+        io.reads[k] = _wrap(v)
+    for k, v in list(io.writes.items()):
+        io.writes[k] = _wrap(v)
+    return stream, io
 
 
 class Mount:
@@ -56,6 +102,13 @@ class Mount:
         self.resource = resource
         self.mode = mode
         self.consistency = consistency
+        # Per-path revision pins installed at Workspace.load time. Read
+        # functions consult these via the ``revision_for`` contextvar
+        # lookup; on a hit, the backend GET pins to the recorded
+        # revision so replay serves the exact bytes the agent saw.
+        # Empty during normal runs; populated only by the snapshot
+        # loader.
+        self.revisions: dict[str, str] = {}
         self._cmds: dict[tuple, RegisteredCommand] = {}
         self._general_cmds: dict[str, RegisteredCommand] = {}
         self._cmd_specs: dict[str, CommandSpec] = {}
@@ -320,6 +373,8 @@ class Mount:
         dispatch: Callable | None = None,
         history: Any = None,
         session_id: str | None = None,
+        env: dict[str, str] | None = None,
+        exec_allowed: bool = True,
     ) -> tuple[ByteSource | None, IOResult]:
         """Execute a command on this mount's resource.
 
@@ -376,8 +431,12 @@ class Mount:
             kw["history"] = history
         if session_id is not None:
             kw["session_id"] = session_id
+        if env is not None:
+            kw["env"] = env
+        kw["exec_allowed"] = exec_allowed
 
-        set_virtual_prefix(mount_prefix)
+        prev_prefix = push_mount_prefix(mount_prefix)
+        revs_token = push_revisions(self.revisions or None)
         try:
             for cmd in handlers:
                 if cmd.write and self.mode == MountMode.READ:
@@ -388,10 +447,12 @@ class Mount:
                 result = await cmd.fn(self.resource.accessor, paths, *texts,
                                       **kw)
                 if result is not None:
-                    return result
+                    return _wrap_cmd_streams(result, mount_prefix,
+                                             self.revisions or None)
             return None, IOResult()
         finally:
-            set_virtual_prefix("")
+            reset_revisions(revs_token)
+            push_mount_prefix(prev_prefix)
 
     async def execute_op(
         self,
@@ -426,10 +487,16 @@ class Mount:
             prefix=mount_prefix,
         )
         kwargs.setdefault("index", self.resource.index)
-        for op in levels:
-            result = op.fn(self.resource.accessor, scope, *args, **kwargs)
-            if inspect.isawaitable(result):
-                result = await result
-            if result is not None:
-                return result
-        return None
+        prev_prefix = push_mount_prefix(mount_prefix)
+        revs_token = push_revisions(self.revisions or None)
+        try:
+            for op in levels:
+                result = op.fn(self.resource.accessor, scope, *args, **kwargs)
+                if inspect.isawaitable(result):
+                    result = await result
+                if result is not None:
+                    return result
+            return None
+        finally:
+            reset_revisions(revs_token)
+            push_mount_prefix(prev_prefix)

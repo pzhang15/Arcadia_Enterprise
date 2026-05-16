@@ -83,14 +83,18 @@ async def stat(accessor: S3Accessor,
             resp = await client.head_object(Bucket=config.bucket, Key=key)
             modified = resp["LastModified"].astimezone(
                 timezone.utc).isoformat()
-            etag = resp.get("ETag", "").strip('"')
+            etag_raw = resp.get("ETag", "").strip('"')
+            vid_raw = resp.get("VersionId")
+            if vid_raw == "null":
+                vid_raw = None
             return FileStat(
                 name=path.rstrip("/").rsplit("/", 1)[-1],
                 size=resp["ContentLength"],
                 modified=modified,
                 type=guess_type(path),
-                fingerprint=etag or None,
-                extra={"etag": etag},
+                fingerprint=etag_raw or None,
+                revision=vid_raw or None,
+                extra={"etag": etag_raw},
             )
         except Exception as exc:
             if not _is_not_found(exc):
