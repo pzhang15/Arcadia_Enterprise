@@ -27,10 +27,11 @@ import { getExtension } from '../../commands/resolve.ts'
 import type { CommandSpec } from '../../commands/spec/types.ts'
 import type { ByteSource } from '../../io/types.ts'
 import { IOResult } from '../../io/types.ts'
-import { setVirtualPrefix } from '../../observe/context.ts'
+import { runWithRevisions, setVirtualPrefix } from '../../observe/context.ts'
 import type { RegisteredOp } from '../../ops/registry.ts'
 import type { Resource } from '../../resource/base.ts'
 import { ConsistencyPolicy, MountMode, PathSpec } from '../../types.ts'
+import type { PyodideRuntime } from '../executor/python/runtime.ts'
 
 type CmdKey = string
 type OpKey = string
@@ -63,6 +64,15 @@ export class Mount {
   readonly resource: Resource
   readonly mode: MountMode
   readonly consistency: ConsistencyPolicy
+
+  /**
+   * Per-path revision pins installed at Workspace.load time. Read
+   * functions consult these via the {@link revisionFor} contextvar
+   * lookup; on a hit, the backend GET pins to the recorded revision so
+   * replay serves the exact bytes the agent saw. Empty during normal
+   * runs; populated only by the snapshot loader.
+   */
+  readonly revisions = new Map<string, string>()
 
   private readonly cmds = new Map<CmdKey, RegisteredCommand>()
   private readonly generalCmds = new Map<string, RegisteredCommand>()
@@ -309,6 +319,9 @@ export class Mount {
       dispatch?: CommandDispatch
       history?: CommandHistory
       sessionId?: string
+      env?: Record<string, string>
+      execAllowed?: boolean
+      pythonRuntime?: PyodideRuntime
     } = {},
   ): Promise<[ByteSource | null, IOResult]> {
     const extension =
@@ -356,26 +369,34 @@ export class Mount {
       ...(opts.dispatch !== undefined ? { dispatch: opts.dispatch } : {}),
       ...(opts.history !== undefined ? { history: opts.history } : {}),
       ...(opts.sessionId !== undefined ? { sessionId: opts.sessionId } : {}),
+      ...(opts.env !== undefined ? { env: opts.env } : {}),
+      ...(opts.execAllowed !== undefined ? { execAllowed: opts.execAllowed } : {}),
+      ...(opts.pythonRuntime !== undefined ? { pythonRuntime: opts.pythonRuntime } : {}),
     }
 
     setVirtualPrefix(mountPrefix)
     try {
-      for (const cmd of handlers) {
-        if (cmd.write && this.mode === MountMode.READ) {
-          return [
-            null,
-            new IOResult({
-              exitCode: 1,
-              stderr: new TextEncoder().encode(`${cmdName}: read-only mount at ${this.prefix}`),
-            }),
-          ]
-        }
-        const result = await cmd.fn(accessor, expandedPaths, texts, cmdOpts)
-        if (result !== null) {
-          return result
-        }
-      }
-      return [null, new IOResult()]
+      return await runWithRevisions(
+        this.revisions.size > 0 ? this.revisions : null,
+        async (): Promise<[ByteSource | null, IOResult]> => {
+          for (const cmd of handlers) {
+            if (cmd.write && this.mode === MountMode.READ) {
+              return [
+                null,
+                new IOResult({
+                  exitCode: 1,
+                  stderr: new TextEncoder().encode(`${cmdName}: read-only mount at ${this.prefix}`),
+                }),
+              ]
+            }
+            const result = await cmd.fn(accessor, expandedPaths, texts, cmdOpts)
+            if (result !== null) {
+              return result
+            }
+          }
+          return [null, new IOResult()]
+        },
+      )
     } finally {
       setVirtualPrefix('')
     }
@@ -410,11 +431,13 @@ export class Mount {
       ...(filetype !== null && kwargs.filetype === undefined ? { filetype } : {}),
     }
     const accessor = this.resource.accessor ?? NOOP_ACCESSOR
-    for (const op of levels) {
-      const result = await op.fn(accessor, scope, args, effectiveKwargs)
-      if (result !== null && result !== undefined) return result
-    }
-    return null
+    return runWithRevisions(this.revisions.size > 0 ? this.revisions : null, async () => {
+      for (const op of levels) {
+        const result = await op.fn(accessor, scope, args, effectiveKwargs)
+        if (result !== null && result !== undefined) return result
+      }
+      return null
+    })
   }
 }
 
