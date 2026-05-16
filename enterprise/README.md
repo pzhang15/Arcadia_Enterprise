@@ -119,6 +119,7 @@ uv run pytest
 |---|---|---|
 | `onboarding_it` | HR onboarding + IT helpdesk | Slack, GSheets, GDocs, ITSM |
 | `meridian_labs` | SRE incident response | Slack, Jira, GitHub, PagerDuty, Datadog |
+| `bi_analytics` | (placeholder) | — |
 
 ## Adding a scenario
 
@@ -133,14 +134,115 @@ uv run mirage-eval run --scenario my_scenario --task <id>
 
 See `app/HANDOFF.md` for a comprehensive spec covering 5 views: live command timeline, resource access map, MCP traffic inspector, mock backend request log, and eval scorecard dashboard.
 
-## Layout
+---
+
+## Repo Structure
 
 ```
 enterprise/
-  mirage_eval/          # framework: CLI, runner, scorers, report, MCP server
-  scenarios/            # per-scenario seed data, mounts, tasks, tests
-  docker/               # Dockerfile, docker-compose, mock backend server
-  app/                  # observability UI (planned, see HANDOFF.md)
-  results/              # sweep outputs (gitignored)
-  tests/                # framework-level tests
+│
+├── pyproject.toml                  # Package config, dependencies, CLI entry points
+├── uv.lock                        # Lockfile for reproducible installs
+├── .env.example                   # Template for API keys (copy to .env)
+├── .gitignore                     # Ignores results/, fixtures, pycache
+├── README.md                      # This file
+│
+├── mirage_eval/                   # ── Framework (scenario-agnostic) ──
+│   ├── cli.py                     # CLI: seed, run, sweep, report, mcp-serve, scenario new
+│   ├── mcp_server.py              # MCP server (stdio + HTTP) wrapping any workspace
+│   ├── config.py                  # TaskConfig, TrajectoryBudget, JudgeConfig (pydantic)
+│   ├── scenario.py                # ScenarioManifest loader + ENTERPRISE_ROOT
+│   │
+│   ├── fixtures/                  # Fake resources (DiskResource + PROMPT wrappers)
+│   │   ├── fake_slack.py          #   Slack (reuses mirage's real Slack PROMPT)
+│   │   ├── fake_gdocs.py          #   Google Docs
+│   │   ├── fake_gsheets.py        #   Google Sheets
+│   │   ├── fake_ticketing.py      #   ITSM tickets (+ helpdesk-* write commands)
+│   │   ├── fake_github.py         #   GitHub deployments/commits/PRs
+│   │   ├── fake_pagerduty.py      #   PagerDuty incidents/services
+│   │   ├── fake_datadog.py        #   Datadog logs/metrics
+│   │   └── build_snapshot.py      #   Workspace → tar snapshot utility
+│   │
+│   ├── runner/                    # Agent execution engine
+│   │   ├── common.py              #   run_one_task(), RunArtifacts, TokenUsage
+│   │   ├── l1_synthetic.py        #   L1 runner (offline, fake resources)
+│   │   └── l2_real.py             #   L2 runner (real Slack/GitHub/Google APIs)
+│   │
+│   ├── scorers/                   # Scoring pipeline
+│   │   ├── composite.py           #   ScoreCard, score_run() (blends all scores)
+│   │   ├── programmatic.py        #   Gate checks (files exist, must contain, etc.)
+│   │   ├── trajectory.py          #   Trajectory metrics (turns, ops, cost, budget)
+│   │   └── llm_judge.py           #   LLM-as-judge (rubric-based quality scoring)
+│   │
+│   └── report/                    # Output generation
+│       ├── aggregate.py           #   AggregateReport from sweep scorecards
+│       ├── markdown.py            #   SUMMARY.md writer
+│       └── canvas.py              #   Cursor Canvas dashboard (.canvas.tsx)
+│
+├── scenarios/                     # ── Per-scenario data + tasks ──
+│   │
+│   ├── onboarding_it/             # Scenario 1: ACME Corp HR + IT helpdesk
+│   │   ├── scenario.yaml          #   Manifest (id, builders, paths)
+│   │   ├── seed.py                #   Generates Slack/Sheets/Docs/Tickets corpus
+│   │   ├── mounts.py              #   build_l1_workspace (6 mounts)
+│   │   ├── seed_real.py           #   L2: push corpus to real Slack + Google
+│   │   ├── personas.yaml          #   Cast of characters
+│   │   ├── tasks/                 #   Task YAMLs (prompt + oracles + judge rubric)
+│   │   │   ├── onboarding_status.yaml
+│   │   │   ├── provision_new_hire.yaml
+│   │   │   ├── ticket_triage.yaml
+│   │   │   ├── incident_followup.yaml
+│   │   │   └── adversarial/       #   Adversarial variants (missing data, contradictions)
+│   │   ├── tests/                 #   Corpus integrity tests
+│   │   └── fixture/               #   Seed output + snapshot tar (gitignored)
+│   │
+│   ├── meridian_labs/             # Scenario 2: Meridian Labs SRE incident response
+│   │   ├── scenario.yaml
+│   │   ├── seed.py                #   Generates Slack/Tickets/GitHub/PagerDuty/Datadog
+│   │   ├── mounts.py              #   build_l1_workspace (6 mounts)
+│   │   ├── mounts_docker.py       #   Docker workspace (real resources → mock URLs)
+│   │   ├── tasks/
+│   │   │   ├── incident_investigation.yaml
+│   │   │   └── cross_reference_summary.yaml
+│   │   ├── tests/
+│   │   └── fixture/
+│   │
+│   └── bi_analytics/              # Scenario 3: (placeholder, not yet implemented)
+│
+├── docker/                        # ── Docker testing suite ──
+│   ├── Dockerfile                 #   Python 3.12 + uv, seeds data at build time
+│   ├── docker-compose.yml         #   3 services: mock-services, mirage-api, mirage-mcp
+│   └── mock_server.py             #   Unified FastAPI mock (Slack/GitHub/Jira/PD/DD)
+│
+├── app/                           # ── Observability UI (planned) ──
+│   └── HANDOFF.md                 #   Spec for building the frontend
+│
+├── tests/                         # ── Framework-level tests ──
+│   ├── test_runner_smoke.py       #   Runner completes even when agent fails
+│   ├── test_scenario_manifest.py  #   Manifest loads, tasks validate
+│   └── test_scorers_units.py      #   Scorer unit tests (gates, trajectory, composite)
+│
+├── scripts/
+│   └── run_sweep.sh               #   Convenience wrapper for sweep command
+│
+├── canvases/                      #   Cursor Canvas dashboards (generated by sweeps)
+└── results/                       #   Sweep outputs: scorecards, artifacts (gitignored)
+```
+
+### How the pieces connect
+
+```
+Agent (OpenAI/Kimi)
+  → MCP Server (mirage_eval/mcp_server.py)
+    → Workspace.execute(command)
+      → Ops dispatcher routes to mounted resources
+        → FakeSlackResource reads /slack/channels/...
+        → FakeTicketingResource reads /tickets/queues/...
+        → FakeGitHubResource reads /github/repos/...
+        → FakePagerDutyResource reads /pagerduty/incidents/...
+        → FakeDatadogResource reads /datadog/logs/...
+      → Observer writes JSONL to /.sessions/
+    → stdout/stderr returned to agent
+  → Agent reasons, calls execute again (loop)
+  → Final output scored by programmatic gates + LLM judge
 ```
