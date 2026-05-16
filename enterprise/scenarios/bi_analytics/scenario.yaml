@@ -1,0 +1,16 @@
+id: bi_analytics
+name: Bi Analytics (TBD)
+description: |
+  TODO: describe this scenario.
+
+mounts:
+  l1:
+    builder: scenarios.bi_analytics.mounts:build_l1_workspace
+
+fixture:
+  seed: scenarios.bi_analytics.seed:main
+  snapshot_path: scenarios/bi_analytics/fixture/corpus.tar
+
+tasks_dir: scenarios/bi_analytics/tasks
+results_dir: results/bi_analytics
+canvas_path: canvases/bi_analytics/dashboard.canvas.tsx

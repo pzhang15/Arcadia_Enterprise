@@ -1,0 +1,78 @@
+id: provision_new_hire_v1
+description: |
+  Respond to a new IT helpdesk ticket requesting GitHub access for a new
+  hire. Tests that the agent reads the access matrix + the IT runbook,
+  checks for existing in-flight tickets, drafts a response, and adds a
+  comment to the ticket.
+
+prompt: |
+  A new IT helpdesk ticket INC-1004 came in: "GitHub org invite for
+  Alex Rivera (Platform team)". Do all of the following:
+
+  (1) Look up the Access Matrix in /sheets/owned/ and find the row for
+      'Software Engineer' on the 'Platform' team. Record which GitHub org
+      Alex needs to be invited to.
+  (2) Read the IT Runbook /gdocs/owned/ ('IT_Runbook_New_Hire_Provisioning')
+      and identify the SLA for this ticket type AND the steps the agent
+      should follow.
+  (3) Scan all open tickets in /tickets/queues/it-helpdesk/ to confirm
+      Alex is not already in the GitHub org via another ticket. Note any
+      near-duplicate tickets you find.
+  (4) Write your draft response to /tickets/draft/INC-1004_response.md
+      with sections: Plan, SLA, Notes (including any duplicates found).
+  (5) Add a comment to INC-1004 summarizing the plan and SLA via
+      `helpdesk-ticket-comment-add --ticket INC-1004 --author U104 --body "..."`.
+
+oracles:
+  files_must_exist:
+    - /tickets/draft/INC-1004_response.md
+  must_contain_in_file:
+    /tickets/draft/INC-1004_response.md:
+      - acme-platform
+      - INC-1004
+      - "P3"
+      - "48h"
+  must_not_contain_in_file:
+    /tickets/draft/INC-1004_response.md:
+      - INC-1005
+      - INC-0998
+      - Bob Lee
+  ops_must_touch_prefix:
+    - /sheets/owned/2026-05-12_Access_Matrix__SH103.gsheet.json
+    - /gdocs/owned/2026-05-10_IT_Runbook_New_Hire_Provisioning__GD102.gdoc.json
+    - /tickets/queues/it-helpdesk/open/
+  max_enoent: 0
+
+trajectory_budget:
+  max_turns: 30
+  max_commands: 80
+  max_wallclock_s: 240
+  max_tokens: 200000
+
+judge:
+  model: gpt-5
+  rubric:
+    correctness:
+      weight: 0.4
+      criteria: |
+        Identifies acme-platform as the target GitHub org. Correctly
+        classifies the ticket as P3 with a 48h SLA per the IT Runbook
+        and IT_SLA_Matrix. Notes that INC-1006 / INC-1003 are related
+        (correctly), without conflating with unrelated tickets.
+    runbook_adherence:
+      weight: 0.3
+      criteria: |
+        The plan follows the runbook's steps (look up access matrix,
+        send invite, close on acceptance). Doesn't invent steps not in
+        the runbook.
+    write_action:
+      weight: 0.2
+      criteria: |
+        A comment was actually added to INC-1004 via the helpdesk write
+        command (not just discussed in the draft). Comment summarizes the
+        plan + SLA.
+    specificity:
+      weight: 0.1
+      criteria: |
+        References to source artifacts are specific (sheet/doc names,
+        ticket IDs), not generic.

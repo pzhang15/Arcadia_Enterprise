@@ -1,0 +1,34 @@
+id: onboarding_it
+name: ACME Corp new-hire onboarding + IT helpdesk
+description: |
+  Cross-domain enterprise tasks spanning HR onboarding (GSheets + GDocs),
+  IT helpdesk ticketing (FakeTicketingResource at both L1 and L2 in v1),
+  and team communication (Slack channels + DMs).
+
+mounts:
+  l1:
+    builder: scenarios.onboarding_it.mounts:build_l1_workspace
+  l2:
+    builder: scenarios.onboarding_it.mounts:build_l2_workspace
+
+fixture:
+  seed: scenarios.onboarding_it.seed:main
+  snapshot_path: scenarios/onboarding_it/fixture/corpus.tar
+
+l2:
+  resources:
+    slack:
+      kind: SlackResource
+      env: [SLACK_BOT_TOKEN, SLACK_USER_TOKEN]
+    google:
+      kind: [GSheetsResource, GDocsResource]
+      env: [GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN]
+    tickets:
+      kind: FakeTicketingResource
+      mount_as: /tickets
+  seed_real: scenarios.onboarding_it.seed_real:main
+  mapping_path: scenarios/onboarding_it/l2_mapping.yaml
+
+tasks_dir: scenarios/onboarding_it/tasks
+results_dir: results/onboarding_it
+canvas_path: canvases/onboarding_it/dashboard.canvas.tsx

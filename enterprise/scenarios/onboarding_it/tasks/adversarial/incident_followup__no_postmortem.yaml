@@ -1,0 +1,65 @@
+id: incident_followup_no_postmortem_v1
+description: |
+  Adversarial variant: the agent is told the postmortem is at a
+  different filename that doesn't exist. It must locate the actual
+  postmortem (or reconstruct from Slack alone) AND clearly note that
+  the path provided in the prompt was wrong.
+
+prompt: |
+  Read the Slack outage postmortem at
+  /gdocs/owned/2026-04-22_Slack_Outage_Final_Report__GD999.gdoc.json
+  and write an incident recap. If you cannot find that exact path,
+  reconstruct the timeline from the Slack #incidents channel and the
+  New Hire Tracker, and clearly note in the recap that the requested
+  postmortem file does not exist (suggest the correct filename if you
+  find one).
+
+  Write to /incident_recap.md with sections: Timeline, Affected hires,
+  Tickets blocked, Source notes (including the path correction).
+
+oracles:
+  files_must_exist:
+    - /incident_recap.md
+  must_contain_in_file:
+    /incident_recap.md:
+      - "2026-04-22"
+      - Priya Wong
+      - Marcus Davis
+      - "GD105"
+  must_not_contain_in_file:
+    /incident_recap.md:
+      - "GD999"
+  ops_must_touch_prefix:
+    - /slack/channels/incidents__C305
+    - /sheets/owned/2026-05-12_New_Hire_Tracker__SH101.gsheet.json
+    - /gdocs/owned/2026-04-22_Slack_Outage_Postmortem__GD105.gdoc.json
+  max_enoent: 5
+
+trajectory_budget:
+  max_turns: 30
+  max_commands: 80
+  max_wallclock_s: 240
+  max_tokens: 200000
+
+judge:
+  model: gpt-5
+  rubric:
+    path_correction:
+      weight: 0.4
+      criteria: |
+        Recap explicitly notes the requested file (GD999) does not
+        exist, and identifies the actual postmortem file as GD105
+        (Slack_Outage_Postmortem) under /gdocs/owned/.
+    timeline_accuracy:
+      weight: 0.3
+      criteria: |
+        Timeline correctly derived from Slack messages and the actual
+        postmortem (once found).
+    blast_radius_correctness:
+      weight: 0.2
+      criteria: |
+        Identifies both Priya Wong and Marcus Davis as affected hires.
+    no_fabrication:
+      weight: 0.1
+      criteria: |
+        Doesn't invent details for the missing GD999 file.

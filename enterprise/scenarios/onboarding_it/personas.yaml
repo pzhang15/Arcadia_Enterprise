@@ -1,0 +1,73 @@
+company:
+  name: ACME Corp
+  size: 250
+  industry: B2B SaaS
+
+cast:
+  - id: U101
+    handle: alex
+    name: Alex Rivera
+    email: alex.rivera@acme.com
+    role: Software Engineer
+    team: Platform
+    notes: New hire. Day 1 = 2026-05-12.
+  - id: U102
+    handle: diana
+    name: Diana Park
+    email: diana.park@acme.com
+    role: HR Partner
+    team: People
+    notes: Owns the onboarding playbook. Drives Day-1 checklist.
+  - id: U103
+    handle: sam
+    name: Sam Chen
+    email: sam.chen@acme.com
+    role: IT Lead
+    team: IT
+    notes: Owns helpdesk queue triage.
+  - id: U104
+    handle: priya
+    name: Priya Patel
+    email: priya.patel@acme.com
+    role: IT Support Agent
+    team: IT
+    notes: Resolves provisioning tickets.
+  - id: U105
+    handle: marcus
+    name: Marcus Johnson
+    email: marcus.johnson@acme.com
+    role: Eng Lead
+    team: Platform
+    notes: Alex's manager. Owns team welcome doc.
+  - id: U106
+    handle: jordan
+    name: Jordan Kim
+    email: jordan.kim@acme.com
+    role: Software Engineer
+    team: Platform
+    notes: Buddy assigned to Alex for Week 1.
+  - id: U107
+    handle: bob
+    name: Bob Lee
+    email: bob.lee@acme.com
+    role: Software Engineer
+    team: Platform
+    notes: Existing hire (control). Has open VPN ticket from before; tests
+      that the agent does not confuse Bob with Alex.
+
+key_dates:
+  alex_day_1: "2026-05-12"
+  outage_date: "2026-04-22"
+  prior_hire_day_1: "2026-04-22"   # falls during outage window
+  another_prior_hire_day_1: "2026-04-22"
+
+teams:
+  - id: T01
+    name: Platform
+    manager: U105
+  - id: T02
+    name: IT
+    manager: U103
+  - id: T03
+    name: People
+    manager: U102
