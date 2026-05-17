@@ -1,25 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useEventStream } from "./hooks/useEventStream";
 import {
   createSession,
-  getSessionResult,
-  getSessionStatus,
+  getConfig,
+  getSessionHistory,
   listSessions,
-  runSession,
+  sendMessage,
 } from "./api/client";
 import ServiceConnector from "./components/ServiceConnector";
 import SessionHistory from "./components/SessionHistory";
 import TaskDialog, { type ChatMessage } from "./components/TaskDialog";
 import LiveExecutionView from "./components/LiveExecutionView";
-import ResultsSummary from "./components/ResultsSummary";
-import type { AgentResult, QuickAction } from "./types";
+import type { QuickAction } from "./types";
 
 interface SessionListEntry {
   id: string;
   status: string;
-  task: string;
+  services: string[];
   created_at: number;
-  completed_at: number | null;
+  message_count: number;
+  last_message: string;
 }
 
 export default function App() {
@@ -27,22 +27,18 @@ export default function App() {
     new Set(["it", "hr"]),
   );
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessionStatus, setSessionStatus] = useState<string>("created");
+  const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [result, setResult] = useState<AgentResult | null>(null);
   const [sessions, setSessions] = useState<SessionListEntry[]>([]);
+  const [hasApiKey, setHasApiKey] = useState(true);
   const { events, connected } = useEventStream("/events");
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const refreshSessions = useCallback(() => {
-    listSessions()
-      .then(setSessions)
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
-    refreshSessions();
-  }, [refreshSessions]);
+    listSessions().then(setSessions).catch(() => {});
+    getConfig()
+      .then((cfg) => setHasApiKey(cfg.has_api_key))
+      .catch(() => {});
+  }, []);
 
   const addMessage = useCallback(
     (role: ChatMessage["role"], text: string) => {
@@ -59,43 +55,6 @@ export default function App() {
     [],
   );
 
-  const startPolling = useCallback(
-    (sid: string) => {
-      if (pollRef.current) clearInterval(pollRef.current);
-      pollRef.current = setInterval(async () => {
-        try {
-          const status = await getSessionStatus(sid);
-          setSessionStatus(status.status);
-          if (status.status === "completed") {
-            if (pollRef.current) clearInterval(pollRef.current);
-            pollRef.current = null;
-            const res = await getSessionResult(sid);
-            setResult(res);
-            addMessage(
-              "agent",
-              `Task complete in ${res.duration_s}s. Ran ${res.commands_run} commands across ${Object.keys(res.services_touched).length} services.`,
-            );
-            refreshSessions();
-          } else if (status.status === "error") {
-            if (pollRef.current) clearInterval(pollRef.current);
-            pollRef.current = null;
-            addMessage("system", "Agent encountered an error.");
-            refreshSessions();
-          }
-        } catch {
-          /* ignore poll errors */
-        }
-      }, 500);
-    },
-    [addMessage, refreshSessions],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, []);
-
   const handleSend = useCallback(
     async (task: string, quickAction?: QuickAction) => {
       const services = quickAction
@@ -107,37 +66,44 @@ export default function App() {
       }
 
       if (quickAction) {
-        for (const svc of quickAction.services) {
-          setSelectedServices((prev) => new Set([...prev, svc]));
-        }
+        setSelectedServices((prev) => {
+          const next = new Set(prev);
+          for (const s of quickAction.services) next.add(s);
+          return next;
+        });
       }
 
       addMessage("user", task);
-      setResult(null);
-      setSessionStatus("created");
+      setIsProcessing(true);
 
       try {
-        addMessage("system", "Creating agent session...");
-        const session = await createSession(services);
-        setSessionId(session.id);
-        addMessage(
-          "system",
-          `Session ${session.id} created. Starting agent...`,
-        );
+        let sid = sessionId;
+        if (!sid) {
+          addMessage("system", "Creating session...");
+          const session = await createSession(services);
+          sid = session.id;
+          setSessionId(sid);
+          if (!session.has_workspace) {
+            addMessage(
+              "system",
+              "Note: workspace could not be built. Make sure seed data is generated.",
+            );
+          }
+        }
 
-        await runSession(session.id, task);
-        setSessionStatus("running");
-        addMessage("system", `Agent started with ${services.length} service(s) connected.`);
-        startPolling(session.id);
-        refreshSessions();
+        const resp = await sendMessage(sid, task);
+        addMessage("agent", resp.reply);
+        listSessions().then(setSessions).catch(() => {});
       } catch (err) {
         addMessage(
           "system",
           `Error: ${err instanceof Error ? err.message : "Unknown error"}`,
         );
+      } finally {
+        setIsProcessing(false);
       }
     },
-    [selectedServices, addMessage, startPolling, refreshSessions],
+    [selectedServices, sessionId, addMessage],
   );
 
   const handleToggleService = useCallback((service: string) => {
@@ -149,38 +115,40 @@ export default function App() {
     });
   }, []);
 
+  const handleNewSession = useCallback(() => {
+    setSessionId(null);
+    setMessages([]);
+    setIsProcessing(false);
+  }, []);
+
   const handleSelectSession = useCallback(
     async (id: string) => {
       setSessionId(id);
+      setIsProcessing(false);
       try {
-        const status = await getSessionStatus(id);
-        setSessionStatus(status.status);
-        if (status.status === "completed") {
-          const res = await getSessionResult(id);
-          setResult(res);
-        } else {
-          setResult(null);
-        }
-        setMessages([
-          {
-            id: `${Date.now()}-loaded`,
-            role: "system",
-            text: `Loaded session ${id}: ${status.task || "(no task)"}`,
-            timestamp: Date.now(),
-          },
-        ]);
+        const history = await getSessionHistory(id);
+        setMessages(
+          history.map((e, i) => ({
+            id: `${e.timestamp}-${i}`,
+            role: (e.role === "assistant" ? "agent" : e.role) as ChatMessage["role"],
+            text: e.content,
+            timestamp: e.timestamp * 1000,
+          })),
+        );
       } catch {
-        addMessage("system", `Failed to load session ${id}`);
+        setMessages([]);
+        addMessage("system", `Loaded session ${id}`);
       }
     },
     [addMessage],
   );
 
-  const isRunning = sessionStatus === "running";
-
   return (
     <div className="console-layout">
-      <div className="console-panel" style={{ background: "var(--bg-secondary)" }}>
+      <div
+        className="console-panel"
+        style={{ background: "var(--bg-secondary)" }}
+      >
         <div className="panel-header flex items-center gap-2">
           <span>Mirage</span>
           <span
@@ -201,9 +169,18 @@ export default function App() {
             selected={selectedServices}
             onToggle={handleToggleService}
           />
+          <div style={{ marginTop: 16 }}>
+            <button
+              className="filter-btn"
+              style={{ width: "100%" }}
+              onClick={handleNewSession}
+            >
+              + New conversation
+            </button>
+          </div>
           <div style={{ margin: "20px 0 0" }}>
             <div className="sidebar-section" style={{ padding: "0 0 8px" }}>
-              Session History
+              History
             </div>
             <SessionHistory
               sessions={sessions}
@@ -222,25 +199,30 @@ export default function App() {
             <div
               className={`connection-dot ${connected ? "connected" : ""}`}
             />
-            {connected ? "Stream connected" : "Stream disconnected"}
-            {events.length > 0 && (
-              <span
-                className="text-tertiary"
-                style={{ marginLeft: "auto" }}
-              >
-                {events.length}
-              </span>
-            )}
+            {connected ? "Stream connected" : "Disconnected"}
           </div>
+          {!hasApiKey && (
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 11,
+                color: "var(--yellow)",
+              }}
+            >
+              OPENAI_API_KEY not set
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="console-panel" style={{ display: "flex", flexDirection: "column" }}>
+      <div
+        className="console-panel"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
         <div className="panel-header flex items-center gap-3">
           <span>Agent Workspace</span>
-          {isRunning && <span className="badge info pulse">RUNNING</span>}
-          {sessionStatus === "completed" && (
-            <span className="badge success">COMPLETE</span>
+          {isProcessing && (
+            <span className="badge info pulse">THINKING</span>
           )}
           {sessionId && (
             <span
@@ -251,38 +233,31 @@ export default function App() {
             </span>
           )}
         </div>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-          <div style={{ flex: "0 0 auto", maxHeight: "45%", overflow: "hidden" }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          <div style={{ flex: 1, overflow: "hidden" }}>
             <TaskDialog
               messages={messages}
               onSend={handleSend}
-              disabled={isRunning}
+              disabled={isProcessing}
             />
-          </div>
-          <div
-            style={{
-              flex: 1,
-              borderTop: "1px solid var(--border)",
-              overflow: "auto",
-              minHeight: 0,
-            }}
-          >
-            <LiveExecutionView events={events} sessionId={sessionId} />
           </div>
         </div>
       </div>
 
       <div
         className="console-panel"
-        style={{ background: "var(--bg-secondary)" }}
+        style={{ background: "var(--bg-secondary)", display: "flex", flexDirection: "column" }}
       >
-        <div className="panel-header">Results</div>
-        <div className="panel-body">
-          <ResultsSummary
-            result={result}
-            sessionId={sessionId}
-            status={sessionStatus}
-          />
+        <div className="panel-header">Live Activity</div>
+        <div style={{ flex: 1, overflow: "auto" }}>
+          <LiveExecutionView events={events} sessionId={sessionId} />
         </div>
       </div>
     </div>

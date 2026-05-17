@@ -1,9 +1,10 @@
 interface SessionEntry {
   id: string;
   status: string;
-  task: string;
+  services: string[];
   created_at: number;
-  completed_at: number | null;
+  message_count: number;
+  last_message: string;
 }
 
 interface Props {
@@ -13,34 +14,21 @@ interface Props {
 }
 
 function timeAgo(ts: number): string {
-  const diff = Date.now() / 1000 - ts;
+  const diff = (Date.now() / 1000 - ts) | 0;
   if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 3600) return `${(diff / 60) | 0}m ago`;
+  if (diff < 86400) return `${(diff / 3600) | 0}h ago`;
+  return `${(diff / 86400) | 0}d ago`;
 }
 
-function statusBadge(status: string) {
-  const map: Record<string, string> = {
-    created: "neutral",
-    running: "info",
-    completed: "success",
-    error: "danger",
-  };
-  return <span className={`badge ${map[status] || "neutral"}`}>{status}</span>;
-}
-
-export default function SessionHistory({ sessions, activeId, onSelect }: Props) {
+export default function SessionHistory({
+  sessions,
+  activeId,
+  onSelect,
+}: Props) {
   if (sessions.length === 0) {
     return (
-      <div
-        style={{
-          padding: "20px 0",
-          textAlign: "center",
-          color: "var(--text-tertiary)",
-          fontSize: 12,
-        }}
-      >
+      <div className="text-sm text-tertiary" style={{ padding: "8px 0" }}>
         No sessions yet
       </div>
     );
@@ -53,26 +41,37 @@ export default function SessionHistory({ sessions, activeId, onSelect }: Props) 
           key={s.id}
           onClick={() => onSelect(s.id)}
           style={{
-            padding: "10px 12px",
+            padding: "8px 10px",
             borderRadius: "var(--radius-sm)",
             cursor: "pointer",
-            background: s.id === activeId ? "var(--bg-hover)" : "transparent",
+            background:
+              s.id === activeId ? "var(--bg-hover)" : "transparent",
             borderLeft:
               s.id === activeId
                 ? "2px solid var(--accent)"
                 : "2px solid transparent",
-            transition: "all 0.15s",
+            transition: "all 0.1s",
           }}
         >
           <div
-            className="truncate"
-            style={{ fontSize: 12, marginBottom: 4, color: "var(--text-primary)" }}
+            style={{
+              fontSize: 12,
+              color: "var(--text-primary)",
+              marginBottom: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
           >
-            {s.task || "New session"}
+            {s.last_message || `Session ${s.id}`}
           </div>
           <div className="flex items-center gap-2">
-            {statusBadge(s.status)}
-            <span className="text-sm text-tertiary">{timeAgo(s.created_at)}</span>
+            <span className="text-sm text-tertiary">
+              {s.message_count} msgs
+            </span>
+            <span className="text-sm text-tertiary">
+              {timeAgo(s.created_at)}
+            </span>
           </div>
         </div>
       ))}

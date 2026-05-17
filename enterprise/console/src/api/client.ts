@@ -18,31 +18,29 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 
 export async function createSession(
   services: string[],
-): Promise<{ id: string }> {
+): Promise<{ id: string; status: string; has_workspace: boolean }> {
   return postJson("/sessions", { services });
 }
 
-export async function runSession(
-  id: string,
-  task: string,
-): Promise<{ id: string; status: string }> {
-  return postJson(`/sessions/${id}/run`, { task });
+export async function sendMessage(
+  sessionId: string,
+  message: string,
+): Promise<{ reply: string; status: string }> {
+  return postJson(`/sessions/${sessionId}/message`, { message });
 }
 
 export async function getSessionStatus(id: string) {
-  return fetchJson<{ id: string; status: string; task: string }>(
-    `/sessions/${id}/status`,
-  );
+  return fetchJson<{
+    id: string;
+    status: string;
+    message_count: number;
+  }>(`/sessions/${id}/status`);
 }
 
-export async function getSessionResult(id: string) {
-  return fetchJson<{
-    summary: string;
-    services_touched: Record<string, number>;
-    files_created: Record<string, string>;
-    commands_run: number;
-    duration_s: number;
-  }>(`/sessions/${id}/result`);
+export async function getSessionHistory(id: string) {
+  return fetchJson<
+    { role: string; content: string; timestamp: number }[]
+  >(`/sessions/${id}/history`);
 }
 
 export async function listSessions() {
@@ -50,9 +48,10 @@ export async function listSessions() {
     {
       id: string;
       status: string;
-      task: string;
+      services: string[];
       created_at: number;
-      completed_at: number | null;
+      message_count: number;
+      last_message: string;
     }[]
   >("/sessions");
 }
@@ -61,4 +60,8 @@ export async function getQuickActions() {
   return fetchJson<
     { id: string; label: string; services: string[]; task: string }[]
   >("/quick-actions");
+}
+
+export async function getConfig() {
+  return fetchJson<{ has_api_key: boolean; model: string }>("/config");
 }

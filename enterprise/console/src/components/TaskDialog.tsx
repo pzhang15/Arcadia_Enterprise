@@ -53,10 +53,7 @@ export default function TaskDialog({ messages, onSend, disabled }: Props) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {messages.length === 0 && quickActions.length > 0 && (
         <div style={{ padding: 16, borderBottom: "1px solid var(--border)" }}>
-          <div
-            className="sidebar-section"
-            style={{ padding: "0 0 8px" }}
-          >
+          <div className="sidebar-section" style={{ padding: "0 0 8px" }}>
             Quick Actions
           </div>
           <div className="quick-actions">
@@ -88,18 +85,27 @@ export default function TaskDialog({ messages, onSend, disabled }: Props) {
           <div className="empty-state" style={{ padding: "40px 20px" }}>
             <div className="empty-state-icon">$</div>
             <div className="empty-state-text">
-              Select services and describe a task, or pick a quick action above.
+              Select services and describe a task, or pick a quick action
+              above. You can ask follow-up questions in the same session.
             </div>
           </div>
         )}
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-message ${msg.role}`}>
-            {msg.text}
+            {msg.role === "agent" ? (
+              <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                {msg.text}
+              </div>
+            ) : (
+              msg.text
+            )}
           </div>
         ))}
         {disabled && messages.length > 0 && (
           <div className="chat-message system">
-            <span className="pulse">Agent is working...</span>
+            <span className="pulse">
+              Agent is thinking and running commands...
+            </span>
           </div>
         )}
         <div ref={bottomRef} />
@@ -108,8 +114,14 @@ export default function TaskDialog({ messages, onSend, disabled }: Props) {
       <div className="chat-input-bar">
         <textarea
           className="chat-input"
-          rows={1}
-          placeholder={disabled ? "Agent is running..." : "Describe a task for the agent..."}
+          rows={2}
+          placeholder={
+            disabled
+              ? "Agent is working..."
+              : messages.length > 0
+                ? "Ask a follow-up question..."
+                : "Describe a task for the agent..."
+          }
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -120,7 +132,7 @@ export default function TaskDialog({ messages, onSend, disabled }: Props) {
           onClick={handleSend}
           disabled={disabled || !input.trim()}
         >
-          Run
+          Send
         </button>
       </div>
     </div>
