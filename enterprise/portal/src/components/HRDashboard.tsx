@@ -17,8 +17,8 @@ export default function HRDashboard() {
   useEffect(() => {
     Promise.all([
       fetchEmployees(),
-      fetchSheet("hire_tracker").catch(() => ({})),
-      fetchSheet("pto_calendar").catch(() => ({})),
+      fetchSheet("SH101").catch(() => ({})),
+      fetchSheet("SH104").catch(() => ({})),
     ])
       .then(([emp, hire, pto]) => {
         setEmployees(emp || []);

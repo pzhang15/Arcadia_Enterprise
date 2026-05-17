@@ -21,21 +21,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_cache: dict[str, object] = {}
-
 
 def _load_json(rel: str) -> object:
-    if rel in _cache:
-        return _cache[rel]
     path = DISK_ROOT / rel
     if not path.exists():
         return None
-    data = json.loads(path.read_text())
-    _cache[rel] = data
-    return data
+    return json.loads(path.read_text())
 
 
 def _load_dir_jsons(rel: str) -> list[dict]:
+    """Load all .json files from a directory (non-recursive)."""
     d = DISK_ROOT / rel
     if not d.exists() or not d.is_dir():
         return []
@@ -46,65 +41,76 @@ def _load_dir_jsons(rel: str) -> list[dict]:
     return results
 
 
-def _load_users() -> list[dict]:
-    data = _load_json("slack/users.json")
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict) and "members" in data:
-        return data["members"]
-    return []
+def _load_dir_jsons_recursive(rel: str) -> list[dict]:
+    """Load all .json files from a directory and its subdirectories."""
+    d = DISK_ROOT / rel
+    if not d.exists() or not d.is_dir():
+        return []
+    results = []
+    for f in sorted(d.rglob("*.json")):
+        results.append(json.loads(f.read_text()))
+    return results
 
 
 # ---------- IT Helpdesk ----------
 
 @app.get("/api/tickets/{queue}")
 async def list_tickets(queue: str) -> list[dict]:
-    return _load_dir_jsons(f"tickets/{queue}")
+    return _load_dir_jsons_recursive(f"tickets/queues/{queue}")
 
 
 @app.get("/api/tickets/{queue}/{ticket_id}")
 async def get_ticket(queue: str, ticket_id: str) -> dict:
-    data = _load_json(f"tickets/{queue}/{ticket_id}.json")
-    if data is None:
+    base = DISK_ROOT / "tickets" / "queues" / queue
+    if not base.exists():
         return {"error": "not found"}
-    return data
+    for f in base.rglob(f"{ticket_id}*.json"):
+        return json.loads(f.read_text())
+    return {"error": "not found"}
 
 
 # ---------- HR ----------
 
 @app.get("/api/employees")
 async def list_employees() -> list[dict]:
-    return _load_users()
+    return _load_dir_jsons("slack/users")
 
 
 @app.get("/api/sheets/{sheet_id}")
 async def get_sheet(sheet_id: str) -> dict:
-    data = _load_json(f"sheets/{sheet_id}.json")
-    if data is None:
-        return {"error": "not found"}
-    return data
+    owned = DISK_ROOT / "sheets" / "owned"
+    if owned.exists():
+        for f in owned.iterdir():
+            if sheet_id in f.name and f.suffix == ".json":
+                return json.loads(f.read_text())
+    return {"error": "not found"}
+
+
+@app.get("/api/sheets")
+async def list_sheets() -> list[dict]:
+    return _load_dir_jsons("sheets/owned")
 
 
 # ---------- Finance ----------
 
 @app.get("/api/finance/expenses")
 async def list_expenses() -> list[dict]:
-    return _load_dir_jsons("finance/expenses")
+    return _load_dir_jsons_recursive("finance/expenses")
 
 
 @app.get("/api/finance/purchase-orders")
 async def list_purchase_orders() -> list[dict]:
-    return _load_dir_jsons("finance/purchase_orders")
+    return _load_dir_jsons_recursive("finance/purchase_orders")
 
 
 @app.get("/api/finance/invoices")
 async def list_invoices() -> list[dict]:
-    return _load_dir_jsons("finance/invoices")
+    return _load_dir_jsons_recursive("finance/invoices")
 
 
 @app.get("/api/finance/budgets")
 async def get_budgets() -> dict:
-    data = _load_json("finance/budgets.json")
+    data = _load_json("finance/budgets/Q2_2026.json")
     if data is None:
         return {"departments": []}
     return data
@@ -114,20 +120,23 @@ async def get_budgets() -> dict:
 
 @app.get("/api/engineering/incidents")
 async def list_incidents() -> list[dict]:
-    return _load_dir_jsons("pagerduty/incidents")
+    return _load_dir_jsons_recursive("pagerduty/incidents")
 
 
 @app.get("/api/engineering/deployments")
 async def list_deployments() -> list[dict]:
-    return _load_dir_jsons("github/deployments")
+    deploy_dir = DISK_ROOT / "github"
+    if not deploy_dir.exists():
+        return []
+    results = []
+    for f in sorted(deploy_dir.rglob("deployments/*.json")):
+        results.append(json.loads(f.read_text()))
+    return results
 
 
 @app.get("/api/engineering/metrics")
-async def get_metrics() -> dict:
-    data = _load_json("datadog/metrics.json")
-    if data is None:
-        return {"series": []}
-    return data
+async def get_metrics() -> list[dict]:
+    return _load_dir_jsons_recursive("datadog/metrics")
 
 
 # ---------- Customer Support ----------
@@ -142,11 +151,16 @@ async def list_escalations() -> list[dict]:
     return _load_dir_jsons("customers/escalations")
 
 
+@app.get("/api/customers/tickets")
+async def list_customer_tickets() -> list[dict]:
+    return _load_dir_jsons_recursive("tickets/queues/customer-support")
+
+
 # ---------- Compliance ----------
 
 @app.get("/api/compliance/contracts")
 async def list_contracts() -> list[dict]:
-    return _load_dir_jsons("compliance/contracts")
+    return _load_dir_jsons_recursive("compliance/contracts")
 
 
 @app.get("/api/compliance/audits")

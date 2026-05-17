@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchTickets } from "../api/client";
 import type { Ticket } from "../types";
 
-const QUEUES = ["it_helpdesk", "it_access", "it_hardware"];
+const QUEUES = ["it-helpdesk"];
 const STATUS_FILTERS = ["all", "open", "in_progress", "resolved", "closed"];
 
 function priorityBadge(p: string) {

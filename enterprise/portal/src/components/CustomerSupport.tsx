@@ -59,7 +59,7 @@ export default function CustomerSupport() {
 
   useEffect(() => {
     Promise.all([
-      fetchTickets("support").catch(() => []),
+      fetchTickets("customer-support").catch(() => []),
       fetchAccounts(),
       fetchEscalations(),
     ])
