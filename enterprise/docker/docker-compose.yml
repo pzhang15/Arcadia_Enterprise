@@ -65,3 +65,39 @@ services:
     environment:
       - MOCK_SERVICES_URL=http://mock-services:3000
       - RELAY_URL=http://observability:8082
+
+  portal:
+    build:
+      context: ../portal
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SCENARIO_ROOT=/app/fixture
+    volumes:
+      - ../scenarios/acme_corp/fixture/disk:/app/fixture:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8083/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  console:
+    build:
+      context: ../console
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    depends_on:
+      observability:
+        condition: service_healthy
+    environment:
+      - RELAY_URL=http://observability:8082
+      - SCENARIO_ROOT=/app/fixture
+    volumes:
+      - ../scenarios/acme_corp/fixture/disk:/app/fixture:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8084/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

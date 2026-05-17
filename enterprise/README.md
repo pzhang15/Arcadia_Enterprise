@@ -10,11 +10,10 @@ What you get:
 - **Graded agent evaluation** measuring programmatic correctness (did it find the right data?), trajectory efficiency (how many commands, tokens, dollars?), and LLM-judged quality (is the output actually useful?) — all in a single composite score.
 - **MCP server** exposing any scenario as a standard Model Context Protocol endpoint, so Claude, Cursor, OpenAI agents, or any MCP client can connect and drive the workspace interactively.
 - **Docker mock suite** with fake HTTP backends for all services, a Mirage daemon, and an MCP server — one `docker compose up` to stand up the entire test environment.
-- **Observability pipeline** capturing every command the agent runs, every file it reads, every mount it touches, persisted as JSONL for replay and debugging.
+- **Enterprise Portal** showing simulated department tools (IT helpdesk, HR, Finance, Engineering, Customer Support, Compliance) with realistic seed data.
+- **Agent Console** where users assign cross-department tasks and watch the AI agent work in real-time.
 
-The thesis: if an agent can investigate a production incident across five services in a governed Mirage workspace and score well on the eval, it can do it in your company's real environment with real credentials — because the workspace abstraction, the governance rules, and the scoring criteria are identical.
-
-______________________________________________________________________
+---
 
 ## 1. Install
 
@@ -40,13 +39,14 @@ OPENAI_MODEL=kimi-k2.6
 ## 2. Seed (once per scenario)
 
 ```bash
+uv run mirage-eval seed --scenario acme_corp
 uv run mirage-eval seed --scenario onboarding_it
 uv run mirage-eval seed --scenario meridian_labs
 ```
 
 ## 3. Start the Docker stack (recommended)
 
-Runs mock backend services (Slack, GitHub, Jira, PagerDuty, Datadog), the Mirage HTTP daemon, and the MCP server — all in one command.
+Runs all services — mock backends, Mirage daemon, MCP server, portal, console, and observability — in one command.
 
 ```bash
 cd docker
@@ -56,6 +56,8 @@ docker compose up --build
 | Service       | Port | What it does                                               |
 | ------------- | ---- | ---------------------------------------------------------- |
 | observability | 8082 | Observability UI + event relay (SSE + results API)         |
+| portal        | 8083 | Enterprise department portal (6 departments)               |
+| console       | 8084 | Agent console (interactive AI agent workspace)             |
 | mock-services | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog |
 | mirage-api    | 8080 | Mirage HTTP daemon (workspace CRUD, execute, sessions)     |
 | mirage-mcp    | 8081 | MCP server over Streamable HTTP                            |
@@ -64,13 +66,9 @@ Verify the stack is up:
 
 ```bash
 curl http://localhost:3000/health
-curl http://localhost:3000/slack/api/conversations.list
-curl http://localhost:3000/pagerduty/incidents
-curl http://localhost:3000/github/repos/meridian-labs/payments-api/deployments
-curl 'http://localhost:3000/jira/rest/api/2/search?jql=project=OPS'
-curl -X POST http://localhost:3000/datadog/api/v1/logs/search \
-  -H 'Content-Type: application/json' \
-  -d '{"filter":{"query":"connection pool"}}'
+curl http://localhost:8082/api/health
+curl http://localhost:8083/api/health
+curl http://localhost:8084/api/health
 ```
 
 ## 4. Run an agent against the stack
@@ -132,11 +130,12 @@ uv run pytest
 
 ## Scenarios
 
-| Scenario        | Domain                      | Services                                |
-| --------------- | --------------------------- | --------------------------------------- |
-| `onboarding_it` | HR onboarding + IT helpdesk | Slack, GSheets, GDocs, ITSM             |
-| `meridian_labs` | SRE incident response       | Slack, Jira, GitHub, PagerDuty, Datadog |
-| `bi_analytics`  | (placeholder)               | —                                       |
+| Scenario        | Domain                             | Services                                                       |
+| --------------- | ---------------------------------- | -------------------------------------------------------------- |
+| `acme_corp`     | Full enterprise (6 departments)    | Slack, Sheets, Docs, ITSM, GitHub, PagerDuty, Datadog, Finance, CRM, Compliance |
+| `onboarding_it` | HR onboarding + IT helpdesk        | Slack, GSheets, GDocs, ITSM                                    |
+| `meridian_labs` | SRE incident response              | Slack, Jira, GitHub, PagerDuty, Datadog                        |
+| `bi_analytics`  | (placeholder)                      | ---                                                            |
 
 ## Adding a scenario
 
@@ -147,36 +146,13 @@ uv run mirage-eval seed --scenario my_scenario
 uv run mirage-eval run --scenario my_scenario --task <id>
 ```
 
-## Observability UI
+---
 
-Real-time observability dashboard for agent sessions. Shows every command the agent runs, every resource it touches, and how it scores — all in a browser.
+## Apps
 
-### Quick start (dev mode)
+### Observability UI
 
-```bash
-# Terminal 1: start the event relay server
-cd enterprise/app
-pip install fastapi uvicorn httpx
-python server.py
-
-# Terminal 2: start the Vite dev server
-cd enterprise/app
-npm install
-npm run dev
-```
-
-Open http://localhost:5173 to see the dashboard. Events from the MCP server and mock services are streamed via SSE.
-
-### Quick start (Docker)
-
-```bash
-cd enterprise/docker
-docker compose up --build
-```
-
-The observability UI is available at http://localhost:8082.
-
-### Views
+Real-time observability dashboard for agent sessions. Shows every command the agent runs, every resource it touches, and how it scores.
 
 | View | What it shows |
 |---|---|
@@ -186,139 +162,45 @@ The observability UI is available at http://localhost:8082.
 | Resource Map | Which mounts the agent touched, read/write counts, bytes transferred |
 | Scorecard | Eval results — composite scores, gate pass/fail, judge rubric, failure modes |
 
-### Architecture
+Open http://localhost:8082 (Docker) or run in dev mode:
 
-```
-Agent → MCP Server (:8081) → POST events → Observability Relay (:8082) → SSE → Browser
-         Mock Server (:3000) → POST events ↗
-```
-
-The relay server (`enterprise/app/server.py`) receives events from instrumented services via `POST /ingest`, buffers them, and streams to browser clients via `GET /events` (SSE). It also serves eval results from `results/` via `GET /api/results`.
-
-______________________________________________________________________
-
-## Repo Structure
-
-```
-enterprise/
-│
-├── pyproject.toml                  # Package config, dependencies, CLI entry points
-├── uv.lock                        # Lockfile for reproducible installs
-├── .env.example                   # Template for API keys (copy to .env)
-├── .gitignore                     # Ignores results/, fixtures, pycache
-├── README.md                      # This file
-│
-├── mirage_eval/                   # ── Framework (scenario-agnostic) ──
-│   ├── cli.py                     # CLI: seed, run, sweep, report, mcp-serve, scenario new
-│   ├── mcp_server.py              # MCP server (stdio + HTTP) wrapping any workspace
-│   ├── config.py                  # TaskConfig, TrajectoryBudget, JudgeConfig (pydantic)
-│   ├── scenario.py                # ScenarioManifest loader + ENTERPRISE_ROOT
-│   │
-│   ├── fixtures/                  # Fake resources (DiskResource + PROMPT wrappers)
-│   │   ├── fake_slack.py          #   Slack (reuses mirage's real Slack PROMPT)
-│   │   ├── fake_gdocs.py          #   Google Docs
-│   │   ├── fake_gsheets.py        #   Google Sheets
-│   │   ├── fake_ticketing.py      #   ITSM tickets (+ helpdesk-* write commands)
-│   │   ├── fake_github.py         #   GitHub deployments/commits/PRs
-│   │   ├── fake_pagerduty.py      #   PagerDuty incidents/services
-│   │   ├── fake_datadog.py        #   Datadog logs/metrics
-│   │   └── build_snapshot.py      #   Workspace → tar snapshot utility
-│   │
-│   ├── runner/                    # Agent execution engine
-│   │   ├── common.py              #   run_one_task(), RunArtifacts, TokenUsage
-│   │   ├── l1_synthetic.py        #   L1 runner (offline, fake resources)
-│   │   └── l2_real.py             #   L2 runner (real Slack/GitHub/Google APIs)
-│   │
-│   ├── scorers/                   # Scoring pipeline
-│   │   ├── composite.py           #   ScoreCard, score_run() (blends all scores)
-│   │   ├── programmatic.py        #   Gate checks (files exist, must contain, etc.)
-│   │   ├── trajectory.py          #   Trajectory metrics (turns, ops, cost, budget)
-│   │   └── llm_judge.py           #   LLM-as-judge (rubric-based quality scoring)
-│   │
-│   └── report/                    # Output generation
-│       ├── aggregate.py           #   AggregateReport from sweep scorecards
-│       ├── markdown.py            #   SUMMARY.md writer
-│       └── canvas.py              #   Cursor Canvas dashboard (.canvas.tsx)
-│
-├── scenarios/                     # ── Per-scenario data + tasks ──
-│   │
-│   ├── onboarding_it/             # Scenario 1: ACME Corp HR + IT helpdesk
-│   │   ├── scenario.yaml          #   Manifest (id, builders, paths)
-│   │   ├── seed.py                #   Generates Slack/Sheets/Docs/Tickets corpus
-│   │   ├── mounts.py              #   build_l1_workspace (6 mounts)
-│   │   ├── seed_real.py           #   L2: push corpus to real Slack + Google
-│   │   ├── personas.yaml          #   Cast of characters
-│   │   ├── tasks/                 #   Task YAMLs (prompt + oracles + judge rubric)
-│   │   │   ├── onboarding_status.yaml
-│   │   │   ├── provision_new_hire.yaml
-│   │   │   ├── ticket_triage.yaml
-│   │   │   ├── incident_followup.yaml
-│   │   │   └── adversarial/       #   Adversarial variants (missing data, contradictions)
-│   │   ├── tests/                 #   Corpus integrity tests
-│   │   └── fixture/               #   Seed output + snapshot tar (gitignored)
-│   │
-│   ├── meridian_labs/             # Scenario 2: Meridian Labs SRE incident response
-│   │   ├── scenario.yaml
-│   │   ├── seed.py                #   Generates Slack/Tickets/GitHub/PagerDuty/Datadog
-│   │   ├── mounts.py              #   build_l1_workspace (6 mounts)
-│   │   ├── mounts_docker.py       #   Docker workspace (real resources → mock URLs)
-│   │   ├── tasks/
-│   │   │   ├── incident_investigation.yaml
-│   │   │   └── cross_reference_summary.yaml
-│   │   ├── tests/
-│   │   └── fixture/
-│   │
-│   └── bi_analytics/              # Scenario 3: (placeholder, not yet implemented)
-│
-├── docker/                        # ── Docker testing suite ──
-│   ├── Dockerfile                 #   Python 3.12 + uv, seeds data at build time
-│   ├── docker-compose.yml         #   3 services: mock-services, mirage-api, mirage-mcp
-│   └── mock_server.py             #   Unified FastAPI mock (Slack/GitHub/Jira/PD/DD)
-│
-├── app/                           # ── Observability UI ──
-│   ├── HANDOFF.md                 #   Original spec / handoff document
-│   ├── server.py                  #   Event relay + results API (FastAPI, port 8082)
-│   ├── Dockerfile                 #   Multi-stage build (Node frontend + Python server)
-│   ├── package.json               #   React + Vite frontend deps
-│   ├── vite.config.ts             #   Dev server + proxy config
-│   └── src/
-│       ├── App.tsx                #   Layout: sidebar nav + main view
-│       ├── types.ts               #   TypeScript types for all event/data shapes
-│       ├── hooks/useEventStream.ts #  SSE connection hook
-│       ├── api/client.ts          #   Fetch from results API
-│       └── components/
-│           ├── CommandTimeline.tsx #   View 1: live command stream
-│           ├── MockRequestLog.tsx #   View 2: backend HTTP log
-│           ├── ScoreCardDashboard.tsx # View 3: eval results
-│           ├── ResourceMap.tsx    #   View 4: mount access visualization
-│           └── McpTraffic.tsx     #   View 5: JSON-RPC inspector
-│
-├── tests/                         # ── Framework-level tests ──
-│   ├── test_runner_smoke.py       #   Runner completes even when agent fails
-│   ├── test_scenario_manifest.py  #   Manifest loads, tasks validate
-│   └── test_scorers_units.py      #   Scorer unit tests (gates, trajectory, composite)
-│
-├── scripts/
-│   └── run_sweep.sh               #   Convenience wrapper for sweep command
-│
-├── canvases/                      #   Cursor Canvas dashboards (generated by sweeps)
-└── results/                       #   Sweep outputs: scorecards, artifacts (gitignored)
+```bash
+cd enterprise/app && pip install fastapi uvicorn httpx && python server.py
+cd enterprise/app && npm install && npm run dev   # http://localhost:5173
 ```
 
-### How the pieces connect
+### Enterprise Portal
 
+Simulates the enterprise tools employees use daily — ServiceNow, Workday, Zendesk, etc. — organized by department.
+
+| Department | What it shows |
+|---|---|
+| IT Helpdesk | Ticket queue (ServiceNow-style), filterable by status/priority |
+| HR & People | Employee directory, onboarding tracker, PTO calendar |
+| Finance | Expense report queue, purchase orders, department budgets |
+| Engineering | Active incidents, deployment log, monitoring alerts |
+| Customer Support | Support tickets (Zendesk-style), account health cards |
+| Compliance | Contract review queue, audit checklists, policy acknowledgments |
+
+Open http://localhost:8083 (Docker) or run in dev mode:
+
+```bash
+cd enterprise/portal && pip install fastapi uvicorn httpx && python server.py
+cd enterprise/portal && npm install && npm run dev   # http://localhost:5174
 ```
-Agent (OpenAI/Kimi)
-  → MCP Server (mirage_eval/mcp_server.py)
-    → Workspace.execute(command)
-      → Ops dispatcher routes to mounted resources
-        → FakeSlackResource reads /slack/channels/...
-        → FakeTicketingResource reads /tickets/queues/...
-        → FakeGitHubResource reads /github/repos/...
-        → FakePagerDutyResource reads /pagerduty/incidents/...
-        → FakeDatadogResource reads /datadog/logs/...
-      → Observer writes JSONL to /.sessions/
-    → stdout/stderr returned to agent
-  → Agent reasons, calls execute again (loop)
-  → Final output scored by programmatic gates + LLM judge
+
+### Agent Console
+
+The interactive AI agent workspace. Users select which department services to connect, describe a task in natural language, and watch the agent work across services in real-time.
+
+1. **Service Connector** — toggle which departments the agent can access
+2. **Task Dialog** — type a task or use quick-action presets
+3. **Live Execution** — watch the agent run commands in real-time via SSE
+4. **Results Summary** — see what the agent accomplished: services touched, files created, structured report
+
+Open http://localhost:8084 (Docker) or run in dev mode:
+
+```bash
+cd enterprise/console && pip install fastapi uvicorn httpx && python server.py
+cd enterprise/console && npm install && npm run dev   # http://localhost:5175
 ```

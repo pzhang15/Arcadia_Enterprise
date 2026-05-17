@@ -18,5 +18,6 @@ RUN uv sync --no-dev
 
 RUN uv run mirage-eval seed --scenario onboarding_it
 RUN uv run mirage-eval seed --scenario meridian_labs
+RUN uv run mirage-eval seed --scenario acme_corp
 
 EXPOSE 3000 8080 8081

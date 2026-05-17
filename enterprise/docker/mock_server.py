@@ -160,10 +160,97 @@ def _seed_datadog():
     return logs, metrics
 
 
+def _seed_finance():
+    import tempfile
+
+    from scenarios.acme_corp.seed import main as seed_main
+    td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
+    seed_main(td, clean=True)
+    fin = td / "finance"
+    expenses = []
+    for status in ("pending", "approved", "rejected"):
+        d = fin / "expenses" / status
+        if d.exists():
+            for f in sorted(d.glob("*.json")):
+                expenses.append(json.loads(f.read_text()))
+    purchase_orders = []
+    for status in ("open", "approved", "received"):
+        d = fin / "purchase_orders" / status
+        if d.exists():
+            for f in sorted(d.glob("*.json")):
+                purchase_orders.append(json.loads(f.read_text()))
+    invoices = []
+    for status in ("pending", "paid", "disputed"):
+        d = fin / "invoices" / status
+        if d.exists():
+            for f in sorted(d.glob("*.json")):
+                invoices.append(json.loads(f.read_text()))
+    budgets = {}
+    budget_file = fin / "budgets" / "Q2_2026.json"
+    if budget_file.exists():
+        budgets = json.loads(budget_file.read_text())
+    return expenses, purchase_orders, invoices, budgets
+
+
+def _seed_customers():
+    import tempfile
+
+    from scenarios.acme_corp.seed import main as seed_main
+    td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
+    seed_main(td, clean=True)
+    cust = td / "customers"
+    accounts = []
+    accts_dir = cust / "accounts"
+    if accts_dir.exists():
+        for f in sorted(accts_dir.glob("*.json")):
+            accounts.append(json.loads(f.read_text()))
+    escalations = []
+    esc_dir = cust / "escalations"
+    if esc_dir.exists():
+        for f in sorted(esc_dir.glob("*.json")):
+            escalations.append(json.loads(f.read_text()))
+    return accounts, escalations
+
+
+def _seed_compliance():
+    import tempfile
+
+    from scenarios.acme_corp.seed import main as seed_main
+    td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
+    seed_main(td, clean=True)
+    comp = td / "compliance"
+    contracts = []
+    for status in ("in_review", "active", "expired"):
+        d = comp / "contracts" / status
+        if d.exists():
+            for f in sorted(d.glob("*.json")):
+                contracts.append(json.loads(f.read_text()))
+    audits = []
+    audits_dir = comp / "audits"
+    if audits_dir.exists():
+        for f in sorted(audits_dir.glob("*.json")):
+            audits.append(json.loads(f.read_text()))
+    policies = []
+    policies_dir = comp / "policies"
+    if policies_dir.exists():
+        for f in sorted(policies_dir.glob("*.json")):
+            policies.append(json.loads(f.read_text()))
+    return contracts, audits, policies
+
+
 TICKETS = _seed_tickets()
 GH_DEPLOYMENTS, GH_COMMITS, GH_PULLS = _seed_github()
 PD_SERVICES, PD_INCIDENTS = _seed_pagerduty()
 DD_LOGS, DD_METRICS = _seed_datadog()
+
+try:
+    EXPENSES, PURCHASE_ORDERS, INVOICES, BUDGETS = _seed_finance()
+    CUSTOMER_ACCOUNTS, ESCALATIONS = _seed_customers()
+    CONTRACTS, AUDITS, POLICIES = _seed_compliance()
+except Exception:
+    EXPENSES, PURCHASE_ORDERS, INVOICES, BUDGETS = [], [], [], {}
+    CUSTOMER_ACCOUNTS, ESCALATIONS = [], []
+    CONTRACTS, AUDITS, POLICIES = [], [], []
 
 # ── Slack Mock ──────────────────────────────────────────────────────────
 
@@ -351,11 +438,120 @@ async def dd_metrics_query(
     return {"series": matched}
 
 
+# ── Finance Mock ────────────────────────────────────────────────────────
+
+
+@app.get("/finance/expenses")
+async def finance_expenses(status: str = Query(None)):
+    results = EXPENSES
+    if status:
+        results = [e for e in results if e.get("status") == status]
+    return {"expenses": results}
+
+
+@app.get("/finance/expenses/{expense_id}")
+async def finance_expense(expense_id: str):
+    for exp in EXPENSES:
+        if exp.get("expense_id") == expense_id:
+            return exp
+    return JSONResponse({"error": "Not Found"}, status_code=404)
+
+
+@app.get("/finance/purchase-orders")
+async def finance_purchase_orders(status: str = Query(None)):
+    results = PURCHASE_ORDERS
+    if status:
+        results = [p for p in results if p.get("status") == status]
+    return {"purchase_orders": results}
+
+
+@app.get("/finance/invoices")
+async def finance_invoices(status: str = Query(None)):
+    results = INVOICES
+    if status:
+        results = [i for i in results if i.get("status") == status]
+    return {"invoices": results}
+
+
+@app.get("/finance/budgets")
+async def finance_budgets():
+    return BUDGETS
+
+
+# ── Customer Support Mock ──────────────────────────────────────────────
+
+
+@app.get("/customers/accounts")
+async def customers_accounts():
+    return {"accounts": CUSTOMER_ACCOUNTS}
+
+
+@app.get("/customers/accounts/{account_id}")
+async def customers_account(account_id: str):
+    for acct in CUSTOMER_ACCOUNTS:
+        if acct.get("account_id") == account_id:
+            return acct
+    return JSONResponse({"error": "Not Found"}, status_code=404)
+
+
+@app.get("/customers/escalations")
+async def customers_escalations():
+    return {"escalations": ESCALATIONS}
+
+
+@app.get("/customers/escalations/{escalation_id}")
+async def customers_escalation(escalation_id: str):
+    for esc in ESCALATIONS:
+        if esc.get("escalation_id") == escalation_id:
+            return esc
+    return JSONResponse({"error": "Not Found"}, status_code=404)
+
+
+# ── Compliance Mock ────────────────────────────────────────────────────
+
+
+@app.get("/compliance/contracts")
+async def compliance_contracts(status: str = Query(None)):
+    results = CONTRACTS
+    if status:
+        results = [c for c in results if c.get("status") == status]
+    return {"contracts": results}
+
+
+@app.get("/compliance/contracts/{contract_id}")
+async def compliance_contract(contract_id: str):
+    for ctr in CONTRACTS:
+        if ctr.get("contract_id") == contract_id:
+            return ctr
+    return JSONResponse({"error": "Not Found"}, status_code=404)
+
+
+@app.get("/compliance/audits")
+async def compliance_audits():
+    return {"audits": AUDITS}
+
+
+@app.get("/compliance/audits/{audit_id}")
+async def compliance_audit(audit_id: str):
+    for audit in AUDITS:
+        if audit.get("audit_id") == audit_id:
+            return audit
+    return JSONResponse({"error": "Not Found"}, status_code=404)
+
+
+@app.get("/compliance/policies")
+async def compliance_policies():
+    return {"policies": POLICIES}
+
+
 @app.get("/health")
 async def health():
     return {
         "status": "ok",
-        "services": ["slack", "github", "jira", "pagerduty", "datadog"]
+        "services": [
+            "slack", "github", "jira", "pagerduty", "datadog",
+            "finance", "customers", "compliance",
+        ],
     }
 
 
