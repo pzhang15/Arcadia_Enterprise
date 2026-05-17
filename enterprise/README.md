@@ -14,7 +14,7 @@ What you get:
 
 The thesis: if an agent can investigate a production incident across five services in a governed Mirage workspace and score well on the eval, it can do it in your company's real environment with real credentials — because the workspace abstraction, the governance rules, and the scoring criteria are identical.
 
----
+______________________________________________________________________
 
 ## 1. Install
 
@@ -53,11 +53,12 @@ cd docker
 docker compose up --build
 ```
 
-| Service | Port | What it does |
-|---|---|---|
+| Service       | Port | What it does                                               |
+| ------------- | ---- | ---------------------------------------------------------- |
+| observability | 8082 | Observability UI + event relay (SSE + results API)         |
 | mock-services | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog |
-| mirage-api | 8080 | Mirage HTTP daemon (workspace CRUD, execute, sessions) |
-| mirage-mcp | 8081 | MCP server over Streamable HTTP |
+| mirage-api    | 8080 | Mirage HTTP daemon (workspace CRUD, execute, sessions)     |
+| mirage-mcp    | 8081 | MCP server over Streamable HTTP                            |
 
 Verify the stack is up:
 
@@ -131,11 +132,11 @@ uv run pytest
 
 ## Scenarios
 
-| Scenario | Domain | Services |
-|---|---|---|
-| `onboarding_it` | HR onboarding + IT helpdesk | Slack, GSheets, GDocs, ITSM |
-| `meridian_labs` | SRE incident response | Slack, Jira, GitHub, PagerDuty, Datadog |
-| `bi_analytics` | (placeholder) | — |
+| Scenario        | Domain                      | Services                                |
+| --------------- | --------------------------- | --------------------------------------- |
+| `onboarding_it` | HR onboarding + IT helpdesk | Slack, GSheets, GDocs, ITSM             |
+| `meridian_labs` | SRE incident response       | Slack, Jira, GitHub, PagerDuty, Datadog |
+| `bi_analytics`  | (placeholder)               | —                                       |
 
 ## Adding a scenario
 
@@ -146,11 +147,55 @@ uv run mirage-eval seed --scenario my_scenario
 uv run mirage-eval run --scenario my_scenario --task <id>
 ```
 
-## Observability UI (planned)
+## Observability UI
 
-See `app/HANDOFF.md` for a comprehensive spec covering 5 views: live command timeline, resource access map, MCP traffic inspector, mock backend request log, and eval scorecard dashboard.
+Real-time observability dashboard for agent sessions. Shows every command the agent runs, every resource it touches, and how it scores — all in a browser.
 
----
+### Quick start (dev mode)
+
+```bash
+# Terminal 1: start the event relay server
+cd enterprise/app
+pip install fastapi uvicorn httpx
+python server.py
+
+# Terminal 2: start the Vite dev server
+cd enterprise/app
+npm install
+npm run dev
+```
+
+Open http://localhost:5173 to see the dashboard. Events from the MCP server and mock services are streamed via SSE.
+
+### Quick start (Docker)
+
+```bash
+cd enterprise/docker
+docker compose up --build
+```
+
+The observability UI is available at http://localhost:8082.
+
+### Views
+
+| View | What it shows |
+|---|---|
+| Command Timeline | Live stream of every `execute()` call — command, exit code, timing, stdout, mount I/O |
+| MCP Traffic | JSON-RPC request/response pairs for the MCP protocol layer |
+| Request Log | HTTP requests hitting the mock backend services, filterable by service |
+| Resource Map | Which mounts the agent touched, read/write counts, bytes transferred |
+| Scorecard | Eval results — composite scores, gate pass/fail, judge rubric, failure modes |
+
+### Architecture
+
+```
+Agent → MCP Server (:8081) → POST events → Observability Relay (:8082) → SSE → Browser
+         Mock Server (:3000) → POST events ↗
+```
+
+The relay server (`enterprise/app/server.py`) receives events from instrumented services via `POST /ingest`, buffers them, and streams to browser clients via `GET /events` (SSE). It also serves eval results from `results/` via `GET /api/results`.
+
+______________________________________________________________________
 
 ## Repo Structure
 
@@ -230,8 +275,23 @@ enterprise/
 │   ├── docker-compose.yml         #   3 services: mock-services, mirage-api, mirage-mcp
 │   └── mock_server.py             #   Unified FastAPI mock (Slack/GitHub/Jira/PD/DD)
 │
-├── app/                           # ── Observability UI (planned) ──
-│   └── HANDOFF.md                 #   Spec for building the frontend
+├── app/                           # ── Observability UI ──
+│   ├── HANDOFF.md                 #   Original spec / handoff document
+│   ├── server.py                  #   Event relay + results API (FastAPI, port 8082)
+│   ├── Dockerfile                 #   Multi-stage build (Node frontend + Python server)
+│   ├── package.json               #   React + Vite frontend deps
+│   ├── vite.config.ts             #   Dev server + proxy config
+│   └── src/
+│       ├── App.tsx                #   Layout: sidebar nav + main view
+│       ├── types.ts               #   TypeScript types for all event/data shapes
+│       ├── hooks/useEventStream.ts #  SSE connection hook
+│       ├── api/client.ts          #   Fetch from results API
+│       └── components/
+│           ├── CommandTimeline.tsx #   View 1: live command stream
+│           ├── MockRequestLog.tsx #   View 2: backend HTTP log
+│           ├── ScoreCardDashboard.tsx # View 3: eval results
+│           ├── ResourceMap.tsx    #   View 4: mount access visualization
+│           └── McpTraffic.tsx     #   View 5: JSON-RPC inspector
 │
 ├── tests/                         # ── Framework-level tests ──
 │   ├── test_runner_smoke.py       #   Runner completes even when agent fails
