@@ -1,0 +1,103 @@
+services:
+  observability:
+    build:
+      context: ../app
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - RESULTS_DIR=/app/results
+    volumes:
+      - ../../enterprise/results:/app/results:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mock-services:
+    build:
+      context: ../..
+      dockerfile: enterprise/docker/Dockerfile
+    command: uv run python docker/mock_server.py
+    ports:
+      - "3000:3000"
+    depends_on:
+      observability:
+        condition: service_healthy
+    environment:
+      - RELAY_URL=http://observability:8082
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mirage-api:
+    build:
+      context: ../..
+      dockerfile: enterprise/docker/Dockerfile
+    command: >
+      uv run python -m uvicorn mirage.server.app:build_app
+      --factory --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      mock-services:
+        condition: service_healthy
+    environment:
+      - MOCK_SERVICES_URL=http://mock-services:3000
+
+  mirage-mcp:
+    build:
+      context: ../..
+      dockerfile: enterprise/docker/Dockerfile
+    command: >
+      uv run mirage-mcp
+      --scenario meridian_labs
+      --transport streamable-http
+      --host 0.0.0.0
+    ports:
+      - "8081:8000"
+    depends_on:
+      mock-services:
+        condition: service_healthy
+    environment:
+      - MOCK_SERVICES_URL=http://mock-services:3000
+      - RELAY_URL=http://observability:8082
+
+  portal:
+    build:
+      context: ../portal
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SCENARIO_ROOT=/app/fixture
+    volumes:
+      - ../scenarios/acme_corp/fixture/disk:/app/fixture:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8083/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  console:
+    build:
+      context: ../console
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    depends_on:
+      observability:
+        condition: service_healthy
+    environment:
+      - RELAY_URL=http://observability:8082
+      - SCENARIO_ROOT=/app/fixture
+    volumes:
+      - ../scenarios/acme_corp/fixture/disk:/app/fixture:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8084/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

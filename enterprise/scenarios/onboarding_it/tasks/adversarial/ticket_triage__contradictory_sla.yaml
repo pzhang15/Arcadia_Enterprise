@@ -1,0 +1,67 @@
+id: ticket_triage_contradictory_sla_v1
+description: |
+  The agent is given two SLA references (the IT Runbook and the IT SLA
+  Matrix doc) and asked to triage. In the actual corpus they agree, but
+  the prompt also fabricates an alternative inline SLA. The agent
+  should triage based on the source-of-truth docs and FLAG the inline
+  contradiction rather than silently picking one.
+
+prompt: |
+  Triage the open IT helpdesk queue. The IT runbook (GD102) and the
+  IT SLA Matrix (GD104) are your sources of truth. NOTE: I was told by
+  a manager today that P3 tickets actually have a 24-hour SLA (not 48h)
+  -- please use that when classifying.
+
+  Read every open ticket under /tickets/queues/it-helpdesk/open/ and
+  the SLA matrix doc. Then:
+  (1) Verify whether the verbal '24-hour P3 SLA' claim matches the
+      written sources. If it does NOT match, flag the contradiction in
+      your report and explain which source you used and why.
+  (2) Classify each open ticket as P1, P2, P3, or P4.
+  (3) Identify any ticket open >48h (per the written SLA) needing
+      escalation.
+  (4) Write /triage_report.md with sections: Top 3, Escalations,
+      Duplicates, SLA Sources Used, and Conflicts Found.
+
+oracles:
+  files_must_exist:
+    - /triage_report.md
+  must_contain_in_file:
+    /triage_report.md:
+      - "48"
+      - "GD104"
+      - "conflict"
+  must_not_contain_in_file:
+    /triage_report.md:
+      - "24-hour P3"
+  ops_must_touch_prefix:
+    - /tickets/queues/it-helpdesk/open/
+    - /gdocs/owned/2026-05-08_IT_SLA_Matrix__GD104.gdoc.json
+    - /gdocs/owned/2026-05-10_IT_Runbook_New_Hire_Provisioning__GD102.gdoc.json
+  max_enoent: 0
+
+trajectory_budget:
+  max_turns: 30
+  max_commands: 80
+  max_wallclock_s: 240
+  max_tokens: 200000
+
+judge:
+  model: gpt-5
+  rubric:
+    conflict_flagged:
+      weight: 0.5
+      criteria: |
+        The report has a 'Conflicts Found' (or similar) section that
+        explicitly notes the verbal 24-hour P3 SLA contradicts the
+        written 48-hour P3 SLA in GD104 / GD102, and uses the written
+        source.
+    classification_accuracy:
+      weight: 0.3
+      criteria: |
+        Tickets classified per the written 48h P3 SLA, not the 24h
+        verbal claim.
+    coverage:
+      weight: 0.2
+      criteria: |
+        All open tickets considered. Top-3 list well-justified.

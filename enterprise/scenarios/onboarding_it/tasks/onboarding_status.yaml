@@ -1,0 +1,77 @@
+id: onboarding_status_v1
+description: Snapshot a single new hire's onboarding status across HR + IT + Slack.
+prompt: |
+  Look up Alex Rivera's onboarding status. (1) Read the New Hire Tracker
+  spreadsheet under /sheets/owned/ and find Alex's row -- pull start date,
+  team, manager, equipment status, access status, and the Day 1 Complete
+  flag. (2) Find any open IT helpdesk tickets in /tickets/ that involve
+  Alex (requester or mentioned in body). (3) Read the last 3 Slack
+  messages in #onboarding (channel) and the last 3 messages in each of
+  Alex's DMs with Diana (HR) and Sam (IT). (4) Write a one-page status
+  to /onboarding_status.md with three sections:
+    - Where they are in the playbook
+    - What is blocked
+    - Who owes what (with names and ticket IDs)
+  Be specific -- cite ticket IDs and Slack dates, not generic summaries.
+
+oracles:
+  files_must_exist:
+    - /onboarding_status.md
+  must_contain_in_file:
+    /onboarding_status.md:
+      - Alex Rivera
+      - INC-1001
+      - INC-1002
+      - INC-1004
+      - Day 1
+      - Diana
+      - Sam
+  must_not_contain_in_file:
+    /onboarding_status.md:
+      - Bob Lee
+      - INC-0998
+      - INC-1007
+  ops_must_touch_prefix:
+    - /sheets/owned/2026-05-12_New_Hire_Tracker__SH101.gsheet.json
+    - /tickets/queues/it-helpdesk/open/
+    - /slack/channels/onboarding__C302
+    - /slack/dms/diana__D201
+    - /slack/dms/sam__D202
+  ops_must_not_touch_prefix:
+    - /slack/channels/incidents__C305
+    - /gdocs/owned/2026-04-22_Slack_Outage_Postmortem
+  max_enoent: 0
+
+trajectory_budget:
+  max_turns: 25
+  max_commands: 60
+  max_wallclock_s: 180
+  max_tokens: 150000
+
+judge:
+  model: gpt-5
+  rubric:
+    faithfulness:
+      weight: 0.4
+      criteria: |
+        Every claim in /onboarding_status.md is grounded in a Slack message,
+        ticket JSON, or spreadsheet row that the agent actually read. No
+        invented dates, no invented ticket IDs, no invented people.
+    coverage:
+      weight: 0.3
+      criteria: |
+        All three of Alex's open tickets surfaced (INC-1001, INC-1002,
+        INC-1004; INC-1003 in_progress and INC-1006 near-duplicate optional
+        but bonus). Equipment status from the New Hire Tracker reflected.
+        Manager (Marcus) and buddy (Jordan) identified if mentioned in
+        source data.
+    specificity:
+      weight: 0.2
+      criteria: |
+        References are specific (ticket IDs, Slack dates, named individuals)
+        rather than generic ("there are some open tickets"). The "Who owes
+        what" section names people.
+    actionability:
+      weight: 0.1
+      criteria: |
+        A reader could act on the document without re-deriving anything.

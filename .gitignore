@@ -231,3 +231,6 @@ models/
 /plan/
 
 docs/plans/
+
+# Node
+node_modules/

@@ -1,0 +1,49 @@
+[project]
+name = "mirage-enterprise-eval"
+version = "0.1.0"
+description = "Scenario-driven evaluation harness for Mirage agents on cross-domain enterprise tasks."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [
+    { name = "Pat Zhang" },
+]
+
+dependencies = [
+    "mirage-ai",
+    "openai>=2.30.0",
+    "openai-agents>=0.14.7",
+    "pyyaml>=6.0.3",
+    "jsonschema>=4.23.0",
+    "pydantic>=2.9.0",
+    "rich>=13.9.0",
+    "typer>=0.12.0",
+    "python-dotenv>=1.2.2",
+    "mcp>=1.9.0",
+    "httpx>=0.28.1",
+]
+
+[project.scripts]
+mirage-eval = "mirage_eval.cli:app"
+mirage-mcp = "mirage_eval.mcp_server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["mirage_eval*", "scenarios*"]
+
+[tool.uv.sources]
+mirage-ai = { path = "../python", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "scenarios"]
+addopts = "-q --import-mode=importlib"
+asyncio_mode = "auto"

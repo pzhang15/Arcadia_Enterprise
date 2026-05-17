@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MirageEvalTask",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "description", "prompt", "oracles", "judge"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(_v[0-9]+)?$"},
+    "description": {"type": "string"},
+    "prompt": {"type": "string"},
+    "oracles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files_must_exist": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "must_contain_in_file": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        },
+        "must_not_contain_in_file": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        },
+        "ops_must_touch_prefix": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "ops_must_not_touch_prefix": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "max_enoent": {"type": "integer", "minimum": 0}
+      }
+    },
+    "trajectory_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_turns": {"type": "integer", "minimum": 1},
+        "max_commands": {"type": "integer", "minimum": 1},
+        "max_wallclock_s": {"type": "integer", "minimum": 1},
+        "max_tokens": {"type": "integer", "minimum": 1}
+      }
+    },
+    "judge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "rubric"],
+      "properties": {
+        "model": {"type": "string"},
+        "rubric": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["weight", "criteria"],
+            "additionalProperties": false,
+            "properties": {
+              "weight": {"type": "number", "minimum": 0, "maximum": 1},
+              "criteria": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

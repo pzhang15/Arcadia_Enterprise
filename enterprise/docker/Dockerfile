@@ -1,0 +1,23 @@
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+RUN pip install uv
+
+WORKDIR /app
+
+COPY python/pyproject.toml python/uv.lock /app/python/
+COPY python/mirage /app/python/mirage
+
+COPY enterprise/pyproject.toml enterprise/uv.lock /app/enterprise/
+WORKDIR /app/enterprise
+RUN uv sync --no-dev
+
+COPY enterprise /app/enterprise
+RUN uv sync --no-dev
+
+RUN uv run mirage-eval seed --scenario onboarding_it
+RUN uv run mirage-eval seed --scenario meridian_labs
+RUN uv run mirage-eval seed --scenario acme_corp
+
+EXPOSE 3000 8080 8081

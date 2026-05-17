@@ -1,0 +1,82 @@
+id: ticket_triage_v1
+description: |
+  Triage all open IT helpdesk tickets: classify by P-level per the SLA
+  matrix, find duplicates, identify any open >48h needing escalation,
+  and produce a triage report.
+
+prompt: |
+  You are triaging the IT helpdesk queue. Read every open ticket under
+  /tickets/queues/it-helpdesk/open/ and the IT_SLA_Matrix gdoc under
+  /gdocs/owned/. Then:
+
+  (1) Classify each open ticket as P1, P2, P3, or P4 per the SLA matrix.
+  (2) Identify duplicates by clustering on subject and requester.
+      (Hint: at least one near-duplicate exists in the open queue.)
+  (3) Identify any tickets open more than 48 hours from their
+      created_at that need escalation per the runbook.
+  (4) Recommend an owner for each unassigned ticket based on the queue
+      and ticket subject.
+
+  Write /triage_report.md with sections:
+  - Top 3 to handle today (with priority + reason)
+  - Escalations (open >48h)
+  - Duplicates (tickets to merge / close)
+  - Recommended owners (for unassigned tickets)
+
+  Be specific: cite ticket IDs and dates, not generic statements.
+
+oracles:
+  files_must_exist:
+    - /triage_report.md
+  must_contain_in_file:
+    /triage_report.md:
+      - INC-1001
+      - INC-1002
+      - INC-1003
+      - INC-1004
+      - INC-1006
+      - INC-1007
+      - "duplicate"
+  must_not_contain_in_file:
+    /triage_report.md:
+      - INC-0998
+      - INC-0999
+  ops_must_touch_prefix:
+    - /tickets/queues/it-helpdesk/open/
+    - /gdocs/owned/2026-05-08_IT_SLA_Matrix__GD104.gdoc.json
+  max_enoent: 0
+
+trajectory_budget:
+  max_turns: 30
+  max_commands: 80
+  max_wallclock_s: 240
+  max_tokens: 200000
+
+judge:
+  model: gpt-5
+  rubric:
+    classification_accuracy:
+      weight: 0.35
+      criteria: |
+        Each open ticket assigned a sensible P-level per the SLA matrix.
+        INC-1001 and INC-1003 should be P1 or P2 (Day-1 blockers),
+        INC-1002/1004/1006 P3 (single-user non-blockers), INC-1007 P4
+        (cosmetic).
+    duplicate_detection:
+      weight: 0.25
+      criteria: |
+        Identifies INC-1006 (Slack workspace access for Alex) as a
+        near-duplicate of INC-1002 (AWS access for Alex) and/or
+        INC-1003 (Okta SSO, which auto-provisions both per the runbook).
+        Not just any pair flagged as duplicates.
+    coverage:
+      weight: 0.2
+      criteria: |
+        All open tickets considered. Top-3 list is well-justified by
+        priority + impact. Recommended owners route tickets to plausible
+        people from the corpus (priya/sam for IT).
+    specificity:
+      weight: 0.2
+      criteria: |
+        Ticket IDs and timestamps cited. Recommended owners named
+        specifically (not "an IT engineer").

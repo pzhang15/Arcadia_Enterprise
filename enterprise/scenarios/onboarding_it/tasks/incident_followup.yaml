@@ -1,0 +1,83 @@
+id: incident_followup_v1
+description: |
+  Reconstruct an incident's blast radius by joining the postmortem doc,
+  the Slack incident thread, the New Hire Tracker, and any tickets that
+  may have been blocked. Produce an exec-readable recap.
+
+prompt: |
+  Read the Slack outage postmortem in /gdocs/owned/ (filename includes
+  'Slack_Outage_Postmortem'). Then:
+
+  (1) Find the related Slack thread in /slack/channels/incidents__C305/
+      from the outage date. Extract the timeline.
+  (2) Cross-reference the New Hire Tracker spreadsheet to find any
+      hires whose Day 1 fell on the outage date.
+  (3) Look at /tickets/ for any tickets created on the outage date that
+      may have been blocked or delayed by the outage. (Hint: Day-1
+      laptop setup tickets for the hires from step 2.)
+  (4) Write /incident_recap.md with sections:
+      - Timeline (with timestamps from the Slack thread + postmortem)
+      - Affected hires (named individuals from the New Hire Tracker)
+      - Tickets blocked or delayed
+      - What to communicate (one short paragraph for an exec audience)
+      - Recommended preventive ITSM tickets to file (1-3 items)
+
+  Cite specific message dates, ticket IDs, and the postmortem section
+  you reference. Do not invent facts.
+
+oracles:
+  files_must_exist:
+    - /incident_recap.md
+  must_contain_in_file:
+    /incident_recap.md:
+      - "2026-04-22"
+      - Priya Wong
+      - Marcus Davis
+      - Okta
+      - INC-0999
+  must_not_contain_in_file:
+    /incident_recap.md:
+      - Alex Rivera
+      - INC-1001
+  ops_must_touch_prefix:
+    - /gdocs/owned/2026-04-22_Slack_Outage_Postmortem__GD105.gdoc.json
+    - /slack/channels/incidents__C305
+    - /sheets/owned/2026-05-12_New_Hire_Tracker__SH101.gsheet.json
+    - /tickets/queues/it-helpdesk/resolved/
+  max_enoent: 0
+
+trajectory_budget:
+  max_turns: 35
+  max_commands: 100
+  max_wallclock_s: 300
+  max_tokens: 250000
+
+judge:
+  model: gpt-5
+  rubric:
+    timeline_accuracy:
+      weight: 0.3
+      criteria: |
+        Timeline reflects the actual events (outage at 09:14 PT,
+        resolution ~09:54 PT). Times are derived from Slack messages
+        and the postmortem, not invented.
+    blast_radius_correctness:
+      weight: 0.3
+      criteria: |
+        Identifies BOTH affected hires (Priya Wong + Marcus Davis) by
+        name from the New Hire Tracker. Correctly notes INC-0999
+        (Priya Wong's Day-1 laptop setup) was delayed by the outage.
+        Does not blame the outage for unrelated tickets (e.g. Alex
+        Rivera's tickets, which are from a different week).
+    exec_readability:
+      weight: 0.25
+      criteria: |
+        The "What to communicate" paragraph is concise, factual, and
+        ready to send. The recap as a whole is skimmable in <60s by a
+        director.
+    actionability:
+      weight: 0.15
+      criteria: |
+        Recommended preventive tickets are specific and grounded in
+        the postmortem's action items (e.g. cert rotation runbook,
+        delayed-start guidance template).

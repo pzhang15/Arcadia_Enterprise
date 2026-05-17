@@ -1,0 +1,19 @@
+id: acme_corp
+name: ACME Corp - Full Enterprise
+description: |
+  Unified enterprise scenario spanning IT helpdesk, HR/People Ops,
+  Finance/Procurement, Engineering/SRE, Customer Support, and
+  Legal/Compliance. 28 employees, 10 Slack channels, cross-referenced
+  tickets, expenses, incidents, contracts, and audit checklists.
+
+mounts:
+  l1:
+    builder: scenarios.acme_corp.mounts:build_l1_workspace
+
+fixture:
+  seed: scenarios.acme_corp.seed:main
+  snapshot_path: scenarios/acme_corp/fixture/corpus.tar
+
+tasks_dir: scenarios/acme_corp/tasks
+results_dir: results/acme_corp
+canvas_path: canvases/acme_corp/dashboard.canvas.tsx
