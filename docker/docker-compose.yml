@@ -19,7 +19,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    command: uv run python docker/mock_server.py
+    command: uv run python /app/docker/mock_server.py
     ports:
       - "3000:3000"
     depends_on:

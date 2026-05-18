@@ -10,13 +10,15 @@ COPY vendor/mirage/python/pyproject.toml vendor/mirage/python/uv.lock /app/vendo
 COPY vendor/mirage/python/mirage /app/vendor/mirage/python/mirage
 
 COPY pyproject.toml /app/
-COPY packages/eval/pyproject.toml packages/eval/uv.lock /app/packages/eval/
+COPY packages/eval/pyproject.toml /app/packages/eval/
 
 WORKDIR /app/packages/eval
 RUN uv sync --no-dev
 
 COPY packages/eval /app/packages/eval
 RUN uv sync --no-dev
+
+COPY docker/mock_server.py /app/docker/mock_server.py
 
 RUN uv run mirage-eval seed --scenario onboarding_it
 RUN uv run mirage-eval seed --scenario meridian_labs

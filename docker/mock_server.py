@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "packages" / "eval"))
 
 from scenarios.meridian_labs.seed import (CHANNEL_MESSAGES, CHANNELS, USERS,
                                           _slack_msg)

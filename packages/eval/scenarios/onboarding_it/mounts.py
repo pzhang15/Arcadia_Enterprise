@@ -21,7 +21,7 @@ def build_l1_workspace(
     Args:
         disk_root (str | Path | None): Filesystem root containing the seeded
             slack/sheets/gdocs/tickets subtrees. Defaults to
-            ``enterprise/scenarios/onboarding_it/fixture/disk/``.
+            ``packages/eval/scenarios/onboarding_it/fixture/disk/``.
         agent_id (str): Agent identifier for session isolation.
         session_id (str): Session identifier; used in
             ``/.sessions/<date>/<session_id>.jsonl``.

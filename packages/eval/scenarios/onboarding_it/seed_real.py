@@ -124,10 +124,10 @@ def push_google(disk_root: Path, mapping: dict) -> dict:
 
     NOTE: Real Google Sheets / Docs API push requires the official
     google-api-python-client + google-auth packages. Those are NOT in
-    enterprise/pyproject.toml because L1 doesn't need them. To enable
+    packages/eval/pyproject.toml because L1 doesn't need them. To enable
     L2 Google push, install with:
 
-        cd enterprise && uv add google-api-python-client google-auth-oauthlib
+        cd packages/eval && uv add google-api-python-client google-auth-oauthlib
 
     Then this function will lazy-import and use them. Without those
     packages, this is a no-op (a warning is printed).
@@ -146,7 +146,7 @@ def push_google(disk_root: Path, mapping: dict) -> dict:
         from googleapiclient.discovery import build
     except ImportError:
         print("google-api-python-client not installed; skipping Google push. "
-              "Run: cd enterprise && uv add google-api-python-client "
+              "Run: cd packages/eval && uv add google-api-python-client "
               "google-auth-oauthlib")
         return mapping
     creds = Credentials(
