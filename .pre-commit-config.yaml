@@ -1,5 +1,4 @@
 ci:
-  # https://pre-commit.ci/#configuration
   autofix_prs: true
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit suggestions'
   autoupdate_schedule: monthly
@@ -12,14 +11,14 @@ repos:
         name: No commits to master
       - id: end-of-file-fixer
         name: End-of-file fixer
-        exclude: ^typescript/
+        exclude: ^vendor/mirage/typescript/
       - name: mixed-line-ending
         id: mixed-line-ending
         args: [--fix, lf]
-        exclude: ^typescript/
+        exclude: ^vendor/mirage/typescript/
       - id: trailing-whitespace
         name: Remove trailing whitespaces
-        exclude: ^typescript/
+        exclude: ^vendor/mirage/typescript/
       - id: check-toml
         name: Check toml
       - id: check-yaml
@@ -28,7 +27,7 @@ repos:
           (?x)^(
               conda/pytorch-geometric/meta.yaml|
               conda/pyg/meta.yaml|
-              typescript/.*
+              vendor/mirage/typescript/.*
           )$
 
   - repo: https://github.com/adrienverge/yamllint.git
@@ -37,7 +36,7 @@ repos:
       - id: yamllint
         name: Lint yaml
         args: [-d, '{extends: default, rules: {line-length: disable, document-start: disable, truthy: {level: error}, braces: {max-spaces-inside: 1}}}']
-        exclude: ^typescript/
+        exclude: ^vendor/mirage/typescript/
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.0
@@ -77,7 +76,7 @@ repos:
     hooks:
       - id: flake8
         name: Check PEP8
-        args: [--toml-config=python/pyproject.toml]
+        args: [--toml-config=vendor/mirage/python/pyproject.toml]
         additional_dependencies: [Flake8-pyproject]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -99,7 +98,7 @@ repos:
         exclude: |
           (?x)^(
               test/data/cursor\.md|
-              typescript/.*
+              vendor/mirage/typescript/.*
           )$
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
@@ -112,13 +111,13 @@ repos:
     hooks:
       - id: ts-prettier
         name: Prettier (typescript)
-        entry: typescript/scripts/precommit-run.sh prettier --write
+        entry: vendor/mirage/typescript/scripts/precommit-run.sh prettier --write
         language: system
-        files: ^typescript/.*\.(ts|tsx|js|mjs|cjs|json|md|yaml|yml)$
+        files: ^vendor/mirage/typescript/.*\.(ts|tsx|js|mjs|cjs|json|md|yaml|yml)$
         pass_filenames: true
       - id: ts-eslint
         name: ESLint (typescript)
-        entry: typescript/scripts/precommit-run.sh eslint --fix
+        entry: vendor/mirage/typescript/scripts/precommit-run.sh eslint --fix
         language: system
-        files: ^typescript/.*\.(ts|tsx|js|mjs|cjs)$
+        files: ^vendor/mirage/typescript/.*\.(ts|tsx|js|mjs|cjs)$
         pass_filenames: true

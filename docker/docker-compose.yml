@@ -1,14 +1,14 @@
 services:
   observability:
     build:
-      context: ../app
+      context: ../frontends/observability
       dockerfile: Dockerfile
     ports:
       - "8082:8082"
     environment:
       - RESULTS_DIR=/app/results
     volumes:
-      - ../../enterprise/results:/app/results:ro
+      - ../packages/eval/results:/app/results:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8082/api/health"]
       interval: 5s
@@ -17,8 +17,8 @@ services:
 
   mock-services:
     build:
-      context: ../..
-      dockerfile: enterprise/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     command: uv run python docker/mock_server.py
     ports:
       - "3000:3000"
@@ -35,8 +35,8 @@ services:
 
   mirage-api:
     build:
-      context: ../..
-      dockerfile: enterprise/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     command: >
       uv run python -m uvicorn mirage.server.app:build_app
       --factory --host 0.0.0.0 --port 8080
@@ -50,8 +50,8 @@ services:
 
   mirage-mcp:
     build:
-      context: ../..
-      dockerfile: enterprise/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     command: >
       uv run mirage-mcp
       --scenario meridian_labs
@@ -68,14 +68,14 @@ services:
 
   portal:
     build:
-      context: ../portal
+      context: ../frontends/portal
       dockerfile: Dockerfile
     ports:
       - "8083:8083"
     environment:
       - SCENARIO_ROOT=/app/fixture
     volumes:
-      - ../scenarios/acme_corp/fixture/disk:/app/fixture:ro
+      - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8083/api/health"]
       interval: 5s
@@ -84,7 +84,7 @@ services:
 
   console:
     build:
-      context: ../console
+      context: ../frontends/console
       dockerfile: Dockerfile
     ports:
       - "8084:8084"
@@ -95,7 +95,7 @@ services:
       - RELAY_URL=http://observability:8082
       - SCENARIO_ROOT=/app/fixture
     volumes:
-      - ../scenarios/acme_corp/fixture/disk:/app/fixture:ro
+      - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8084/api/health"]
       interval: 5s

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from mirage_eval.report.aggregate import AggregateReport
-from mirage_eval.scenario import ENTERPRISE_ROOT
+from mirage_eval.scenario import ENTERPRISE_ROOT, REPO_ROOT
 
 
 def _workspace_slug(repo_root: Path) -> str:
@@ -20,7 +20,7 @@ def resolve_canvas_dir(fallback_in_repo: Path | None = None) -> Path:
             the managed dir cannot be located. The IDE will not pick up
             canvases from this path, but it's useful for CI / inspection.
     """
-    repo_root = ENTERPRISE_ROOT.parent
+    repo_root = REPO_ROOT
     slug = _workspace_slug(repo_root)
     managed = (Path(os.path.expanduser("~"))
                / ".cursor" / "projects" / slug / "canvases")

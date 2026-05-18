@@ -6,7 +6,7 @@ import time
 import httpx
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from mirage_eval.scenario import ENTERPRISE_ROOT, ScenarioManifest
+from mirage_eval.scenario import ENTERPRISE_ROOT, REPO_ROOT, ScenarioManifest
 
 logger = logging.getLogger(__name__)
 
@@ -132,8 +132,8 @@ def serve(scenario: str,
         host (str): Bind address for HTTP transports (default 127.0.0.1,
             use 0.0.0.0 for Docker).
     """
-    load_dotenv(ENTERPRISE_ROOT / ".env")
-    load_dotenv(ENTERPRISE_ROOT.parent / ".env.development")
+    load_dotenv(REPO_ROOT / ".env")
+    load_dotenv(REPO_ROOT / ".env.development")
     _build_workspace(scenario, surface)
     if transport != "stdio":
         _mcp.settings.host = host

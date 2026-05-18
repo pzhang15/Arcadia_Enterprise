@@ -14,7 +14,7 @@ from mirage_eval.report.markdown import write_markdown_summary
 from mirage_eval.runner.common import RunArtifacts
 from mirage_eval.runner.l1_synthetic import run_l1
 from mirage_eval.runner.l2_real import run_l2
-from mirage_eval.scenario import ENTERPRISE_ROOT, ScenarioManifest
+from mirage_eval.scenario import ENTERPRISE_ROOT, REPO_ROOT, ScenarioManifest
 from mirage_eval.scorers.composite import ScoreCard, score_run
 from rich.console import Console
 from rich.table import Table
@@ -24,8 +24,8 @@ console = Console()
 
 
 def _load_env() -> None:
-    load_dotenv(ENTERPRISE_ROOT / ".env")
-    load_dotenv(ENTERPRISE_ROOT.parent / ".env.development")
+    load_dotenv(REPO_ROOT / ".env")
+    load_dotenv(REPO_ROOT / ".env.development")
 
 
 def _new_sweep_id() -> str:

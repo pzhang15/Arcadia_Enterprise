@@ -6,14 +6,16 @@ RUN pip install uv
 
 WORKDIR /app
 
-COPY python/pyproject.toml python/uv.lock /app/python/
-COPY python/mirage /app/python/mirage
+COPY vendor/mirage/python/pyproject.toml vendor/mirage/python/uv.lock /app/vendor/mirage/python/
+COPY vendor/mirage/python/mirage /app/vendor/mirage/python/mirage
 
-COPY enterprise/pyproject.toml enterprise/uv.lock /app/enterprise/
-WORKDIR /app/enterprise
+COPY pyproject.toml /app/
+COPY packages/eval/pyproject.toml packages/eval/uv.lock /app/packages/eval/
+
+WORKDIR /app/packages/eval
 RUN uv sync --no-dev
 
-COPY enterprise /app/enterprise
+COPY packages/eval /app/packages/eval
 RUN uv sync --no-dev
 
 RUN uv run mirage-eval seed --scenario onboarding_it

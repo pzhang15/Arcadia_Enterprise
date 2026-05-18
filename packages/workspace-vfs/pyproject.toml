@@ -1,0 +1,35 @@
+[project]
+name = "arcadia-workspace-vfs"
+version = "0.1.0"
+description = "Virtual filesystem extensions: dot-file metadata convention, query.json handler, and output auto-registration."
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [
+    { name = "Pat Zhang" },
+]
+
+dependencies = [
+    "mirage-ai",
+    "arcadia-policy-engine",
+    "arcadia-lineage",
+    "pydantic>=2.9.0",
+    "orjson>=3.11",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["workspace_vfs*"]
+
+[tool.uv.sources]
+mirage-ai = { path = "../../vendor/mirage/python", editable = true }
+arcadia-policy-engine = { workspace = true }
+arcadia-lineage = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+]

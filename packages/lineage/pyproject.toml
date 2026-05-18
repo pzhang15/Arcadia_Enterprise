@@ -1,0 +1,27 @@
+[project]
+name = "arcadia-lineage"
+version = "0.1.0"
+description = "Lineage emitter that captures every VFS data access operation and publishes OpenLineage-compatible events."
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [
+    { name = "Pat Zhang" },
+]
+
+dependencies = [
+    "pydantic>=2.9.0",
+    "orjson>=3.11",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["lineage_emitter*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+]

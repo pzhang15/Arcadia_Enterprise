@@ -7,8 +7,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from mirage_eval.config import TaskConfig
 
-# enterprise/ root is two levels up from this file.
-ENTERPRISE_ROOT = Path(__file__).resolve().parent.parent
+EVAL_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = EVAL_ROOT.parent.parent
+ENTERPRISE_ROOT = EVAL_ROOT
 
 
 class MountsBlock(BaseModel):

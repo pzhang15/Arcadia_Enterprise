@@ -1,0 +1,16 @@
+[project]
+name = "arcadia"
+version = "0.1.0"
+description = "The governed data access layer for autonomous agents."
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+mirage-ai = { path = "vendor/mirage/python", editable = true }
+
+[tool.pytest.ini_options]
+testpaths = ["packages/eval/tests", "packages/eval/scenarios"]
+addopts = "-q --import-mode=importlib"
+asyncio_mode = "auto"

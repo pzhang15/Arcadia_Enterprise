@@ -1,8 +1,8 @@
-# Mirage Enterprise — Governed AI Workspaces for Heterogeneous Enterprise Environments
+# Arcadia Eval — Governed AI Workspaces for Heterogeneous Enterprise Environments
 
-Enterprise work is inherently heterogeneous. A single task — investigating a production incident, onboarding a new hire, triaging a support queue — spans five or more services that were never designed to talk to each other: Slack threads, Jira tickets, GitHub deployments, PagerDuty alerts, Datadog dashboards, Google Sheets, internal docs. Humans hold the context together in their heads. AI agents can do it faster, but only if they can access all of these services through a single, governed interface.
+This is the `packages/eval` component of the [Arcadia](../../README.md) platform.
 
-**Mirage Enterprise** is the evaluation and testing harness for that interface. It simulates realistic enterprise environments where AI agents navigate cross-domain data under workspace-level governance — the same filesystem abstraction, the same observation pipeline, and the same scoring framework that would run in production, but backed by synthetic seed data so you can iterate without credentials, without cost, and without risk.
+It simulates realistic enterprise environments where AI agents navigate cross-domain data under workspace-level governance — the same filesystem abstraction, the same observation pipeline, and the same scoring framework that would run in production, but backed by synthetic seed data so you can iterate without credentials, without cost, and without risk.
 
 What you get:
 
@@ -18,12 +18,12 @@ What you get:
 ## 1. Install
 
 ```bash
-cd enterprise
+# From the repo root
 uv sync
 cp .env.example .env
 ```
 
-Edit `.env` and set your LLM API key. OpenAI or any OpenAI-compatible provider works:
+Edit `.env` (at the repo root) and set your LLM API key. OpenAI or any OpenAI-compatible provider works:
 
 ```bash
 # OpenAI
@@ -49,7 +49,7 @@ uv run mirage-eval seed --scenario meridian_labs
 Runs all services — mock backends, Mirage daemon, MCP server, portal, console, and observability — in one command.
 
 ```bash
-cd docker
+cd docker  # from repo root
 docker compose up --build
 ```
 
@@ -76,14 +76,14 @@ curl http://localhost:8084/api/health
 With `.env` configured:
 
 ```bash
-cd enterprise
+cd packages/eval
 uv sync                       # must run after pulling new changes
 
 # Against Docker MCP server (HTTP, port 8081 — Docker must be running)
-uv run python ../examples/python/mcp/mcp_agent_demo.py --mode docker
+uv run python ../../vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode docker
 
 # Against local MCP server (stdio, no Docker needed)
-uv run python ../examples/python/mcp/mcp_agent_demo.py --mode local
+uv run python ../../vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode local
 ```
 
 The agent connects via MCP, discovers the `execute` tool, and uses shell commands (`ls`, `cat`, `jq`, `grep`) to investigate the Meridian Labs incident across all 5 services.
@@ -97,7 +97,7 @@ Add to your MCP config:
   "mcpServers": {
     "mirage": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/enterprise", "mirage-mcp", "--scenario", "meridian_labs"]
+      "args": ["run", "--directory", "/path/to/arcadia/packages/eval", "mirage-mcp", "--scenario", "meridian_labs"]
     }
   }
 }
@@ -165,8 +165,8 @@ Real-time observability dashboard for agent sessions. Shows every command the ag
 Open http://localhost:8082 (Docker) or run in dev mode:
 
 ```bash
-cd enterprise/app && pip install fastapi uvicorn httpx && python server.py
-cd enterprise/app && npm install && npm run dev   # http://localhost:5173
+cd frontends/observability && pip install fastapi uvicorn httpx && python server.py
+cd frontends/observability && npm install && npm run dev   # http://localhost:5173
 ```
 
 ### Enterprise Portal
@@ -185,8 +185,8 @@ Simulates the enterprise tools employees use daily — ServiceNow, Workday, Zend
 Open http://localhost:8083 (Docker) or run in dev mode:
 
 ```bash
-cd enterprise/portal && pip install fastapi uvicorn httpx && python server.py
-cd enterprise/portal && npm install && npm run dev   # http://localhost:5174
+cd frontends/portal && pip install fastapi uvicorn httpx && python server.py
+cd frontends/portal && npm install && npm run dev   # http://localhost:5174
 ```
 
 ### Agent Console
@@ -201,6 +201,6 @@ The interactive AI agent workspace. Users select which department services to co
 Open http://localhost:8084 (Docker) or run in dev mode:
 
 ```bash
-cd enterprise/console && pip install fastapi uvicorn httpx && python server.py
-cd enterprise/console && npm install && npm run dev   # http://localhost:5175
+cd frontends/console && pip install fastapi uvicorn httpx && python server.py
+cd frontends/console && npm install && npm run dev   # http://localhost:5175
 ```
