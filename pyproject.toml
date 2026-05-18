@@ -3,12 +3,26 @@ name = "arcadia"
 version = "0.1.0"
 description = "The governed data access layer for autonomous agents."
 requires-python = ">=3.12"
+dependencies = [
+    "arcadia-eval",
+    "arcadia-catalog-proxy",
+    "arcadia-credential-broker",
+    "arcadia-lineage",
+    "arcadia-policy-engine",
+    "arcadia-workspace-vfs",
+]
 
 [tool.uv.workspace]
 members = ["packages/*"]
 
 [tool.uv.sources]
 mirage-ai = { path = "vendor/mirage/python", editable = true }
+arcadia-eval = { workspace = true }
+arcadia-catalog-proxy = { workspace = true }
+arcadia-credential-broker = { workspace = true }
+arcadia-lineage = { workspace = true }
+arcadia-policy-engine = { workspace = true }
+arcadia-workspace-vfs = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["packages/eval/tests", "packages/eval/scenarios"]
