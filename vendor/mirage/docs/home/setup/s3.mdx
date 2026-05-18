@@ -1,0 +1,59 @@
+---
+title: S3
+icon: aws
+description: Set up AWS S3 credentials for the S3 resource.
+---
+
+## Credentials
+
+The S3 resource needs an AWS access key pair with read (and optionally write) access to your bucket.
+
+### 1. Create an IAM User
+
+1. Go to https://console.aws.amazon.com/iam/
+1. **Users** -> **Create user**
+1. Attach the `AmazonS3ReadOnlyAccess` policy (or `AmazonS3FullAccess` for write)
+1. **Security credentials** -> **Create access key** -> **Application running outside AWS**
+1. Copy the **Access key ID** and **Secret access key**
+
+### 2. Set Environment Variables
+
+```bash
+# .env.development
+AWS_S3_BUCKET=my-bucket
+AWS_DEFAULT_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=wJal...
+```
+
+### Alternative: AWS Profile
+
+If you have `~/.aws/credentials` configured, you can use a profile name instead of explicit access keys.
+
+For the Python resource API, see the [S3 resource doc](/python/resource/s3).
+
+## Scoping a resource to a key prefix
+
+Both runtimes support a key prefix option that transparently scopes every operation to a subpath of the bucket, so agents see clean paths while the underlying S3 keys carry the full prefix.
+
+<CodeGroup>
+
+```ts TypeScript
+const s3 = new S3Resource({
+  bucket: 'app-data',
+  region: 'eu-west-1',
+  keyPrefix: `users/${userId}/`,
+})
+```
+
+```python Python
+S3Resource(S3Config(
+    bucket="app-data",
+    region="eu-west-1",
+    key_prefix=f"users/{user_id}/",
+))
+```
+
+</CodeGroup>
+
+Leading slashes are stripped and a trailing slash is added automatically. `None` / `undefined` and empty strings both mean "no prefix." For browser security considerations, see the [TypeScript S3 setup doc](/typescript/setup/s3).
