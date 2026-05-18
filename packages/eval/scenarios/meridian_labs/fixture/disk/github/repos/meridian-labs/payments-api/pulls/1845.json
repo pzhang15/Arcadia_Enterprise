@@ -1,0 +1,20 @@
+{
+  "number": 1845,
+  "title": "add SEPA instant credit transfer support",
+  "user": {
+    "login": "frank.osei"
+  },
+  "state": "open",
+  "head": {
+    "ref": "frank/sepa-instant"
+  },
+  "base": {
+    "ref": "main"
+  },
+  "body": "Implements SEPA Instant Credit Transfer.\n\nRef: PAY-892",
+  "labels": [
+    "payments-api",
+    "feature",
+    "sepa"
+  ]
+}

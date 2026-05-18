@@ -1,0 +1,39 @@
+{
+  "expense_id": "EXP-0991",
+  "submitter": {
+    "id": "U212",
+    "name": "Bob Martinez",
+    "email": "bob.martinez@acme.com"
+  },
+  "department": "Engineering/SRE",
+  "amount": 2100.0,
+  "currency": "USD",
+  "category": "travel",
+  "description": "SREcon 2026 attendance (Portland)",
+  "receipt_url": "/finance/receipts/EXP-0991_receipt.pdf",
+  "submitted_at": "2026-04-28T09:00:00Z",
+  "status": "approved",
+  "approver": {
+    "id": "U218",
+    "name": "Patricia Chen",
+    "email": "patricia.chen@acme.com"
+  },
+  "line_items": [
+    {
+      "description": "Conference registration",
+      "amount": 800.0
+    },
+    {
+      "description": "Flight",
+      "amount": 380.0
+    },
+    {
+      "description": "Hotel (3 nights)",
+      "amount": 750.0
+    },
+    {
+      "description": "Meals",
+      "amount": 170.0
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "P001",
+  "name": "platform-api",
+  "description": "Core platform API service",
+  "status": "critical",
+  "escalation_policy": {
+    "id": "EP001",
+    "name": "Platform On-Call"
+  }
+}

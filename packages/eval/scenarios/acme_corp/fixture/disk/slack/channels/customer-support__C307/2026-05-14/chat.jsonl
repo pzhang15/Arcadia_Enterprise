@@ -1,0 +1,2 @@
+{"type": "message", "user": "U209", "text": "Escalation: GlobalTech (ACCT-1001, enterprise tier) reporting intermittent login failures for their SSO-integrated users. CS-1001 filed as P2. @emily please check account health.", "ts": "1715676000.000100", "team": "T_ACME"}
+{"type": "message", "user": "U211", "text": "GlobalTech health score dropped to 45 (was 72 last month). Renewal is in 3 months. Creating escalation ESC-1001. This needs eng attention.", "ts": "1715679600.000100", "team": "T_ACME"}

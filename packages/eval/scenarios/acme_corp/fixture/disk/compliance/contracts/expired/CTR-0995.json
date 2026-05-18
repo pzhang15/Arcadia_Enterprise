@@ -1,0 +1,15 @@
+{
+  "contract_id": "CTR-0995",
+  "counterparty": "OldVendor LLC",
+  "type": "SOW",
+  "value": 15000.0,
+  "start_date": "2025-06-01",
+  "end_date": "2026-03-31",
+  "status": "expired",
+  "owner": {
+    "id": "U216",
+    "name": "Michael Torres",
+    "email": "michael.torres@acme.com"
+  },
+  "review_notes": "Did not renew. Migrated to DataFlow Systems."
+}

@@ -1,0 +1,9 @@
+{
+  "invoice_id": "INV-3005",
+  "vendor": "SecureSign Corp",
+  "amount": 1000.0,
+  "due_date": "2026-05-31",
+  "po_reference": "PO-0993",
+  "status": "pending",
+  "department": "Customer Support"
+}

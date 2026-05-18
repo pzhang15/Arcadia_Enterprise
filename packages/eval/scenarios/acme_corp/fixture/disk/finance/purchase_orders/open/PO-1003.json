@@ -1,0 +1,21 @@
+{
+  "po_id": "PO-1003",
+  "requester": {
+    "id": "U212",
+    "name": "Bob Martinez",
+    "email": "bob.martinez@acme.com"
+  },
+  "vendor": "CloudRack Inc.",
+  "items": [
+    {
+      "description": "Database server (32-core, 128GB)",
+      "qty": 3,
+      "unit_price": 15000.0
+    }
+  ],
+  "total": 45000.0,
+  "status": "open",
+  "created_at": "2026-05-14T08:00:00Z",
+  "approved_by": null,
+  "department": "Engineering/SRE"
+}

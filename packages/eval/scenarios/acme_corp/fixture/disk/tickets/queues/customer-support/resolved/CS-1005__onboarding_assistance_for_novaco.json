@@ -1,0 +1,32 @@
+{
+  "ticket_id": "CS-1005",
+  "subject": "Onboarding assistance for NovaCorp",
+  "body": "NovaCorp (ACCT-1004, starter tier) needed help with initial API integration setup. Walked them through auth flow and webhook configuration. All endpoints verified working.",
+  "requester": {
+    "id": "external",
+    "name": "NovaCorp Dev",
+    "email": "dev@novacorp.io"
+  },
+  "assignee": {
+    "id": "U210",
+    "name": "Carlos Ruiz",
+    "email": "carlos.ruiz@acme.com"
+  },
+  "queue": "customer-support",
+  "status": "resolved",
+  "priority": "P3",
+  "created_at": "2026-05-10T14:00:00Z",
+  "updated_at": "2026-05-12T10:00:00Z",
+  "tags": [
+    "onboarding",
+    "starter"
+  ],
+  "related_tickets": [],
+  "comments": [
+    {
+      "author": "U210",
+      "ts": "2026-05-12T10:00:00Z",
+      "body": "Integration complete. NovaCorp confirmed all endpoints are working. Closing."
+    }
+  ]
+}

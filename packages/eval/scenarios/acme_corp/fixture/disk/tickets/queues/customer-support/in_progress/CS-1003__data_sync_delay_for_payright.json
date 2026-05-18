@@ -1,0 +1,33 @@
+{
+  "ticket_id": "CS-1003",
+  "subject": "Data sync delay for PayRight",
+  "body": "PayRight (ACCT-1002, pro tier) reporting webhook delivery delays of up to 15 minutes. Their integration depends on near-realtime event delivery. Investigating webhook queue health.",
+  "requester": {
+    "id": "external",
+    "name": "PayRight Engineering",
+    "email": "eng@payright.io"
+  },
+  "assignee": {
+    "id": "U210",
+    "name": "Carlos Ruiz",
+    "email": "carlos.ruiz@acme.com"
+  },
+  "queue": "customer-support",
+  "status": "in_progress",
+  "priority": "P2",
+  "created_at": "2026-05-14T11:00:00Z",
+  "updated_at": "2026-05-15T09:00:00Z",
+  "tags": [
+    "webhook",
+    "data-sync",
+    "pro"
+  ],
+  "related_tickets": [],
+  "comments": [
+    {
+      "author": "U210",
+      "ts": "2026-05-15T09:00:00Z",
+      "body": "Isolated to PayRight's webhook endpoint. Their endpoint is responding slowly (avg 8s). Working with their eng team on a fix."
+    }
+  ]
+}

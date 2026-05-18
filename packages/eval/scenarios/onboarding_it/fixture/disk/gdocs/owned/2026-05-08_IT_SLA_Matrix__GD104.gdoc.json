@@ -1,0 +1,207 @@
+{
+  "documentId": "GD104",
+  "title": "IT SLA Matrix",
+  "body": {
+    "content": [
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "# ACME IT SLA Matrix\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "Last updated: 2026-05-08. Owner: Sam Chen.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "## Severity definitions\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P1: full org outage, security incident, or VIP blocker. Page IT Lead immediately.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P2: single user fully blocked from work (e.g. SSO inaccessible, no laptop), or team partial outage.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P3: single user partially blocked (e.g. one app access pending). New-hire access requests default to P3 unless laptop is missing.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P4: requests, preferences, cosmetic.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "## Response and resolution targets\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P1: response 15min, resolution 2h.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P2: response 2h, resolution 8h.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P3: response 8h, resolution 48h.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- P4: response 48h, resolution 1wk.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "## Escalation\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- Any P3 open >48h: auto-escalate to IT Lead via comment on the ticket.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- Any new-hire ticket open >24h on Day 1: notify HR partner.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      }
+    ]
+  },
+  "documentStyle": {},
+  "namedStyles": {},
+  "revisionId": "rev-1",
+  "suggestionsViewMode": "DEFAULT_FOR_CURRENT_ACCESS"
+}

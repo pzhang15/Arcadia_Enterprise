@@ -1,0 +1,31 @@
+{
+  "ticket_id": "INC-0998",
+  "subject": "VPN client crash for Bob Lee",
+  "body": "VPN client kept crashing on connect. Resolved by reinstalling client and clearing local profile.",
+  "requester": {
+    "id": "U107",
+    "name": "Bob Lee",
+    "email": "bob.lee@acme.com"
+  },
+  "assignee": {
+    "id": "U104",
+    "name": "Priya Patel",
+    "email": "priya.patel@acme.com"
+  },
+  "queue": "it-helpdesk",
+  "status": "resolved",
+  "priority": "P3",
+  "created_at": "2026-04-15T10:00:00Z",
+  "updated_at": "2026-04-15T16:30:00Z",
+  "tags": [
+    "vpn"
+  ],
+  "related_tickets": [],
+  "comments": [
+    {
+      "author": "U104",
+      "ts": "2026-04-15T16:30:00Z",
+      "body": "Reinstalled. Verified working."
+    }
+  ]
+}

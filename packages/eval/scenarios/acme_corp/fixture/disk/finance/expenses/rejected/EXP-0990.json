@@ -1,0 +1,27 @@
+{
+  "expense_id": "EXP-0990",
+  "submitter": {
+    "id": "U203",
+    "name": "Derek Wong",
+    "email": "derek.wong@acme.com"
+  },
+  "department": "IT",
+  "amount": 12000.0,
+  "currency": "USD",
+  "category": "software",
+  "description": "CrowdStrike Falcon annual license (unapproved vendor)",
+  "receipt_url": "/finance/receipts/EXP-0990_receipt.pdf",
+  "submitted_at": "2026-04-25T14:00:00Z",
+  "status": "rejected",
+  "approver": {
+    "id": "U206",
+    "name": "Rachel Nguyen",
+    "email": "rachel.nguyen@acme.com"
+  },
+  "line_items": [
+    {
+      "description": "CrowdStrike Falcon Go (annual)",
+      "amount": 12000.0
+    }
+  ]
+}

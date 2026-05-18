@@ -1,0 +1,469 @@
+{
+  "spreadsheetId": "SH105",
+  "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/SH105",
+  "properties": {
+    "title": "Department Budget",
+    "locale": "en_US",
+    "timeZone": "America/Los_Angeles"
+  },
+  "sheets": [
+    {
+      "properties": {
+        "sheetId": 0,
+        "title": "Q2 2026",
+        "index": 0,
+        "gridProperties": {
+          "rowCount": 100,
+          "columnCount": 26
+        }
+      },
+      "data": [
+        {
+          "rowData": [
+            {
+              "values": [
+                {
+                  "formattedValue": "Department",
+                  "userEnteredValue": {
+                    "stringValue": "Department"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Department"
+                  }
+                },
+                {
+                  "formattedValue": "Q2 Budget",
+                  "userEnteredValue": {
+                    "stringValue": "Q2 Budget"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Q2 Budget"
+                  }
+                },
+                {
+                  "formattedValue": "Q2 Spent",
+                  "userEnteredValue": {
+                    "stringValue": "Q2 Spent"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Q2 Spent"
+                  }
+                },
+                {
+                  "formattedValue": "Q2 Remaining",
+                  "userEnteredValue": {
+                    "stringValue": "Q2 Remaining"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Q2 Remaining"
+                  }
+                },
+                {
+                  "formattedValue": "Status",
+                  "userEnteredValue": {
+                    "stringValue": "Status"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Status"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Platform Engineering",
+                  "userEnteredValue": {
+                    "stringValue": "Platform Engineering"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Platform Engineering"
+                  }
+                },
+                {
+                  "formattedValue": "$420,000",
+                  "userEnteredValue": {
+                    "stringValue": "$420,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$420,000"
+                  }
+                },
+                {
+                  "formattedValue": "$327,600",
+                  "userEnteredValue": {
+                    "stringValue": "$327,600"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$327,600"
+                  }
+                },
+                {
+                  "formattedValue": "$92,400",
+                  "userEnteredValue": {
+                    "stringValue": "$92,400"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$92,400"
+                  }
+                },
+                {
+                  "formattedValue": "on_track",
+                  "userEnteredValue": {
+                    "stringValue": "on_track"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "on_track"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "IT",
+                  "userEnteredValue": {
+                    "stringValue": "IT"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "IT"
+                  }
+                },
+                {
+                  "formattedValue": "$180,000",
+                  "userEnteredValue": {
+                    "stringValue": "$180,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$180,000"
+                  }
+                },
+                {
+                  "formattedValue": "$142,200",
+                  "userEnteredValue": {
+                    "stringValue": "$142,200"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$142,200"
+                  }
+                },
+                {
+                  "formattedValue": "$37,800",
+                  "userEnteredValue": {
+                    "stringValue": "$37,800"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$37,800"
+                  }
+                },
+                {
+                  "formattedValue": "on_track",
+                  "userEnteredValue": {
+                    "stringValue": "on_track"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "on_track"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "People/HR",
+                  "userEnteredValue": {
+                    "stringValue": "People/HR"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "People/HR"
+                  }
+                },
+                {
+                  "formattedValue": "$95,000",
+                  "userEnteredValue": {
+                    "stringValue": "$95,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$95,000"
+                  }
+                },
+                {
+                  "formattedValue": "$68,400",
+                  "userEnteredValue": {
+                    "stringValue": "$68,400"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$68,400"
+                  }
+                },
+                {
+                  "formattedValue": "$26,600",
+                  "userEnteredValue": {
+                    "stringValue": "$26,600"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$26,600"
+                  }
+                },
+                {
+                  "formattedValue": "on_track",
+                  "userEnteredValue": {
+                    "stringValue": "on_track"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "on_track"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Finance",
+                  "userEnteredValue": {
+                    "stringValue": "Finance"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Finance"
+                  }
+                },
+                {
+                  "formattedValue": "$65,000",
+                  "userEnteredValue": {
+                    "stringValue": "$65,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$65,000"
+                  }
+                },
+                {
+                  "formattedValue": "$41,300",
+                  "userEnteredValue": {
+                    "stringValue": "$41,300"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$41,300"
+                  }
+                },
+                {
+                  "formattedValue": "$23,700",
+                  "userEnteredValue": {
+                    "stringValue": "$23,700"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$23,700"
+                  }
+                },
+                {
+                  "formattedValue": "on_track",
+                  "userEnteredValue": {
+                    "stringValue": "on_track"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "on_track"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Customer Support",
+                  "userEnteredValue": {
+                    "stringValue": "Customer Support"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Customer Support"
+                  }
+                },
+                {
+                  "formattedValue": "$210,000",
+                  "userEnteredValue": {
+                    "stringValue": "$210,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$210,000"
+                  }
+                },
+                {
+                  "formattedValue": "$178,500",
+                  "userEnteredValue": {
+                    "stringValue": "$178,500"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$178,500"
+                  }
+                },
+                {
+                  "formattedValue": "$31,500",
+                  "userEnteredValue": {
+                    "stringValue": "$31,500"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$31,500"
+                  }
+                },
+                {
+                  "formattedValue": "at_risk",
+                  "userEnteredValue": {
+                    "stringValue": "at_risk"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "at_risk"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Engineering/SRE",
+                  "userEnteredValue": {
+                    "stringValue": "Engineering/SRE"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Engineering/SRE"
+                  }
+                },
+                {
+                  "formattedValue": "$350,000",
+                  "userEnteredValue": {
+                    "stringValue": "$350,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$350,000"
+                  }
+                },
+                {
+                  "formattedValue": "$298,200",
+                  "userEnteredValue": {
+                    "stringValue": "$298,200"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$298,200"
+                  }
+                },
+                {
+                  "formattedValue": "$51,800",
+                  "userEnteredValue": {
+                    "stringValue": "$51,800"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$51,800"
+                  }
+                },
+                {
+                  "formattedValue": "on_track",
+                  "userEnteredValue": {
+                    "stringValue": "on_track"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "on_track"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Legal/Compliance",
+                  "userEnteredValue": {
+                    "stringValue": "Legal/Compliance"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Legal/Compliance"
+                  }
+                },
+                {
+                  "formattedValue": "$120,000",
+                  "userEnteredValue": {
+                    "stringValue": "$120,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$120,000"
+                  }
+                },
+                {
+                  "formattedValue": "$108,600",
+                  "userEnteredValue": {
+                    "stringValue": "$108,600"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$108,600"
+                  }
+                },
+                {
+                  "formattedValue": "$11,400",
+                  "userEnteredValue": {
+                    "stringValue": "$11,400"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$11,400"
+                  }
+                },
+                {
+                  "formattedValue": "over_budget",
+                  "userEnteredValue": {
+                    "stringValue": "over_budget"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "over_budget"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Executive",
+                  "userEnteredValue": {
+                    "stringValue": "Executive"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Executive"
+                  }
+                },
+                {
+                  "formattedValue": "$75,000",
+                  "userEnteredValue": {
+                    "stringValue": "$75,000"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$75,000"
+                  }
+                },
+                {
+                  "formattedValue": "$52,100",
+                  "userEnteredValue": {
+                    "stringValue": "$52,100"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$52,100"
+                  }
+                },
+                {
+                  "formattedValue": "$22,900",
+                  "userEnteredValue": {
+                    "stringValue": "$22,900"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "$22,900"
+                  }
+                },
+                {
+                  "formattedValue": "on_track",
+                  "userEnteredValue": {
+                    "stringValue": "on_track"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "on_track"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

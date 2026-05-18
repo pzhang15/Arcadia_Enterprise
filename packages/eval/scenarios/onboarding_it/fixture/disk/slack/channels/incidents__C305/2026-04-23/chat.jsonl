@@ -1,0 +1,1 @@
+{"type": "message", "user": "U103", "text": "postmortem for the 2026-04-22 outage is up in /gdocs/owned/. TL;DR: okta IdP cert rotation misconfigured; affected ~40min of morning auth + 2 new-hire onboardings.", "ts": "1714086400.000100", "team": "T_ACME"}

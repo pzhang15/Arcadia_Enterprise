@@ -1,0 +1,22 @@
+{
+  "number": 1847,
+  "title": "optimize connection pool settings",
+  "user": {
+    "login": "frank.osei"
+  },
+  "state": "closed",
+  "merged": true,
+  "merged_at": "2026-05-15T13:50:00Z",
+  "head": {
+    "ref": "frank/optimize-pool",
+    "sha": "f3a1b2c8"
+  },
+  "base": {
+    "ref": "main"
+  },
+  "body": "Reduces connection pool to lower memory per pod. Benchmarked locally with 10 concurrent connections.\n\nRef: PAY-895",
+  "labels": [
+    "payments-api",
+    "performance"
+  ]
+}

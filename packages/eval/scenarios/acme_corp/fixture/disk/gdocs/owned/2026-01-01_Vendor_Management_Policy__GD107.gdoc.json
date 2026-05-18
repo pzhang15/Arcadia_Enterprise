@@ -1,0 +1,220 @@
+{
+  "documentId": "GD107",
+  "title": "Vendor Management Policy",
+  "body": {
+    "content": [
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "# ACME Corp Vendor Management Policy\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "Owner: Rachel Nguyen (Finance Director). Effective: 2026-01-01.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "## Procurement process\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- All vendor engagements over $10,000 require a purchase order.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- POs must reference an approved budget line item.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- Vendor security assessment required for any vendor handling customer data (coordinate with compliance team).\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "## Approved vendors\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- CloudRack Inc. (infrastructure/hosting)\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- DataFlow Systems (data pipeline tooling)\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- SecureSign Corp (e-signature platform)\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- NetGuard Solutions (network security)\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "## New vendor onboarding\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- Submit vendor request via finance channel.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- Legal reviews contract terms (NDA required first).\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- Compliance reviews data handling practices.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      },
+      {
+        "paragraph": {
+          "elements": [
+            {
+              "textRun": {
+                "content": "- Finance issues PO upon all approvals.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {}
+        }
+      }
+    ]
+  },
+  "documentStyle": {},
+  "namedStyles": {},
+  "revisionId": "rev-1",
+  "suggestionsViewMode": "DEFAULT_FOR_CURRENT_ACCESS"
+}

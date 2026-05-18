@@ -1,0 +1,26 @@
+{
+  "ticket_id": "INC-1006",
+  "subject": "Slack workspace access for Alex Rivera",
+  "body": "Need access to the ACME slack workspace. (Note: this is automatic via Okta SSO once INC-1003 lands - this ticket is likely a near-duplicate of INC-1002 / can be closed once SSO completes.)",
+  "requester": {
+    "id": "U101",
+    "name": "Alex Rivera",
+    "email": "alex.rivera@acme.com"
+  },
+  "assignee": null,
+  "queue": "it-helpdesk",
+  "status": "open",
+  "priority": "P3",
+  "created_at": "2026-05-12T08:55:00Z",
+  "updated_at": "2026-05-12T08:55:00Z",
+  "tags": [
+    "onboarding",
+    "access",
+    "slack"
+  ],
+  "related_tickets": [
+    "INC-1002",
+    "INC-1003"
+  ],
+  "comments": []
+}

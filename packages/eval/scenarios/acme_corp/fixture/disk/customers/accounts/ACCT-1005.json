@@ -1,0 +1,29 @@
+{
+  "account_id": "ACCT-1005",
+  "company_name": "DataVault",
+  "tier": "pro",
+  "arr": 72000.0,
+  "health_score": 60,
+  "csm": {
+    "id": "U211",
+    "name": "Emily Zhang",
+    "email": "emily.zhang@acme.com"
+  },
+  "renewal_date": "2026-12-01",
+  "contacts": [
+    {
+      "name": "Klaus Weber",
+      "email": "k.weber@datavault.eu",
+      "role": "DPO"
+    },
+    {
+      "name": "Anna Hoffmann",
+      "email": "a.hoffmann@datavault.eu",
+      "role": "CTO"
+    }
+  ],
+  "products": [
+    "platform-api",
+    "analytics"
+  ]
+}

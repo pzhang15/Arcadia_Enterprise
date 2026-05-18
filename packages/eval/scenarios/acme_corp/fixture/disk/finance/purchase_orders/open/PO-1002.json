@@ -1,0 +1,26 @@
+{
+  "po_id": "PO-1002",
+  "requester": {
+    "id": "U214",
+    "name": "David Park",
+    "email": "david.park@acme.com"
+  },
+  "vendor": "CloudRack Inc.",
+  "items": [
+    {
+      "description": "Staging server (16-core, 64GB)",
+      "qty": 2,
+      "unit_price": 4500.0
+    },
+    {
+      "description": "NVMe storage upgrade kit",
+      "qty": 4,
+      "unit_price": 800.0
+    }
+  ],
+  "total": 12200.0,
+  "status": "open",
+  "created_at": "2026-05-11T10:00:00Z",
+  "approved_by": null,
+  "department": "Engineering/SRE"
+}

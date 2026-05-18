@@ -1,0 +1,23 @@
+{
+  "expense_id": "EXP-1005",
+  "submitter": {
+    "id": "U205",
+    "name": "Tom Bradley",
+    "email": "tom.bradley@acme.com"
+  },
+  "department": "People/HR",
+  "amount": 275.0,
+  "currency": "USD",
+  "category": "meals",
+  "description": "Team lunch for new hire welcome (8 attendees)",
+  "receipt_url": "/finance/receipts/EXP-1005_receipt.pdf",
+  "submitted_at": "2026-05-12T16:00:00Z",
+  "status": "pending",
+  "approver": null,
+  "line_items": [
+    {
+      "description": "Team lunch (8 people)",
+      "amount": 275.0
+    }
+  ]
+}

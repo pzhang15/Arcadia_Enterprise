@@ -1,0 +1,27 @@
+{
+  "ticket_id": "LGL-1001",
+  "subject": "NDA review for CloudBase partnership",
+  "body": "CloudBase (ACCT-1006) proposing a strategic partnership. Need NDA reviewed and signed before technical evaluation can proceed. Draft NDA attached by CloudBase legal team.",
+  "requester": {
+    "id": "U211",
+    "name": "Emily Zhang",
+    "email": "emily.zhang@acme.com"
+  },
+  "assignee": {
+    "id": "U216",
+    "name": "Michael Torres",
+    "email": "michael.torres@acme.com"
+  },
+  "queue": "legal",
+  "status": "open",
+  "priority": "P3",
+  "created_at": "2026-05-13T09:00:00Z",
+  "updated_at": "2026-05-13T09:00:00Z",
+  "tags": [
+    "nda",
+    "partnership",
+    "contract"
+  ],
+  "related_tickets": [],
+  "comments": []
+}

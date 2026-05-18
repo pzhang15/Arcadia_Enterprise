@@ -1,0 +1,70 @@
+{
+  "audit_id": "AUDIT-2026-GDPR",
+  "framework": "GDPR",
+  "status": "pending",
+  "due_date": "2026-09-30",
+  "started_at": null,
+  "auditor": "TBD",
+  "checklist": [
+    {
+      "name": "Data Processing Inventory",
+      "status": "pending",
+      "owner": {
+        "id": "U217",
+        "name": "Jennifer Wu",
+        "email": "jennifer.wu@acme.com"
+      },
+      "evidence_link": null
+    },
+    {
+      "name": "Consent Management",
+      "status": "pending",
+      "owner": {
+        "id": "U217",
+        "name": "Jennifer Wu",
+        "email": "jennifer.wu@acme.com"
+      },
+      "evidence_link": null
+    },
+    {
+      "name": "Data Subject Rights Process",
+      "status": "pending",
+      "owner": {
+        "id": "U216",
+        "name": "Michael Torres",
+        "email": "michael.torres@acme.com"
+      },
+      "evidence_link": null
+    },
+    {
+      "name": "Cross-Border Transfer Mechanisms",
+      "status": "pending",
+      "owner": {
+        "id": "U216",
+        "name": "Michael Torres",
+        "email": "michael.torres@acme.com"
+      },
+      "evidence_link": null
+    },
+    {
+      "name": "Breach Notification Process",
+      "status": "pending",
+      "owner": {
+        "id": "U217",
+        "name": "Jennifer Wu",
+        "email": "jennifer.wu@acme.com"
+      },
+      "evidence_link": null
+    },
+    {
+      "name": "DPA Review",
+      "status": "pending",
+      "owner": {
+        "id": "U216",
+        "name": "Michael Torres",
+        "email": "michael.torres@acme.com"
+      },
+      "evidence_link": null
+    }
+  ]
+}

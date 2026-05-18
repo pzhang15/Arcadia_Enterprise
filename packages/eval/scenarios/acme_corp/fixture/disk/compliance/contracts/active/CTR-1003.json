@@ -1,0 +1,15 @@
+{
+  "contract_id": "CTR-1003",
+  "counterparty": "CloudRack Inc.",
+  "type": "MSA",
+  "value": 250000.0,
+  "start_date": "2025-01-01",
+  "end_date": "2027-01-01",
+  "status": "active",
+  "owner": {
+    "id": "U216",
+    "name": "Michael Torres",
+    "email": "michael.torres@acme.com"
+  },
+  "review_notes": "Infrastructure vendor. Multi-year agreement."
+}

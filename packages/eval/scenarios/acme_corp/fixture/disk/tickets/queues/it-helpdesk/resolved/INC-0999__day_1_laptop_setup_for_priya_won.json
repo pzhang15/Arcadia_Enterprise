@@ -1,0 +1,32 @@
+{
+  "ticket_id": "INC-0999",
+  "subject": "Day-1 laptop setup for Priya Wong",
+  "body": "Provision MBP-2026-011 for new hire on IT team starting 2026-04-22. Standard image + Okta enrollment. Note: completed despite the 09:14 SSO outage that day; loaner not needed.",
+  "requester": {
+    "id": "U104",
+    "name": "Priya Patel",
+    "email": "priya.patel@acme.com"
+  },
+  "assignee": {
+    "id": "U104",
+    "name": "Priya Patel",
+    "email": "priya.patel@acme.com"
+  },
+  "queue": "it-helpdesk",
+  "status": "resolved",
+  "priority": "P2",
+  "created_at": "2026-04-21T09:00:00Z",
+  "updated_at": "2026-04-22T16:00:00Z",
+  "tags": [
+    "onboarding",
+    "hardware"
+  ],
+  "related_tickets": [],
+  "comments": [
+    {
+      "author": "U104",
+      "ts": "2026-04-22T16:00:00Z",
+      "body": "Setup complete. 1h delay due to SSO outage; see postmortem GD105."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "account_id": "ACCT-1006",
+  "company_name": "CloudBase",
+  "tier": "enterprise",
+  "arr": 240000.0,
+  "health_score": 82,
+  "csm": {
+    "id": "U211",
+    "name": "Emily Zhang",
+    "email": "emily.zhang@acme.com"
+  },
+  "renewal_date": "2026-10-15",
+  "contacts": [
+    {
+      "name": "Jennifer Adams",
+      "email": "j.adams@cloudbase.com",
+      "role": "VP Partnerships"
+    }
+  ],
+  "products": [
+    "platform-api",
+    "auth-service"
+  ]
+}

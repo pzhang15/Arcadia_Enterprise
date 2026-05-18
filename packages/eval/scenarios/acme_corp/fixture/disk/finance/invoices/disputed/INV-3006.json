@@ -1,0 +1,10 @@
+{
+  "invoice_id": "INV-3006",
+  "vendor": "NetGuard Solutions",
+  "amount": 12500.0,
+  "due_date": "2026-05-15",
+  "po_reference": null,
+  "status": "disputed",
+  "department": "Legal/Compliance",
+  "dispute_reason": "Invoice for services not yet rendered. Penetration test (PO-1004) has not been approved yet."
+}

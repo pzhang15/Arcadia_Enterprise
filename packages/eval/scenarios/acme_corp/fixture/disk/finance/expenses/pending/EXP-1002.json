@@ -1,0 +1,23 @@
+{
+  "expense_id": "EXP-1002",
+  "submitter": {
+    "id": "U213",
+    "name": "Iris Petrova",
+    "email": "iris.petrova@acme.com"
+  },
+  "department": "Engineering/SRE",
+  "amount": 89.99,
+  "currency": "USD",
+  "category": "software",
+  "description": "Datadog Pro license upgrade (monthly)",
+  "receipt_url": "/finance/receipts/EXP-1002_receipt.pdf",
+  "submitted_at": "2026-05-11T14:30:00Z",
+  "status": "pending",
+  "approver": null,
+  "line_items": [
+    {
+      "description": "Datadog Pro monthly subscription",
+      "amount": 89.99
+    }
+  ]
+}

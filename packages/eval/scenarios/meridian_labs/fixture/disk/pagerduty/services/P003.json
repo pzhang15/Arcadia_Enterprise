@@ -1,0 +1,10 @@
+{
+  "id": "P003",
+  "name": "merchant-dashboard",
+  "description": "Merchant-facing web application",
+  "status": "warning",
+  "escalation_policy": {
+    "id": "EP003",
+    "name": "Frontend On-Call"
+  }
+}

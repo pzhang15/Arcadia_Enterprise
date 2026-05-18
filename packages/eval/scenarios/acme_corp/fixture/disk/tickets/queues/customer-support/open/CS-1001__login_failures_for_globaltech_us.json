@@ -1,0 +1,38 @@
+{
+  "ticket_id": "CS-1001",
+  "subject": "Login failures for GlobalTech users",
+  "body": "GlobalTech (ACCT-1001, enterprise tier) reporting intermittent login failures for SSO-integrated users since 14:00 UTC. Linked to engineering incident INC-5521 (payments-api P99 latency spike). Escalation ESC-1001 created. Account health score dropped to 45.",
+  "requester": {
+    "id": "external",
+    "name": "GlobalTech Support",
+    "email": "support@globaltech.com"
+  },
+  "assignee": {
+    "id": "U209",
+    "name": "Maya Krishnan",
+    "email": "maya.krishnan@acme.com"
+  },
+  "queue": "customer-support",
+  "status": "open",
+  "priority": "P2",
+  "created_at": "2026-05-15T14:15:00Z",
+  "updated_at": "2026-05-15T14:45:00Z",
+  "tags": [
+    "escalation",
+    "sso",
+    "enterprise"
+  ],
+  "related_tickets": [
+    "OPS-1247"
+  ],
+  "comments": [
+    {
+      "author": "U210",
+      "ts": "2026-05-15T14:30:00Z",
+      "body": "Confirmed linked to INC-5521. Eng is rolling back deployment d4e5f6. ETA for resolution: 30min."
+    }
+  ],
+  "linked_incidents": [
+    "INC-5521"
+  ]
+}

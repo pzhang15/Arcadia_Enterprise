@@ -1,0 +1,10 @@
+{
+  "id": "P004",
+  "name": "webhook-service",
+  "description": "Outbound webhook delivery",
+  "status": "active",
+  "escalation_policy": {
+    "id": "EP001",
+    "name": "Payments On-Call"
+  }
+}

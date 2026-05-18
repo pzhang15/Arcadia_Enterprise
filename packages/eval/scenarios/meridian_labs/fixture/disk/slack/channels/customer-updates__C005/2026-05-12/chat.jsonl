@@ -1,0 +1,1 @@
+{"type": "message", "user": "U005", "text": "Resolved - Webhook Delivery Delays. Webhook delivery latency has returned to normal levels. All queued events have been delivered. Duration: ~2.5 hours. Root cause: Queue congestion from a high-volume endpoint.", "ts": "1715540700.000100", "team": "T_MERIDIAN"}

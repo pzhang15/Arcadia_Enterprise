@@ -1,0 +1,15 @@
+{
+  "escalation_id": "ESC-1003",
+  "account_id": "ACCT-1005",
+  "severity": "high",
+  "description": "DataVault submitted GDPR Article 17 data deletion request. Legal ticket LGL-1003 tracking. 30-day compliance deadline from 2026-05-14.",
+  "linked_ticket": "LGL-1003",
+  "linked_incidents": [],
+  "created_at": "2026-05-14T09:00:00Z",
+  "status": "active",
+  "owner": {
+    "id": "U217",
+    "name": "Jennifer Wu",
+    "email": "jennifer.wu@acme.com"
+  }
+}

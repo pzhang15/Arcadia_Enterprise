@@ -1,0 +1,31 @@
+{
+  "ticket_id": "OPS-1240",
+  "subject": "Webhook delivery delays exceeding 30-minute SLA",
+  "body": "Webhook queue depth exceeded 50,000. Delivery latency for payment.completed events averaged 45 minutes vs 30-second SLA. Root cause: downstream rate limiting from a large merchant.",
+  "requester": {
+    "id": "U002",
+    "name": "Bob Martinez",
+    "email": "bob.martinez@meridian-labs.com"
+  },
+  "assignee": {
+    "id": "U005",
+    "name": "Eve Nakamura",
+    "email": "eve.nakamura@meridian-labs.com"
+  },
+  "queue": "ops",
+  "status": "resolved",
+  "priority": "P2",
+  "created_at": "2026-05-12T16:00:00Z",
+  "updated_at": "2026-05-13T09:00:00Z",
+  "tags": [
+    "incident",
+    "webhook-service",
+    "queue-depth"
+  ],
+  "related_tickets": [],
+  "comments": [],
+  "severity": "sev2",
+  "resolved": "2026-05-12T18:30:00Z",
+  "resolution": "Implemented per-merchant rate limiting on webhook delivery. Added circuit breaker for slow endpoints.",
+  "project": "OPS"
+}

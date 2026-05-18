@@ -1,0 +1,40 @@
+{
+  "ticket_id": "OPS-1245",
+  "subject": "Intermittent 502 errors on merchant-dashboard API calls",
+  "body": "Multiple merchants reported 502 errors when loading transaction history. Appears to be related to connection pool exhaustion on the BFF layer. Rate: ~2% of requests affected.",
+  "requester": {
+    "id": "U012",
+    "name": "Maya Krishnan",
+    "email": "maya.krishnan@meridian-labs.com"
+  },
+  "assignee": {
+    "id": "U009",
+    "name": "Iris Petrova",
+    "email": "iris.petrova@meridian-labs.com"
+  },
+  "queue": "ops",
+  "status": "open",
+  "priority": "P2",
+  "created_at": "2026-05-15T10:30:00Z",
+  "updated_at": "2026-05-15T13:45:00Z",
+  "tags": [
+    "incident",
+    "merchant-dashboard",
+    "502"
+  ],
+  "related_tickets": [],
+  "comments": [
+    {
+      "author": "U009",
+      "ts": "2026-05-15T11:15:00Z",
+      "body": "Confirmed connection pool exhaustion on the BFF. Increasing pool size from 20 to 50 as a temporary fix."
+    },
+    {
+      "author": "U012",
+      "ts": "2026-05-15T12:00:00Z",
+      "body": "Three enterprise merchants (Acme Corp, GlobalTech, PayRight) have opened support tickets about this."
+    }
+  ],
+  "severity": "sev2",
+  "project": "OPS"
+}

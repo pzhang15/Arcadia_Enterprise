@@ -1,0 +1,10 @@
+{
+  "id": "P002",
+  "name": "auth-service",
+  "description": "Authentication and authorization",
+  "status": "active",
+  "escalation_policy": {
+    "id": "EP002",
+    "name": "Identity On-Call"
+  }
+}

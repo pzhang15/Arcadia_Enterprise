@@ -1,0 +1,4 @@
+{"type": "message", "user": "U212", "text": "INC-5521 triggered: payments-api P99 latency spiked to 2147ms (threshold 500ms). Error rate at 4.2%. Correlated with deployment d4e5f6 at 14:00 UTC by @frank. Opening incident bridge.", "ts": "1715759000.000100", "team": "T_ACME"}
+{"type": "message", "user": "U201", "text": "Looking at the commit now. The deployment changed connection pool settings - reduced connectionPoolSize from 50 to 10. That's almost certainly the cause.", "ts": "1715759200.000100", "team": "T_ACME"}
+{"type": "message", "user": "U212", "text": "Confirmed in Datadog: seeing 'connection pool exhausted' errors starting at exactly 14:00:30. 847 occurrences in the last 10 minutes. Linked ticket OPS-1247.", "ts": "1715759400.000100", "team": "T_ACME"}
+{"type": "message", "user": "U218", "text": "Customer impact confirmed - GlobalTech users reporting login failures (CS-1001). Rolling back deployment now.", "ts": "1715759600.000100", "team": "T_ACME"}

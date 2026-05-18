@@ -1,0 +1,22 @@
+{
+  "ticket_id": "INC-1007",
+  "subject": "Office printer (3rd floor) jammed",
+  "body": "Paper jam, need someone to swing by and clear it.",
+  "requester": {
+    "id": "U104",
+    "name": "Priya Patel",
+    "email": "priya.patel@acme.com"
+  },
+  "assignee": null,
+  "queue": "it-helpdesk",
+  "status": "open",
+  "priority": "P4",
+  "created_at": "2026-05-12T11:20:00Z",
+  "updated_at": "2026-05-12T11:20:00Z",
+  "tags": [
+    "facilities",
+    "printer"
+  ],
+  "related_tickets": [],
+  "comments": []
+}

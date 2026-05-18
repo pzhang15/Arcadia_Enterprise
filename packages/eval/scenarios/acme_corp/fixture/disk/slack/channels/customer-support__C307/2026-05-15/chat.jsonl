@@ -1,0 +1,2 @@
+{"type": "message", "user": "U210", "text": "Update on CS-1001: confirmed linked to engineering incident INC-5521. GlobalTech's auth flow goes through our payments-api which is currently degraded. Eng is rolling back.", "ts": "1715762400.000100", "team": "T_ACME"}
+{"type": "message", "user": "U209", "text": "Account health alert: PayRight (ACCT-1002) data sync delay reported. CS-1003 in progress. Not related to the payments-api incident - separate issue with their webhook integration.", "ts": "1715766000.000200", "team": "T_ACME"}

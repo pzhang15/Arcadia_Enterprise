@@ -1,0 +1,27 @@
+{
+  "expense_id": "EXP-0993",
+  "submitter": {
+    "id": "U102",
+    "name": "Diana Park",
+    "email": "diana.park@acme.com"
+  },
+  "department": "People/HR",
+  "amount": 180.0,
+  "currency": "USD",
+  "category": "meals",
+  "description": "Candidate lunch (final round interview)",
+  "receipt_url": "/finance/receipts/EXP-0993_receipt.pdf",
+  "submitted_at": "2026-05-05T15:00:00Z",
+  "status": "approved",
+  "approver": {
+    "id": "U204",
+    "name": "Lisa Chen",
+    "email": "lisa.chen@acme.com"
+  },
+  "line_items": [
+    {
+      "description": "Lunch (4 attendees)",
+      "amount": 180.0
+    }
+  ]
+}

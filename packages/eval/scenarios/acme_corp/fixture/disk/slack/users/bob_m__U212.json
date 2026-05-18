@@ -1,0 +1,9 @@
+{
+  "id": "U212",
+  "name": "bob_m",
+  "real_name": "Bob Martinez",
+  "profile": {
+    "title": "SRE Lead",
+    "email": "bob.martinez@acme.com"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "policy_id": "POL-1002",
+  "title": "Acceptable Use Policy",
+  "version": "3.0",
+  "effective_date": "2026-02-01",
+  "acknowledgments": [
+    {
+      "user_id": "U101",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U102",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U103",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U104",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U105",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U106",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U107",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U201",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U202",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U203",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U204",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U205",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U206",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U207",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U208",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U209",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U210",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U211",
+      "acked_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "user_id": "U214",
+      "acked_at": null
+    },
+    {
+      "user_id": "U215",
+      "acked_at": null
+    },
+    {
+      "user_id": "U216",
+      "acked_at": null
+    },
+    {
+      "user_id": "U217",
+      "acked_at": null
+    },
+    {
+      "user_id": "U218",
+      "acked_at": null
+    },
+    {
+      "user_id": "U219",
+      "acked_at": null
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "ticket_id": "PAY-892",
+  "subject": "Add support for SEPA instant credit transfers",
+  "body": "",
+  "requester": {
+    "id": "U006",
+    "name": "Frank Osei",
+    "email": "frank.osei@meridian-labs.com"
+  },
+  "assignee": null,
+  "queue": "pay",
+  "status": "open",
+  "priority": "P3",
+  "created_at": "2026-05-06T09:00:00Z",
+  "updated_at": "2026-05-06T09:00:00Z",
+  "tags": [
+    "feature",
+    "sepa"
+  ],
+  "related_tickets": [],
+  "comments": [],
+  "project": "PAY"
+}

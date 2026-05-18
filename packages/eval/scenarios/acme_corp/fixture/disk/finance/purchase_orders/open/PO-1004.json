@@ -1,0 +1,21 @@
+{
+  "po_id": "PO-1004",
+  "requester": {
+    "id": "U217",
+    "name": "Jennifer Wu",
+    "email": "jennifer.wu@acme.com"
+  },
+  "vendor": "NetGuard Solutions",
+  "items": [
+    {
+      "description": "Penetration testing engagement",
+      "qty": 1,
+      "unit_price": 25000.0
+    }
+  ],
+  "total": 25000.0,
+  "status": "open",
+  "created_at": "2026-05-13T14:00:00Z",
+  "approved_by": null,
+  "department": "Legal/Compliance"
+}

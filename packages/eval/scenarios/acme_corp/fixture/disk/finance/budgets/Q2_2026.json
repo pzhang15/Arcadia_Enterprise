@@ -1,0 +1,68 @@
+{
+  "fiscal_quarter": "Q2-2026",
+  "period": {
+    "start": "2026-04-01",
+    "end": "2026-06-30"
+  },
+  "total_budget": 1515000.0,
+  "total_spent": 1216900.0,
+  "total_remaining": 298100.0,
+  "departments": [
+    {
+      "name": "Platform Engineering",
+      "budget": 420000.0,
+      "spent": 327600.0,
+      "remaining": 92400.0,
+      "status": "on_track"
+    },
+    {
+      "name": "IT",
+      "budget": 180000.0,
+      "spent": 142200.0,
+      "remaining": 37800.0,
+      "status": "on_track"
+    },
+    {
+      "name": "People/HR",
+      "budget": 95000.0,
+      "spent": 68400.0,
+      "remaining": 26600.0,
+      "status": "on_track"
+    },
+    {
+      "name": "Finance",
+      "budget": 65000.0,
+      "spent": 41300.0,
+      "remaining": 23700.0,
+      "status": "on_track"
+    },
+    {
+      "name": "Customer Support",
+      "budget": 210000.0,
+      "spent": 178500.0,
+      "remaining": 31500.0,
+      "status": "at_risk"
+    },
+    {
+      "name": "Engineering/SRE",
+      "budget": 350000.0,
+      "spent": 298200.0,
+      "remaining": 51800.0,
+      "status": "on_track"
+    },
+    {
+      "name": "Legal/Compliance",
+      "budget": 120000.0,
+      "spent": 108600.0,
+      "remaining": 11400.0,
+      "status": "over_budget"
+    },
+    {
+      "name": "Executive",
+      "budget": 75000.0,
+      "spent": 52100.0,
+      "remaining": 22900.0,
+      "status": "on_track"
+    }
+  ]
+}

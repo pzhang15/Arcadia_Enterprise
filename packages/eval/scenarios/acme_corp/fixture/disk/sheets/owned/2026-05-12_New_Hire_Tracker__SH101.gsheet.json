@@ -1,0 +1,408 @@
+{
+  "spreadsheetId": "SH101",
+  "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/SH101",
+  "properties": {
+    "title": "New Hire Tracker",
+    "locale": "en_US",
+    "timeZone": "America/Los_Angeles"
+  },
+  "sheets": [
+    {
+      "properties": {
+        "sheetId": 0,
+        "title": "Active",
+        "index": 0,
+        "gridProperties": {
+          "rowCount": 100,
+          "columnCount": 26
+        }
+      },
+      "data": [
+        {
+          "rowData": [
+            {
+              "values": [
+                {
+                  "formattedValue": "Name",
+                  "userEnteredValue": {
+                    "stringValue": "Name"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Name"
+                  }
+                },
+                {
+                  "formattedValue": "Start Date",
+                  "userEnteredValue": {
+                    "stringValue": "Start Date"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Start Date"
+                  }
+                },
+                {
+                  "formattedValue": "Team",
+                  "userEnteredValue": {
+                    "stringValue": "Team"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Team"
+                  }
+                },
+                {
+                  "formattedValue": "Manager",
+                  "userEnteredValue": {
+                    "stringValue": "Manager"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Manager"
+                  }
+                },
+                {
+                  "formattedValue": "Buddy",
+                  "userEnteredValue": {
+                    "stringValue": "Buddy"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Buddy"
+                  }
+                },
+                {
+                  "formattedValue": "Equipment Status",
+                  "userEnteredValue": {
+                    "stringValue": "Equipment Status"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Equipment Status"
+                  }
+                },
+                {
+                  "formattedValue": "Access Status",
+                  "userEnteredValue": {
+                    "stringValue": "Access Status"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Access Status"
+                  }
+                },
+                {
+                  "formattedValue": "Day 1 Complete",
+                  "userEnteredValue": {
+                    "stringValue": "Day 1 Complete"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Day 1 Complete"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Alex Rivera",
+                  "userEnteredValue": {
+                    "stringValue": "Alex Rivera"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Alex Rivera"
+                  }
+                },
+                {
+                  "formattedValue": "2026-05-12",
+                  "userEnteredValue": {
+                    "stringValue": "2026-05-12"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "2026-05-12"
+                  }
+                },
+                {
+                  "formattedValue": "Platform",
+                  "userEnteredValue": {
+                    "stringValue": "Platform"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Platform"
+                  }
+                },
+                {
+                  "formattedValue": "Marcus Johnson",
+                  "userEnteredValue": {
+                    "stringValue": "Marcus Johnson"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Marcus Johnson"
+                  }
+                },
+                {
+                  "formattedValue": "Jordan Kim",
+                  "userEnteredValue": {
+                    "stringValue": "Jordan Kim"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Jordan Kim"
+                  }
+                },
+                {
+                  "formattedValue": "loaner_in_use_pending_shipment",
+                  "userEnteredValue": {
+                    "stringValue": "loaner_in_use_pending_shipment"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "loaner_in_use_pending_shipment"
+                  }
+                },
+                {
+                  "formattedValue": "in_progress",
+                  "userEnteredValue": {
+                    "stringValue": "in_progress"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "in_progress"
+                  }
+                },
+                {
+                  "formattedValue": "N",
+                  "userEnteredValue": {
+                    "stringValue": "N"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "N"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Priya Wong",
+                  "userEnteredValue": {
+                    "stringValue": "Priya Wong"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Priya Wong"
+                  }
+                },
+                {
+                  "formattedValue": "2026-04-22",
+                  "userEnteredValue": {
+                    "stringValue": "2026-04-22"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "2026-04-22"
+                  }
+                },
+                {
+                  "formattedValue": "IT",
+                  "userEnteredValue": {
+                    "stringValue": "IT"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "IT"
+                  }
+                },
+                {
+                  "formattedValue": "Sam Chen",
+                  "userEnteredValue": {
+                    "stringValue": "Sam Chen"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Sam Chen"
+                  }
+                },
+                {
+                  "formattedValue": "Priya Patel",
+                  "userEnteredValue": {
+                    "stringValue": "Priya Patel"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Priya Patel"
+                  }
+                },
+                {
+                  "formattedValue": "received",
+                  "userEnteredValue": {
+                    "stringValue": "received"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "received"
+                  }
+                },
+                {
+                  "formattedValue": "complete",
+                  "userEnteredValue": {
+                    "stringValue": "complete"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "complete"
+                  }
+                },
+                {
+                  "formattedValue": "Y",
+                  "userEnteredValue": {
+                    "stringValue": "Y"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Y"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Marcus Davis",
+                  "userEnteredValue": {
+                    "stringValue": "Marcus Davis"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Marcus Davis"
+                  }
+                },
+                {
+                  "formattedValue": "2026-04-22",
+                  "userEnteredValue": {
+                    "stringValue": "2026-04-22"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "2026-04-22"
+                  }
+                },
+                {
+                  "formattedValue": "Platform",
+                  "userEnteredValue": {
+                    "stringValue": "Platform"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Platform"
+                  }
+                },
+                {
+                  "formattedValue": "Marcus Johnson",
+                  "userEnteredValue": {
+                    "stringValue": "Marcus Johnson"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Marcus Johnson"
+                  }
+                },
+                {
+                  "formattedValue": "Jordan Kim",
+                  "userEnteredValue": {
+                    "stringValue": "Jordan Kim"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Jordan Kim"
+                  }
+                },
+                {
+                  "formattedValue": "received",
+                  "userEnteredValue": {
+                    "stringValue": "received"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "received"
+                  }
+                },
+                {
+                  "formattedValue": "complete",
+                  "userEnteredValue": {
+                    "stringValue": "complete"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "complete"
+                  }
+                },
+                {
+                  "formattedValue": "Y",
+                  "userEnteredValue": {
+                    "stringValue": "Y"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Y"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "formattedValue": "Lin Wei",
+                  "userEnteredValue": {
+                    "stringValue": "Lin Wei"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Lin Wei"
+                  }
+                },
+                {
+                  "formattedValue": "2026-05-19",
+                  "userEnteredValue": {
+                    "stringValue": "2026-05-19"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "2026-05-19"
+                  }
+                },
+                {
+                  "formattedValue": "Platform",
+                  "userEnteredValue": {
+                    "stringValue": "Platform"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Platform"
+                  }
+                },
+                {
+                  "formattedValue": "Marcus Johnson",
+                  "userEnteredValue": {
+                    "stringValue": "Marcus Johnson"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Marcus Johnson"
+                  }
+                },
+                {
+                  "formattedValue": "Jordan Kim",
+                  "userEnteredValue": {
+                    "stringValue": "Jordan Kim"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "Jordan Kim"
+                  }
+                },
+                {
+                  "formattedValue": "ordered",
+                  "userEnteredValue": {
+                    "stringValue": "ordered"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "ordered"
+                  }
+                },
+                {
+                  "formattedValue": "not_started",
+                  "userEnteredValue": {
+                    "stringValue": "not_started"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "not_started"
+                  }
+                },
+                {
+                  "formattedValue": "N",
+                  "userEnteredValue": {
+                    "stringValue": "N"
+                  },
+                  "effectiveValue": {
+                    "stringValue": "N"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

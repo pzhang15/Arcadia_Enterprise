@@ -1,0 +1,31 @@
+{
+  "expense_id": "EXP-0992",
+  "submitter": {
+    "id": "U103",
+    "name": "Sam Chen",
+    "email": "sam.chen@acme.com"
+  },
+  "department": "IT",
+  "amount": 620.0,
+  "currency": "USD",
+  "category": "equipment",
+  "description": "Replacement keyboards and mice (IT stock)",
+  "receipt_url": "/finance/receipts/EXP-0992_receipt.pdf",
+  "submitted_at": "2026-05-02T10:00:00Z",
+  "status": "approved",
+  "approver": {
+    "id": "U206",
+    "name": "Rachel Nguyen",
+    "email": "rachel.nguyen@acme.com"
+  },
+  "line_items": [
+    {
+      "description": "Apple Magic Keyboard x5",
+      "amount": 500.0
+    },
+    {
+      "description": "Logitech MX Master 3S x2",
+      "amount": 120.0
+    }
+  ]
+}

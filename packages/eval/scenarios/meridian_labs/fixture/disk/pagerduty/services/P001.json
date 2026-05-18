@@ -1,0 +1,10 @@
+{
+  "id": "P001",
+  "name": "payments-api",
+  "description": "Core payments processing service",
+  "status": "critical",
+  "escalation_policy": {
+    "id": "EP001",
+    "name": "Payments On-Call"
+  }
+}

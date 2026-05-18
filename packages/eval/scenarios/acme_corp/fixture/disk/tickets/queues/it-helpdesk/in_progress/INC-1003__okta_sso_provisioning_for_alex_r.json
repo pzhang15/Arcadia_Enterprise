@@ -1,0 +1,38 @@
+{
+  "ticket_id": "INC-1003",
+  "subject": "Okta SSO provisioning for Alex Rivera",
+  "body": "New hire on Platform team. Provision Okta user, add to platform-eng group (which gates AWS, Slack, GitHub). Per IT Runbook GD102, Slack workspace access flows automatically from this.",
+  "requester": {
+    "id": "U101",
+    "name": "Alex Rivera",
+    "email": "alex.rivera@acme.com"
+  },
+  "assignee": {
+    "id": "U104",
+    "name": "Priya Patel",
+    "email": "priya.patel@acme.com"
+  },
+  "queue": "it-helpdesk",
+  "status": "in_progress",
+  "priority": "P2",
+  "created_at": "2026-05-11T17:00:00Z",
+  "updated_at": "2026-05-12T08:30:00Z",
+  "tags": [
+    "onboarding",
+    "access",
+    "sso",
+    "okta"
+  ],
+  "related_tickets": [
+    "INC-1002",
+    "INC-1004",
+    "INC-1006"
+  ],
+  "comments": [
+    {
+      "author": "U104",
+      "ts": "2026-05-12T08:30:00Z",
+      "body": "User created in Okta, added to platform-eng group. Waiting on group sync (typically <60min)."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "expense_id": "EXP-1006",
+  "submitter": {
+    "id": "U217",
+    "name": "Jennifer Wu",
+    "email": "jennifer.wu@acme.com"
+  },
+  "department": "Legal/Compliance",
+  "amount": 4850.0,
+  "currency": "USD",
+  "category": "software",
+  "description": "Vanta compliance platform (quarterly)",
+  "receipt_url": "/finance/receipts/EXP-1006_receipt.pdf",
+  "submitted_at": "2026-05-14T11:00:00Z",
+  "status": "pending",
+  "approver": null,
+  "line_items": [
+    {
+      "description": "Vanta SOC2 automation (Q3 quarter)",
+      "amount": 4850.0
+    }
+  ]
+}

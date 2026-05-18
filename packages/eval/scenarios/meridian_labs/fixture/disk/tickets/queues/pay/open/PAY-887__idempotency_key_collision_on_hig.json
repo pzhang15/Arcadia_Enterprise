@@ -1,0 +1,24 @@
+{
+  "ticket_id": "PAY-887",
+  "subject": "Idempotency key collision on high-frequency merchants",
+  "body": "",
+  "requester": {
+    "id": "U005",
+    "name": "Eve Nakamura",
+    "email": "eve.nakamura@meridian-labs.com"
+  },
+  "assignee": null,
+  "queue": "pay",
+  "status": "open",
+  "priority": "P2",
+  "created_at": "2026-05-05T14:00:00Z",
+  "updated_at": "2026-05-05T14:00:00Z",
+  "tags": [
+    "bug",
+    "payments-api",
+    "idempotency"
+  ],
+  "related_tickets": [],
+  "comments": [],
+  "project": "PAY"
+}
