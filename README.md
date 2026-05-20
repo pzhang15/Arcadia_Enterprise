@@ -1,6 +1,6 @@
 # Arcadia
 
-**The governed data access layer for autonomous agents.**
+**The governed intelligence platform for autonomous agents.**
 
 Sandboxes solved isolation. Isolation without governed data access is a sandbox with nothing useful inside it. Arcadia is what makes the sandbox worth booting.
 
