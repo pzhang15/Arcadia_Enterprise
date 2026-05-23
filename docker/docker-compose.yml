@@ -1,4 +1,14 @@
 services:
+  trace-generator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: >
+      uv run --directory /app/packages/lineage
+      python /app/docker/generate_traces.py
+    volumes:
+      - trace-data:/app/data
+
   observability:
     build:
       context: ../frontends/observability
@@ -7,8 +17,13 @@ services:
       - "8082:8082"
     environment:
       - RESULTS_DIR=/app/results
+      - TRACES_DB=/app/data/traces.db
     volumes:
       - ../packages/eval/results:/app/results:ro
+      - trace-data:/app/data:ro
+    depends_on:
+      trace-generator:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8082/api/health"]
       interval: 5s
@@ -101,3 +116,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+volumes:
+  trace-data:

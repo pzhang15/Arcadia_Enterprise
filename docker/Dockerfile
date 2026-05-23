@@ -11,6 +11,7 @@ COPY vendor/mirage/python/mirage /app/vendor/mirage/python/mirage
 
 COPY pyproject.toml /app/
 COPY packages/eval/pyproject.toml /app/packages/eval/
+COPY packages/lineage/pyproject.toml /app/packages/lineage/
 
 WORKDIR /app/packages/eval
 RUN uv sync --no-dev
@@ -18,8 +19,15 @@ RUN uv sync --no-dev
 COPY packages/eval /app/packages/eval
 RUN uv sync --no-dev
 
-COPY docker/mock_server.py /app/docker/mock_server.py
+WORKDIR /app/packages/lineage
+RUN uv sync --no-dev
+COPY packages/lineage /app/packages/lineage
+RUN uv sync --no-dev
 
+COPY docker/mock_server.py /app/docker/mock_server.py
+COPY docker/generate_traces.py /app/docker/generate_traces.py
+
+WORKDIR /app/packages/eval
 RUN uv run mirage-eval seed --scenario onboarding_it
 RUN uv run mirage-eval seed --scenario meridian_labs
 RUN uv run mirage-eval seed --scenario acme_corp
