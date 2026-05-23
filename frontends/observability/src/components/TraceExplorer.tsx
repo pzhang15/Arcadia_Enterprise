@@ -319,9 +319,9 @@ export default function TraceExplorer() {
         <div className="empty-state">
           <div className="empty-state-icon">🔭</div>
           <div className="empty-state-text">
-            No traces yet. Run the demo script to generate trace data:
+            No traces yet. Run the stack to generate trace data:
             <br />
-            <code>cd docker/trace-demo && docker compose up --build</code>
+            <code>cd docker && docker compose up --build</code>
           </div>
         </div>
       )}
