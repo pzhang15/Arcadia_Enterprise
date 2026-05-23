@@ -8,7 +8,7 @@ RUN npm run build
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
-RUN pip install uvicorn fastapi httpx
+RUN pip install uvicorn fastapi httpx openai
 WORKDIR /app
 COPY server.py .
 COPY --from=frontend /app/dist ./dist
