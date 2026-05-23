@@ -147,3 +147,55 @@ export interface MountStats {
   bytes: number;
   ops: OpEvent[];
 }
+
+/* ── Trace Explorer types ── */
+
+export interface SpanMetrics {
+  bytes_read: number;
+  bytes_written: number;
+  api_calls: number;
+  cache_hits: number;
+  cache_misses: number;
+}
+
+export interface SpanEvent {
+  span_id: string;
+  timestamp_ms: number;
+  name: string;
+  attributes: Record<string, unknown>;
+}
+
+export interface TraceSpan {
+  trace_id: string;
+  span_id: string;
+  parent_span_id: string | null;
+  name: string;
+  kind: number;
+  start_time_ms: number;
+  end_time_ms: number;
+  status: number;
+  level: number;
+  attributes: Record<string, unknown>;
+  metrics: SpanMetrics;
+  session_id: string;
+  agent_id: string;
+  events: SpanEvent[];
+}
+
+export interface TraceDetail {
+  trace_id: string;
+  spans: TraceSpan[];
+}
+
+export interface TraceSummary {
+  trace_id: string;
+  name: string;
+  start_time_ms: number;
+  end_time_ms: number;
+  status: number;
+  attributes: Record<string, unknown>;
+  metrics: SpanMetrics;
+  session_id: string;
+  agent_id: string;
+  child_count: number;
+}

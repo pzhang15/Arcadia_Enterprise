@@ -716,6 +716,199 @@ body {
   animation: pulse 2s ease-in-out infinite;
 }
 
+/* Trace Waterfall */
+.trace-waterfall-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.trace-detail-panel {
+  width: 380px;
+  min-width: 380px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  position: sticky;
+  top: 24px;
+}
+
+.waterfall-timeline {
+  overflow-x: auto;
+}
+
+.waterfall-ruler {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px 6px 240px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  z-index: 2;
+}
+
+.waterfall-row {
+  display: flex;
+  align-items: center;
+  padding: 3px 0;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: background 0.1s;
+}
+
+.waterfall-row:hover {
+  background: var(--bg-hover);
+}
+
+.waterfall-row.selected {
+  background: var(--bg-tertiary);
+  border-bottom-color: var(--border);
+}
+
+.waterfall-label {
+  width: 240px;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+  overflow: hidden;
+}
+
+.waterfall-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  flex-shrink: 0;
+}
+
+.waterfall-dot.root {
+  background: var(--accent);
+}
+
+.waterfall-dot.error {
+  background: var(--red);
+}
+
+.waterfall-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.waterfall-path {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.waterfall-bar-container {
+  flex: 1;
+  height: 22px;
+  position: relative;
+  min-width: 200px;
+}
+
+.waterfall-bar {
+  position: absolute;
+  top: 3px;
+  height: 16px;
+  border-radius: 3px;
+  min-width: 2px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  transition: opacity 0.15s;
+}
+
+.waterfall-bar-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #fff;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Span Detail */
+.span-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.span-detail-name {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.span-detail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.span-detail-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+}
+
+.span-detail-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.span-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 12px;
+  gap: 12px;
+}
+
+.span-detail-row > span:first-child {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.span-detail-row > span:last-child {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.span-detail-ids {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  flex-wrap: wrap;
+}
+
 /* Utility */
 .flex {
   display: flex;

@@ -5,14 +5,16 @@ import MockRequestLog from "./components/MockRequestLog";
 import ScoreCardDashboard from "./components/ScoreCardDashboard";
 import ResourceMap from "./components/ResourceMap";
 import McpTraffic from "./components/McpTraffic";
+import TraceExplorer from "./components/TraceExplorer";
 
-type View = "timeline" | "requests" | "scorecard" | "resources" | "mcp";
+type View = "timeline" | "requests" | "scorecard" | "resources" | "mcp" | "traces";
 
 const NAV: { id: View; label: string; icon: string; section: string }[] = [
   { id: "timeline", label: "Command Timeline", icon: "timeline", section: "Live" },
   { id: "mcp", label: "MCP Traffic", icon: "mcp", section: "Live" },
   { id: "requests", label: "Request Log", icon: "requests", section: "Live" },
   { id: "resources", label: "Resource Map", icon: "resources", section: "Live" },
+  { id: "traces", label: "Trace Explorer", icon: "traces", section: "Traces" },
   { id: "scorecard", label: "Scorecard", icon: "scorecard", section: "Results" },
 ];
 
@@ -50,6 +52,15 @@ function NavIcon({ icon }: { icon: string }) {
       return (
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 4l3 4-3 4M9 12h4" />
+        </svg>
+      );
+    case "traces":
+      return (
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M2 4h5M4 8h8M6 12h7" />
+          <circle cx="13" cy="4" r="1" fill="currentColor" />
+          <circle cx="12" cy="8" r="1" fill="currentColor" />
+          <circle cx="13" cy="12" r="1" fill="currentColor" />
         </svg>
       );
     default:
@@ -107,6 +118,7 @@ export default function App() {
         {view === "scorecard" && <ScoreCardDashboard />}
         {view === "resources" && <ResourceMap events={events} />}
         {view === "mcp" && <McpTraffic events={events} />}
+        {view === "traces" && <TraceExplorer />}
       </main>
     </div>
   );
