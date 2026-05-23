@@ -1,5 +1,3 @@
-import asyncio
-import json
 import logging
 import os
 import time
@@ -14,6 +12,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+try:
+    from openai import AsyncOpenAI
+except ImportError:
+    AsyncOpenAI = None
+
+try:
+    from scenarios.acme_corp.mounts import build_l1_workspace
+    from scenarios.acme_corp.seed import main as _seed_acme
+except ImportError:
+    build_l1_workspace = None
+    _seed_acme = None
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Mirage Agent Console")
@@ -26,7 +36,8 @@ app.add_middleware(
 
 RELAY_URL = os.environ.get("RELAY_URL", "http://localhost:8082")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL",
+                                 "https://api.openai.com/v1")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
 
 SYSTEM_PROMPT = """\
@@ -93,11 +104,16 @@ def _get_relay_client() -> httpx.AsyncClient:
 
 def _get_openai_client():
     global _openai_client
+    if AsyncOpenAI is None:
+        raise RuntimeError(
+            "The 'openai' package is not installed. "
+            "Install it with: pip install openai"
+        )
     if _openai_client is None:
-        from openai import AsyncOpenAI
         _openai_client = AsyncOpenAI(
             api_key=OPENAI_API_KEY,
-            base_url=OPENAI_BASE_URL if OPENAI_BASE_URL != "https://api.openai.com/v1" else None,
+            base_url=OPENAI_BASE_URL
+            if OPENAI_BASE_URL != "https://api.openai.com/v1" else None,
         )
     return _openai_client
 
@@ -118,11 +134,13 @@ async def _emit_event(session_id: str, event: dict) -> None:
 
 def _build_workspace(services: list[str]):
     """Build a Mirage workspace with mounts for the selected services."""
+    if _seed_acme is None or build_l1_workspace is None:
+        logger.warning("workspace modules not available (packages/eval not installed)")
+        return None
     try:
-        from scenarios.acme_corp.seed import main as seed_main
-        seed_main()
-        from scenarios.acme_corp.mounts import build_l1_workspace
-        return build_l1_workspace(agent_id="console-agent", session_id="default")
+        _seed_acme()
+        return build_l1_workspace(agent_id="console-agent",
+                                  session_id="default")
     except Exception as exc:
         logger.warning("workspace build failed: %s", exc)
         return None
@@ -166,26 +184,28 @@ async def _execute_in_workspace(ws, command: str, session_id: str) -> str:
         stdout = (result.stdout or b"").decode(errors="replace")
         stderr = (result.stderr or b"").decode(errors="replace")
         exit_code = getattr(result, "exit_code", 0) or 0
-        await _emit_event(session_id, {
-            "type": "command",
-            "agent": "console-agent",
-            "session": session_id,
-            "command": command,
-            "exit_code": exit_code,
-            "stdout": stdout[:4096],
-        })
-        for rec in (ws.ops.records or [])[-20:]:
-            await _emit_event(session_id, {
-                "type": "op",
+        await _emit_event(
+            session_id, {
+                "type": "command",
                 "agent": "console-agent",
                 "session": session_id,
-                "op": rec.op,
-                "path": rec.path,
-                "source": rec.source,
-                "bytes": rec.bytes,
-                "duration_ms": rec.duration_ms,
-                "mount_prefix": rec.mount_prefix,
+                "command": command,
+                "exit_code": exit_code,
+                "stdout": stdout[:4096],
             })
+        for rec in (ws.ops.records or [])[-20:]:
+            await _emit_event(
+                session_id, {
+                    "type": "op",
+                    "agent": "console-agent",
+                    "session": session_id,
+                    "op": rec.op,
+                    "path": rec.path,
+                    "source": rec.source,
+                    "bytes": rec.bytes,
+                    "duration_ms": rec.duration_ms,
+                    "mount_prefix": rec.mount_prefix,
+                })
         output = stdout.rstrip()
         if stderr.strip():
             output += f"\n[stderr] {stderr.rstrip()}"
@@ -214,11 +234,16 @@ async def _run_conversation_turn(
 
     file_prompt = _build_file_prompt(session.services)
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + file_prompt},
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT + "\n\n" + file_prompt
+        },
     ]
     for entry in session.chat_history:
-        messages.append({"role": entry.role if entry.role != "agent" else "assistant",
-                         "content": entry.content})
+        messages.append({
+            "role": entry.role if entry.role != "agent" else "assistant",
+            "content": entry.content
+        })
 
     max_iterations = 15
     for _ in range(max_iterations):
@@ -231,28 +256,47 @@ async def _run_conversation_turn(
                 max_tokens=4096,
             )
             assistant_text = resp.choices[0].message.content or ""
+        except RuntimeError as exc:
+            error_msg = str(exc)
+            session.status = "ready"
+            session.chat_history.append(
+                ChatEntry(role="agent",
+                          content=error_msg,
+                          timestamp=time.time()))
+            await _emit_event(session.id, {
+                "type": "agent_status",
+                "status": "error",
+                "error": error_msg,
+            })
+            return error_msg
         except Exception as exc:
             error_msg = f"LLM error: {type(exc).__name__}: {exc}"
             session.status = "ready"
             session.chat_history.append(
-                ChatEntry(role="agent", content=error_msg, timestamp=time.time()))
+                ChatEntry(role="agent",
+                          content=error_msg,
+                          timestamp=time.time()))
             await _emit_event(session.id, {
-                "type": "agent_status", "status": "error", "error": error_msg,
+                "type": "agent_status",
+                "status": "error",
+                "error": error_msg,
             })
             return error_msg
 
         exec_lines = [
-            line[5:].strip()
-            for line in assistant_text.splitlines()
+            line[5:].strip() for line in assistant_text.splitlines()
             if line.strip().startswith("EXEC:")
         ]
 
         if not exec_lines:
             session.chat_history.append(
-                ChatEntry(role="agent", content=assistant_text, timestamp=time.time()))
+                ChatEntry(role="agent",
+                          content=assistant_text,
+                          timestamp=time.time()))
             session.status = "ready"
             await _emit_event(session.id, {
-                "type": "agent_status", "status": "completed",
+                "type": "agent_status",
+                "status": "completed",
             })
             return assistant_text
 
@@ -264,15 +308,19 @@ async def _run_conversation_turn(
                 "message": f"Running: {cmd}",
             })
             if session.workspace:
-                output = await _execute_in_workspace(
-                    session.workspace, cmd, session.id)
+                output = await _execute_in_workspace(session.workspace, cmd,
+                                                     session.id)
             else:
                 output = "(workspace not available — set OPENAI_API_KEY and seed data)"
             command_outputs.append(f"$ {cmd}\n{output}")
 
         combined_output = "\n\n".join(command_outputs)
-        messages.append({"role": "user",
-                         "content": f"Command output:\n```\n{combined_output}\n```"})
+        messages.append({
+            "role":
+            "user",
+            "content":
+            f"Command output:\n```\n{combined_output}\n```"
+        })
 
     final = "Reached maximum iterations. Here is what I found so far."
     session.chat_history.append(
@@ -308,7 +356,8 @@ async def send_message(session_id: str, request: Request) -> dict:
     if not session:
         return JSONResponse({"error": "session not found"}, status_code=404)
     if session.status == "running":
-        return JSONResponse({"error": "agent is still processing"}, status_code=409)
+        return JSONResponse({"error": "agent is still processing"},
+                            status_code=409)
     body = await request.json()
     user_message = body.get("message", "").strip()
     if not user_message:
@@ -318,10 +367,10 @@ async def send_message(session_id: str, request: Request) -> dict:
         reply = (
             "OPENAI_API_KEY is not set. Please set it in your environment "
             "to enable the agent. For now, you can explore the data through "
-            "the Enterprise Portal at http://localhost:8083."
-        )
+            "the Enterprise Portal at http://localhost:8083.")
         session.chat_history.append(
-            ChatEntry(role="user", content=user_message, timestamp=time.time()))
+            ChatEntry(role="user", content=user_message,
+                      timestamp=time.time()))
         session.chat_history.append(
             ChatEntry(role="agent", content=reply, timestamp=time.time()))
         return {"reply": reply, "status": "ready"}
@@ -335,10 +384,11 @@ async def session_history(session_id: str) -> list[dict]:
     session = _sessions.get(session_id)
     if not session:
         return JSONResponse({"error": "not found"}, status_code=404)
-    return [
-        {"role": e.role, "content": e.content, "timestamp": e.timestamp}
-        for e in session.chat_history
-    ]
+    return [{
+        "role": e.role,
+        "content": e.content,
+        "timestamp": e.timestamp
+    } for e in session.chat_history]
 
 
 @app.get("/api/sessions/{session_id}/status")
@@ -358,43 +408,90 @@ async def session_status(session_id: str) -> dict:
 
 @app.get("/api/sessions")
 async def list_sessions() -> list[dict]:
-    return [
-        {
-            "id": s.id,
-            "status": s.status,
-            "services": s.services,
-            "created_at": s.created_at,
-            "message_count": len(s.chat_history),
-            "last_message": s.chat_history[-1].content[:100] if s.chat_history else "",
-        }
-        for s in sorted(_sessions.values(), key=lambda x: x.created_at, reverse=True)
-    ]
+    return [{
+        "id":
+        s.id,
+        "status":
+        s.status,
+        "services":
+        s.services,
+        "created_at":
+        s.created_at,
+        "message_count":
+        len(s.chat_history),
+        "last_message":
+        s.chat_history[-1].content[:100] if s.chat_history else "",
+    } for s in sorted(
+        _sessions.values(), key=lambda x: x.created_at, reverse=True)]
 
 
 @app.get("/api/quick-actions")
 async def quick_actions() -> list[dict]:
     return [
-        {"id": "triage", "label": "Triage IT helpdesk queue",
-         "services": ["it", "hr"],
-         "task": "Triage all open IT helpdesk tickets. List each one with its priority, classify by severity, find any duplicates, and identify tickets needing escalation."},
-        {"id": "onboarding", "label": "Check onboarding status",
-         "services": ["it", "hr"],
-         "task": "Look up Alex Rivera's onboarding status. Check the New Hire Tracker spreadsheet, any open IT tickets for Alex, and relevant Slack messages."},
-        {"id": "incident", "label": "Investigate platform incident",
-         "services": ["engineering"],
-         "task": "Investigate the active platform-api incident. Check PagerDuty for triggered incidents, correlate with recent deployments, check Datadog logs for errors, and identify root cause."},
-        {"id": "expenses", "label": "Review pending expenses",
-         "services": ["finance"],
-         "task": "Review all pending expense reports. List each with submitter, amount, category, and flag any that exceed policy limits or are missing details. Summarize totals by department."},
-        {"id": "escalations", "label": "Handle customer escalations",
-         "services": ["support", "engineering"],
-         "task": "Review active customer escalations and at-risk accounts. Check account health scores, open support tickets, and cross-reference with any engineering incidents that may be affecting customers."},
-        {"id": "audit", "label": "SOC2 audit status",
-         "services": ["compliance"],
-         "task": "Check the SOC2 audit progress. List all checklist items with their completion status, identify blockers, and check policy acknowledgment rates."},
-        {"id": "full", "label": "Full enterprise review",
-         "services": ["it", "hr", "finance", "engineering", "support", "compliance"],
-         "task": "Do a comprehensive cross-department review. Check IT tickets, onboarding status, pending expenses, active incidents, customer health, and compliance audit progress. Give me an executive summary."},
+        {
+            "id":
+            "triage",
+            "label":
+            "Triage IT helpdesk queue",
+            "services": ["it", "hr"],
+            "task":
+            "Triage all open IT helpdesk tickets. List each one with its priority, classify by severity, find any duplicates, and identify tickets needing escalation."
+        },
+        {
+            "id":
+            "onboarding",
+            "label":
+            "Check onboarding status",
+            "services": ["it", "hr"],
+            "task":
+            "Look up Alex Rivera's onboarding status. Check the New Hire Tracker spreadsheet, any open IT tickets for Alex, and relevant Slack messages."
+        },
+        {
+            "id":
+            "incident",
+            "label":
+            "Investigate platform incident",
+            "services": ["engineering"],
+            "task":
+            "Investigate the active platform-api incident. Check PagerDuty for triggered incidents, correlate with recent deployments, check Datadog logs for errors, and identify root cause."
+        },
+        {
+            "id":
+            "expenses",
+            "label":
+            "Review pending expenses",
+            "services": ["finance"],
+            "task":
+            "Review all pending expense reports. List each with submitter, amount, category, and flag any that exceed policy limits or are missing details. Summarize totals by department."
+        },
+        {
+            "id":
+            "escalations",
+            "label":
+            "Handle customer escalations",
+            "services": ["support", "engineering"],
+            "task":
+            "Review active customer escalations and at-risk accounts. Check account health scores, open support tickets, and cross-reference with any engineering incidents that may be affecting customers."
+        },
+        {
+            "id":
+            "audit",
+            "label":
+            "SOC2 audit status",
+            "services": ["compliance"],
+            "task":
+            "Check the SOC2 audit progress. List all checklist items with their completion status, identify blockers, and check policy acknowledgment rates."
+        },
+        {
+            "id":
+            "full",
+            "label":
+            "Full enterprise review",
+            "services":
+            ["it", "hr", "finance", "engineering", "support", "compliance"],
+            "task":
+            "Do a comprehensive cross-department review. Check IT tickets, onboarding status, pending expenses, active incidents, customer health, and compliance audit progress. Give me an executive summary."
+        },
     ]
 
 
@@ -402,6 +499,7 @@ async def quick_actions() -> list[dict]:
 async def get_config() -> dict:
     return {
         "has_api_key": bool(OPENAI_API_KEY),
+        "openai_available": AsyncOpenAI is not None,
         "model": OPENAI_MODEL,
     }
 
@@ -412,14 +510,16 @@ async def health() -> dict:
         "status": "ok",
         "sessions": len(_sessions),
         "has_api_key": bool(OPENAI_API_KEY),
+        "openai_available": AsyncOpenAI is not None,
         "model": OPENAI_MODEL,
     }
 
 
 dist_dir = Path(__file__).parent / "dist"
 if dist_dir.exists():
-    app.mount("/", StaticFiles(directory=str(dist_dir), html=True), name="static")
-
+    app.mount("/",
+              StaticFiles(directory=str(dist_dir), html=True),
+              name="static")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8084)
