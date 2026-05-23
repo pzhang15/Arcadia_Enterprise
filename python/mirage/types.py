@@ -18,6 +18,19 @@ from enum import Enum, StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class FindType(str, Enum):
+    """POSIX `find -type` flag values (`-type d`, `-type f`)."""
+    DIRECTORY = "d"
+    FILE = "f"
+
+
+class LsSortBy(str, Enum):
+    """`ls` sort keys. NAME is default, TIME is `-t`, SIZE is `-S`."""
+    NAME = "name"
+    TIME = "time"
+    SIZE = "size"
+
+
 class FileType(str, Enum):
     DIRECTORY = "directory"
     TEXT = "text"
@@ -111,7 +124,9 @@ class PathSpec:
     @property
     def strip_prefix(self) -> str:
         if self.prefix and self.original.startswith(self.prefix):
-            return self.original[len(self.prefix):] or "/"
+            rest = self.original[len(self.prefix):]
+            if self.prefix.endswith("/") or rest == "" or rest.startswith("/"):
+                return rest or "/"
         return self.original
 
     @property
@@ -256,8 +271,6 @@ class SessionKey(StrEnum):
 
 class ResourceStateKey(StrEnum):
     TYPE = "type"
-    NEEDS_OVERRIDE = "needs_override"
-    REDACTED_FIELDS = "redacted_fields"
     CONFIG = "config"
     FILES = "files"
     DIRS = "dirs"

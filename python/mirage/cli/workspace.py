@@ -12,7 +12,6 @@
 # limitations under the License.
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
-import json
 import os
 from pathlib import Path
 from typing import Any
@@ -47,9 +46,10 @@ def _resolve_config(path: Path) -> dict:
     return cfg.model_dump()
 
 
-def _resolve_override(path: Path) -> dict:
-    """Read a partial-config YAML and interpolate ``${VAR}`` from the
-    CLI's env. Skips validation -- overrides are intentionally partial.
+def _resolve_config_arg(path: Path) -> dict:
+    """Read a workspace YAML/JSON config and interpolate ``${VAR}`` from
+    the CLI's env. Skips validation because load/clone may only need a
+    subset of mounts.
     """
     raw = _load_yaml(path)
     try:
@@ -107,9 +107,8 @@ def create_cmd(
                                        exists=True,
                                        readable=True,
                                        help="YAML/JSON workspace config."),
-    workspace_id: str | None = typer.Option(None,
-                                            "--id",
-                                            help="Explicit workspace id."),
+    workspace_id: str
+    | None = typer.Option(None, "--id", help="Explicit workspace id."),
 ) -> None:
     """Create a workspace; daemon auto-spawns if not running."""
     body: dict = {"config": _resolve_config(config_path)}
@@ -161,23 +160,13 @@ def delete_cmd(workspace_id: str = typer.Argument(...)) -> None:
 @app.command("clone")
 def clone_cmd(
     workspace_id: str = typer.Argument(..., help="Source workspace id."),
-    new_id: str | None = typer.Option(None,
-                                      "--id",
-                                      help="Explicit id for the clone."),
-    override: Path | None = typer.Option(
-        None,
-        "--override",
-        exists=True,
-        readable=True,
-        help="Partial config YAML/JSON; merged into the clone's mounts.",
-    ),
+    new_id: str
+    | None = typer.Option(None, "--id", help="Explicit id for the clone."),
 ) -> None:
     """Clone a workspace; defaults to fresh local backings + shared remotes."""
     body: dict = {}
     if new_id:
         body["id"] = new_id
-    if override:
-        body["override"] = _resolve_override(override)
     with make_client() as client:
         client.ensure_running(allow_spawn=False)
         r = client.request("POST",
@@ -191,54 +180,49 @@ def snapshot_cmd(
     workspace_id: str = typer.Argument(...),
     output: Path = typer.Argument(..., help="Path to write the .tar to."),
 ) -> None:
-    """Snapshot a workspace to a tar file."""
+    """Snapshot a workspace to a tar file.
+
+    The path is resolved to an absolute path and sent to the daemon,
+    which writes the tar itself. With the default local daemon that is
+    your filesystem; against a remote daemon the tar lands on the
+    daemon host.
+    """
+    body = {"path": str(output.expanduser().resolve())}
     with make_client() as client:
         client.ensure_running(allow_spawn=False)
-        r = client.request("GET", f"/v1/workspaces/{workspace_id}/snapshot")
-    if r.status_code >= 400:
-        try:
-            detail = r.json().get("detail", r.text)
-        except ValueError:
-            detail = r.text
-        fail(f"daemon error {r.status_code}: {detail}", exit_code=2)
-    output.write_bytes(r.content)
+        r = client.request("POST",
+                           f"/v1/workspaces/{workspace_id}/snapshot",
+                           json=body)
     emit(
-        {
-            "workspace_id": workspace_id,
-            "path": str(output),
-            "bytes": len(r.content),
-        },
+        handle_response(r),
         human=lambda d:
-        f"Snapshot {d['workspace_id']} -> {d['path']} ({d['bytes']:,} bytes).",
+        f"Snapshot {d['id']} -> {d['path']} ({d['size']:,} bytes).",
     )
 
 
 @app.command("load")
 def load_cmd(
     tar_path: Path = typer.Argument(..., exists=True, readable=True),
-    new_id: str | None = typer.Option(
-        None, "--id", help="Explicit id for the restored workspace."),
-    override: Path | None = typer.Option(
+    config_path: Path | None = typer.Argument(
         None,
-        "--override",
         exists=True,
         readable=True,
-        help="Partial config YAML/JSON for swapping creds.",
+        help="Optional workspace YAML/JSON config.",
     ),
+    new_id: str | None = typer.Option(
+        None, "--id", help="Explicit id for the restored workspace."),
 ) -> None:
-    """Load a workspace from a tar file."""
-    files = {
-        "tar": (tar_path.name, tar_path.read_bytes(), "application/x-tar"),
-    }
-    data: dict = {}
+    """Load a workspace from a tar file.
+
+    The path is resolved to an absolute path and sent to the daemon,
+    which reads the tar itself.
+    """
+    body: dict = {"path": str(tar_path.expanduser().resolve())}
     if new_id:
-        data["id"] = new_id
-    if override:
-        data["override"] = json.dumps(_resolve_override(override))
+        body["id"] = new_id
+    if config_path:
+        body["override"] = _resolve_config_arg(config_path)
     with make_client() as client:
         client.ensure_running()
-        r = client.request("POST",
-                           "/v1/workspaces/load",
-                           files=files,
-                           data=data)
+        r = client.request("POST", "/v1/workspaces/load", json=body)
     emit(handle_response(r), human=_format_workspace_detail)
