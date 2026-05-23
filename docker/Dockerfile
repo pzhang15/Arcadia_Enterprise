@@ -12,16 +12,23 @@ COPY vendor/mirage/python/mirage /app/vendor/mirage/python/mirage
 COPY pyproject.toml /app/
 COPY packages/eval/pyproject.toml /app/packages/eval/
 COPY packages/lineage/pyproject.toml /app/packages/lineage/
+COPY packages/catalog-proxy/pyproject.toml /app/packages/catalog-proxy/
+COPY packages/credential-broker/pyproject.toml /app/packages/credential-broker/
+COPY packages/policy/pyproject.toml /app/packages/policy/
+COPY packages/workspace-vfs/pyproject.toml /app/packages/workspace-vfs/
 
 WORKDIR /app/packages/eval
 RUN uv sync --no-dev
 
 COPY packages/eval /app/packages/eval
+COPY packages/lineage /app/packages/lineage
+COPY packages/catalog-proxy /app/packages/catalog-proxy
+COPY packages/credential-broker /app/packages/credential-broker
+COPY packages/policy /app/packages/policy
+COPY packages/workspace-vfs /app/packages/workspace-vfs
 RUN uv sync --no-dev
 
 WORKDIR /app/packages/lineage
-RUN uv sync --no-dev
-COPY packages/lineage /app/packages/lineage
 RUN uv sync --no-dev
 
 COPY docker/mock_server.py /app/docker/mock_server.py
