@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import sqlite3
 import time
 from collections import deque
 from pathlib import Path
@@ -11,10 +12,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-RESULTS_DIR = Path(os.environ.get(
-    "RESULTS_DIR",
-    str(Path(__file__).resolve().parent.parent / "results"),
-))
+RESULTS_DIR = Path(
+    os.environ.get(
+        "RESULTS_DIR",
+        str(Path(__file__).resolve().parent.parent / "results"),
+    ))
+
+TRACES_DB = os.environ.get("TRACES_DB", "")
 
 app = FastAPI(title="Mirage Observability Relay")
 app.add_middleware(
@@ -138,20 +142,121 @@ async def get_run(scenario: str, sweep_id: str, run_id: str) -> dict:
     return {"error": "not found"}
 
 
+def _get_traces_db() -> sqlite3.Connection | None:
+    db_path = TRACES_DB
+    if not db_path or not Path(db_path).exists():
+        return None
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@app.get("/api/traces")
+async def list_traces(limit: int = 50, offset: int = 0) -> list[dict]:
+    conn = _get_traces_db()
+    if conn is None:
+        return []
+    try:
+        rows = conn.execute(
+            "SELECT trace_id, name, start_time_ms, end_time_ms, status, "
+            "attributes, metrics, session_id, agent_id "
+            "FROM spans WHERE parent_span_id IS NULL "
+            "ORDER BY start_time_ms DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        ).fetchall()
+        traces = []
+        for row in rows:
+            d = dict(row)
+            child_count = conn.execute(
+                "SELECT COUNT(*) FROM spans WHERE trace_id = ? AND parent_span_id IS NOT NULL",
+                (d["trace_id"],),
+            ).fetchone()[0]
+            d["child_count"] = child_count
+            if d.get("attributes"):
+                d["attributes"] = json.loads(d["attributes"])
+            if d.get("metrics"):
+                d["metrics"] = json.loads(d["metrics"])
+            traces.append(d)
+        return traces
+    finally:
+        conn.close()
+
+
+@app.get("/api/traces/{trace_id}")
+async def get_trace(trace_id: str) -> dict:
+    conn = _get_traces_db()
+    if conn is None:
+        return {"error": "no trace database configured"}
+    try:
+        rows = conn.execute(
+            "SELECT * FROM spans WHERE trace_id = ? ORDER BY start_time_ms",
+            (trace_id,),
+        ).fetchall()
+        if not rows:
+            return {"error": "trace not found", "spans": []}
+        spans = []
+        for row in rows:
+            d = dict(row)
+            if d.get("attributes"):
+                d["attributes"] = json.loads(d["attributes"])
+            if d.get("metrics"):
+                d["metrics"] = json.loads(d["metrics"])
+            events = conn.execute(
+                "SELECT * FROM span_events WHERE span_id = ? ORDER BY timestamp_ms",
+                (d["span_id"],),
+            ).fetchall()
+            d["events"] = [dict(e) for e in events]
+            for e in d["events"]:
+                if e.get("attributes"):
+                    e["attributes"] = json.loads(e["attributes"])
+            spans.append(d)
+        return {"trace_id": trace_id, "spans": spans}
+    finally:
+        conn.close()
+
+
+@app.get("/api/traces/stats/summary")
+async def trace_stats() -> dict:
+    conn = _get_traces_db()
+    if conn is None:
+        return {"total_traces": 0, "total_spans": 0}
+    try:
+        total_spans = conn.execute("SELECT COUNT(*) FROM spans").fetchone()[0]
+        total_traces = conn.execute(
+            "SELECT COUNT(DISTINCT trace_id) FROM spans"
+        ).fetchone()[0]
+        by_level = {}
+        for row in conn.execute(
+            "SELECT level, COUNT(*) as cnt FROM spans GROUP BY level"
+        ).fetchall():
+            level_name = {0: "audit", 1: "trace", 2: "operational"}.get(
+                row["level"], str(row["level"])
+            )
+            by_level[level_name] = row["cnt"]
+        return {
+            "total_traces": total_traces,
+            "total_spans": total_spans,
+            "by_level": by_level,
+        }
+    finally:
+        conn.close()
+
+
 @app.get("/api/health")
 async def health() -> dict:
     return {
         "status": "ok",
         "events_buffered": len(_event_buffer),
         "subscribers": len(_subscribers),
+        "traces_db": TRACES_DB or None,
     }
 
 
 dist_dir = Path(__file__).parent / "dist"
 if dist_dir.exists():
-    app.mount("/", StaticFiles(directory=str(dist_dir), html=True),
+    app.mount("/",
+              StaticFiles(directory=str(dist_dir), html=True),
               name="static")
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8082)

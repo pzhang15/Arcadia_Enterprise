@@ -11,6 +11,7 @@ authors = [
 dependencies = [
     "pydantic>=2.9.0",
     "orjson>=3.11",
+    "mirage-ai",
 ]
 
 [build-system]
