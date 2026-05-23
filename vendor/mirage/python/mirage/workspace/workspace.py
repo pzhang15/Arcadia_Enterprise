@@ -23,6 +23,7 @@ from typing import Any
 from mirage.cache.file import io as cache_io
 from mirage.cache.file.config import CacheConfig, RedisCacheConfig
 from mirage.cache.file.ram import RAMFileCacheStore
+from mirage.cache.index import IndexConfig
 from mirage.commands.builtin.general import HISTORY_COMMANDS
 
 try:
@@ -57,7 +58,8 @@ from mirage.workspace.session import (Session, SessionManager,
                                       set_current_session)
 from mirage.workspace.snapshot import (ContentDriftError, apply_state_dict,
                                        build_mount_args, check_drift,
-                                       norm_mount_prefix, read_tar)
+                                       norm_mount_prefix, read_tar,
+                                       requires_resource_override)
 from mirage.workspace.snapshot import snapshot as _write_snapshot
 from mirage.workspace.snapshot import to_state_dict
 from mirage.workspace.types import ExecutionNode, ExecutionRecord
@@ -85,6 +87,7 @@ class Workspace:
         resources: dict[str, BaseResource | tuple],
         cache_limit: str | int = "512MB",
         cache: CacheConfig | None = None,
+        index: IndexConfig | None = None,
         mode: MountMode = MountMode.READ,
         consistency: ConsistencyPolicy = ConsistencyPolicy.LAZY,
         history: int | None = 100,
@@ -136,6 +139,8 @@ class Workspace:
             else:
                 prov = value
                 mount_mode = mode
+            if index is not None:
+                prov.set_index(index)
             self._registry.mount(prefix, prov, mount_mode)
 
         self._fuse = FuseManager()
@@ -410,10 +415,9 @@ class Workspace:
         # GDrive) stay shared between original and copy. Local backends
         # (RAM, Disk) restore their content fresh into the new resources
         # — see snapshot.api.snapshot docstring for the rationale.
-        # Only reuse resources whose state declares needs_override=True
-        # (S3, Redis, GDrive...). Local content resources (RAM, Disk)
-        # are reconstructed fresh so the copy's writes don't clobber
-        # the original's in-process data.
+        # Only reuse resources whose state has redacted secrets or connection
+        # material. Local content resources (RAM, Disk) are reconstructed
+        # fresh so the copy's writes don't clobber the original's data.
         state = to_state_dict(self)
         auto_prefixes = {"/dev/"}
         if self.observer is not None:
@@ -424,8 +428,7 @@ class Workspace:
         }
         resources = {
             m["prefix"]: prefix_to_resource[m["prefix"]]
-            for m in state["mounts"]
-            if m["resource_state"].get("needs_override")
+            for m in state["mounts"] if requires_resource_override(m)
             and m["prefix"] in prefix_to_resource
         }
         return type(self)._from_state(state, resources=resources)

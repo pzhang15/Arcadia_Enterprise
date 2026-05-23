@@ -12,8 +12,8 @@
 // limitations under the License.
 // ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { basename } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import type { Command } from 'commander'
 import { interpolateEnv, loadWorkspaceConfig } from '@struktoai/mirage-server'
 import { parse as yamlParse } from 'yaml'
@@ -31,6 +31,16 @@ function envRecord(): Record<string, string> {
     if (typeof v === 'string') out[k] = v
   }
   return out
+}
+
+function loadConfigArgument(path: string): unknown {
+  if (!existsSync(path)) fail(`config file not found: ${path}`, 2)
+  const text = readFileSync(path, 'utf-8')
+  try {
+    return interpolateEnv(yamlParse(text), envRecord())
+  } catch (err: unknown) {
+    fail(`invalid config YAML/JSON at ${path}: ${String(err)}`, 2)
+  }
 }
 
 interface WorkspaceBrief {
@@ -169,20 +179,9 @@ export function registerWorkspaceCommands(program: Command): void {
     .description('Clone a workspace; defaults to fresh local backings + shared remotes.')
     .argument('<srcId>')
     .option('--id <id>')
-    .option('--override <path>', 'Partial config JSON/YAML for per-mount overrides')
-    .action(async (srcId: string, opts: { id?: string; override?: string }) => {
+    .action(async (srcId: string, opts: { id?: string }) => {
       const body: Record<string, unknown> = {}
       if (opts.id !== undefined) body.id = opts.id
-      if (opts.override !== undefined) {
-        const text = readFileSync(opts.override, 'utf-8')
-        let parsed: unknown
-        try {
-          parsed = yamlParse(text)
-        } catch (err: unknown) {
-          fail(`invalid override YAML/JSON at ${opts.override}: ${String(err)}`, 2)
-        }
-        body.override = interpolateEnv(parsed, envRecord())
-      }
       const c = buildClient()
       await c.ensureRunning({ allowSpawn: false })
       const r = await c.request('POST', `/v1/workspaces/${srcId}/clone`, {
@@ -192,49 +191,34 @@ export function registerWorkspaceCommands(program: Command): void {
     })
 
   ws.command('snapshot')
-    .description('Snapshot a workspace to a tar file.')
+    .description(
+      'Snapshot a workspace to a tar file. The path is resolved to an absolute path and the daemon writes the tar.',
+    )
     .argument('<id>')
     .argument('<output>', 'Path to write the .tar to')
     .action(async (id: string, output: string) => {
       const c = buildClient()
       await c.ensureRunning({ allowSpawn: false })
-      const r = await c.request('GET', `/v1/workspaces/${id}/snapshot`)
-      if (r.status >= 400) {
-        fail(`daemon error ${String(r.status)}: ${await r.text()}`, 2)
-      }
-      const buf = Buffer.from(await r.arrayBuffer())
-      writeFileSync(output, buf)
-      emit(
-        { workspaceId: id, path: output, bytes: buf.length },
-        (d) => `Snapshot ${d.workspaceId} -> ${d.path} (${d.bytes.toLocaleString()} bytes).`,
-      )
+      const r = await c.request('POST', `/v1/workspaces/${id}/snapshot`, {
+        body: JSON.stringify({ path: resolve(output) }),
+      })
+      const d = (await handleResponse(r)) as { id: string; path: string; size: number }
+      emit(d, (x) => `Snapshot ${x.id} -> ${x.path} (${x.size.toLocaleString()} bytes).`)
     })
 
   ws.command('load')
     .description('Load a workspace from a tar file.')
     .argument('<tar>', 'Path to a .tar produced by `mirage workspace snapshot`')
+    .argument('[config]', 'Workspace YAML/JSON config')
     .option('--id <id>', 'Explicit workspace id')
-    .option('--override <path>', 'Partial config YAML/JSON for per-mount overrides')
-    .action(async (tarPath: string, opts: { id?: string; override?: string }) => {
+    .action(async (tarPath: string, configPath: string | undefined, opts: { id?: string }) => {
       if (!existsSync(tarPath)) fail(`tar file not found: ${tarPath}`, 2)
-      const tarBuf = readFileSync(tarPath)
-      const form = new FormData()
-      form.append('tar', new Blob([tarBuf], { type: 'application/x-tar' }), basename(tarPath))
-      if (opts.id !== undefined) form.append('id', opts.id)
-      if (opts.override !== undefined) {
-        const overrideText = readFileSync(opts.override, 'utf-8')
-        let parsed: unknown
-        try {
-          parsed = yamlParse(overrideText)
-        } catch (err: unknown) {
-          fail(`invalid override YAML/JSON at ${opts.override}: ${String(err)}`, 2)
-        }
-        form.append('override', JSON.stringify(interpolateEnv(parsed, envRecord())))
-      }
+      const body: { path: string; id?: string; override?: unknown } = { path: resolve(tarPath) }
+      if (opts.id !== undefined) body.id = opts.id
+      if (configPath !== undefined) body.override = loadConfigArgument(configPath)
       const c = buildClient()
       await c.ensureRunning({ allowSpawn: true })
-      const r = await c.requestMultipart('POST', '/v1/workspaces/load', form)
-      if (r.status >= 400) fail(`load failed: ${await r.text()}`, 2)
+      const r = await c.request('POST', '/v1/workspaces/load', { body: JSON.stringify(body) })
       emit((await handleResponse(r)) as WorkspaceDetail, formatWorkspaceDetail)
     })
 }
