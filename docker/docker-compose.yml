@@ -3,9 +3,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    command: >
-      uv run --directory /app/packages/lineage
-      python /app/docker/generate_traces.py
+    command: uv run python /app/docker/generate_traces.py
     volumes:
       - trace-data:/app/data
 

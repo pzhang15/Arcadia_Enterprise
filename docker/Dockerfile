@@ -28,7 +28,7 @@ COPY packages/policy /app/packages/policy
 COPY packages/workspace-vfs /app/packages/workspace-vfs
 RUN uv sync --no-dev
 
-WORKDIR /app/packages/lineage
+WORKDIR /app
 RUN uv sync --no-dev
 
 COPY docker/mock_server.py /app/docker/mock_server.py
