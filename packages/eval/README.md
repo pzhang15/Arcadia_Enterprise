@@ -13,7 +13,7 @@ What you get:
 - **Enterprise Portal** showing simulated department tools (IT helpdesk, HR, Finance, Engineering, Customer Support, Compliance) with realistic seed data.
 - **Agent Console** where users assign cross-department tasks and watch the AI agent work in real-time.
 
----
+______________________________________________________________________
 
 ## 1. Install
 
@@ -39,9 +39,8 @@ OPENAI_MODEL=kimi-k2.6
 ## 2. Seed (once per scenario)
 
 ```bash
-uv run mirage-eval seed --scenario acme_corp
+uv run mirage-eval seed --scenario northhill_corp
 uv run mirage-eval seed --scenario onboarding_it
-uv run mirage-eval seed --scenario meridian_labs
 ```
 
 ## 3. Start the Docker stack (recommended)
@@ -86,7 +85,7 @@ uv run python ../../vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode d
 uv run python ../../vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode local
 ```
 
-The agent connects via MCP, discovers the `execute` tool, and uses shell commands (`ls`, `cat`, `jq`, `grep`) to investigate the Meridian Labs incident across all 5 services.
+The agent connects via MCP, discovers the `execute` tool, and uses shell commands (`ls`, `cat`, `jq`, `grep`) to investigate the NorthHill Corp enterprise data across all services.
 
 ## 5. Connect from Cursor or Claude Desktop
 
@@ -97,7 +96,7 @@ Add to your MCP config:
   "mcpServers": {
     "mirage": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/arcadia/packages/eval", "mirage-mcp", "--scenario", "meridian_labs"]
+      "args": ["run", "--directory", "/path/to/arcadia/packages/eval", "mirage-mcp", "--scenario", "northhill_corp"]
     }
   }
 }
@@ -110,13 +109,13 @@ Or connect to the Docker MCP server at `http://localhost:8081/mcp`.
 ```bash
 # Single task
 uv run mirage-eval run \
-  --scenario meridian_labs \
-  --task incident_investigation \
+  --scenario northhill_corp \
+  --task enterprise_review \
   --model gpt-5-mini --seed 1
 
 # Full sweep
 uv run mirage-eval sweep \
-  --scenario meridian_labs \
+  --scenario northhill_corp \
   --models gpt-5-mini --seeds 1 --yes
 ```
 
@@ -130,12 +129,11 @@ uv run pytest
 
 ## Scenarios
 
-| Scenario        | Domain                             | Services                                                       |
-| --------------- | ---------------------------------- | -------------------------------------------------------------- |
-| `acme_corp`     | Full enterprise (6 departments)    | Slack, Sheets, Docs, ITSM, GitHub, PagerDuty, Datadog, Finance, CRM, Compliance |
-| `onboarding_it` | HR onboarding + IT helpdesk        | Slack, GSheets, GDocs, ITSM                                    |
-| `meridian_labs` | SRE incident response              | Slack, Jira, GitHub, PagerDuty, Datadog                        |
-| `bi_analytics`  | (placeholder)                      | ---                                                            |
+| Scenario        | Domain                          | Services                                                                        |
+| --------------- | ------------------------------- | ------------------------------------------------------------------------------- |
+| `northhill_corp` | Full enterprise (6 departments) | Slack, Sheets, Docs, ITSM, GitHub, PagerDuty, Datadog, Finance, CRM, Compliance |
+| `onboarding_it`  | HR onboarding + IT helpdesk     | Slack, GSheets, GDocs, ITSM                                                     |
+| `bi_analytics`   | (placeholder)                   | ---                                                                             |
 
 ## Adding a scenario
 
@@ -146,7 +144,7 @@ uv run mirage-eval seed --scenario my_scenario
 uv run mirage-eval run --scenario my_scenario --task <id>
 ```
 
----
+______________________________________________________________________
 
 ## Apps
 
@@ -154,13 +152,13 @@ uv run mirage-eval run --scenario my_scenario --task <id>
 
 Real-time observability dashboard for agent sessions. Shows every command the agent runs, every resource it touches, and how it scores.
 
-| View | What it shows |
-|---|---|
+| View             | What it shows                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------- |
 | Command Timeline | Live stream of every `execute()` call — command, exit code, timing, stdout, mount I/O |
-| MCP Traffic | JSON-RPC request/response pairs for the MCP protocol layer |
-| Request Log | HTTP requests hitting the mock backend services, filterable by service |
-| Resource Map | Which mounts the agent touched, read/write counts, bytes transferred |
-| Scorecard | Eval results — composite scores, gate pass/fail, judge rubric, failure modes |
+| MCP Traffic      | JSON-RPC request/response pairs for the MCP protocol layer                            |
+| Request Log      | HTTP requests hitting the mock backend services, filterable by service                |
+| Resource Map     | Which mounts the agent touched, read/write counts, bytes transferred                  |
+| Scorecard        | Eval results — composite scores, gate pass/fail, judge rubric, failure modes          |
 
 Open http://localhost:8082 (Docker) or run in dev mode:
 
@@ -173,14 +171,14 @@ cd frontends/observability && npm install && npm run dev   # http://localhost:51
 
 Simulates the enterprise tools employees use daily — ServiceNow, Workday, Zendesk, etc. — organized by department.
 
-| Department | What it shows |
-|---|---|
-| IT Helpdesk | Ticket queue (ServiceNow-style), filterable by status/priority |
-| HR & People | Employee directory, onboarding tracker, PTO calendar |
-| Finance | Expense report queue, purchase orders, department budgets |
-| Engineering | Active incidents, deployment log, monitoring alerts |
-| Customer Support | Support tickets (Zendesk-style), account health cards |
-| Compliance | Contract review queue, audit checklists, policy acknowledgments |
+| Department       | What it shows                                                   |
+| ---------------- | --------------------------------------------------------------- |
+| IT Helpdesk      | Ticket queue (ServiceNow-style), filterable by status/priority  |
+| HR & People      | Employee directory, onboarding tracker, PTO calendar            |
+| Finance          | Expense report queue, purchase orders, department budgets       |
+| Engineering      | Active incidents, deployment log, monitoring alerts             |
+| Customer Support | Support tickets (Zendesk-style), account health cards           |
+| Compliance       | Contract review queue, audit checklists, policy acknowledgments |
 
 Open http://localhost:8083 (Docker) or run in dev mode:
 
@@ -194,9 +192,9 @@ cd frontends/portal && npm install && npm run dev   # http://localhost:5174
 The interactive AI agent workspace. Users select which department services to connect, describe a task in natural language, and watch the agent work across services in real-time.
 
 1. **Service Connector** — toggle which departments the agent can access
-2. **Task Dialog** — type a task or use quick-action presets
-3. **Live Execution** — watch the agent run commands in real-time via SSE
-4. **Results Summary** — see what the agent accomplished: services touched, files created, structured report
+1. **Task Dialog** — type a task or use quick-action presets
+1. **Live Execution** — watch the agent run commands in real-time via SSE
+1. **Results Summary** — see what the agent accomplished: services touched, files created, structured report
 
 Open http://localhost:8084 (Docker) or run in dev mode:
 

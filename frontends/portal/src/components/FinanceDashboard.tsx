@@ -50,7 +50,7 @@ export default function FinanceDashboard() {
       <div className="empty-state">
         <div className="empty-state-icon">💰</div>
         <div className="empty-state-text">
-          No finance data found. Run <code>uv run mirage-eval seed --scenario acme_corp</code> to generate data.
+          No finance data found. Run <code>uv run mirage-eval seed --scenario northhill_corp</code> to generate data.
         </div>
       </div>
     );

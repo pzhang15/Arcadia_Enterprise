@@ -8,8 +8,6 @@ gates from the task YAML."""
 import asyncio
 
 import pytest
-
-from mirage_eval.config import TaskConfig
 from mirage_eval.scenario import ScenarioManifest
 
 
@@ -55,8 +53,7 @@ async def test_onboarding_status_oracle_pipeline_writes_required_file(
         "- Diana (HR): owns Day-1 checklist; latest DM 2026-05-12.\n"
         "- Sam (IT Lead): owns INC-1003 SSO sequencing; DM 2026-05-12.\n"
         "- Priya (IT Agent): owns INC-1001 and INC-1005 follow-up.\n")
-    write_cmd = (
-        "cat > /onboarding_status.md <<'EOF'\n" + body + "EOF")
+    write_cmd = ("cat > /onboarding_status.md <<'EOF'\n" + body + "EOF")
     result = await ws.execute(write_cmd)
     assert result.exit_code == 0
     check = await ws.execute("cat /onboarding_status.md")
@@ -76,7 +73,7 @@ async def test_helpdesk_ticket_comment_add_writes_comment(l1_workspace):
     ws = l1_workspace
     add = await ws.execute(
         "helpdesk-ticket-comment-add --ticket INC-1004 "
-        "--author U104 --body 'GitHub invite sent to alex.rivera@acme.com'")
+        "--author U104 --body 'GitHub invite sent to alex.rivera@northhill.com'")
     assert add.exit_code == 0, (add.stderr or b"").decode()
     check = await ws.execute(
         "cat /tickets/queues/it-helpdesk/open/INC-1004*.json | "
@@ -92,8 +89,7 @@ async def test_helpdesk_ticket_transition_moves_file(l1_workspace):
     txn = await ws.execute(
         "helpdesk-ticket-transition --ticket INC-1006 --status resolved")
     assert txn.exit_code == 0, (txn.stderr or b"").decode()
-    open_listing = await ws.execute(
-        "ls /tickets/queues/it-helpdesk/open/")
+    open_listing = await ws.execute("ls /tickets/queues/it-helpdesk/open/")
     resolved_listing = await ws.execute(
         "ls /tickets/queues/it-helpdesk/resolved/")
     assert "INC-1006" not in (open_listing.stdout or b"").decode()

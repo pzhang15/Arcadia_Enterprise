@@ -1,5 +1,5 @@
 id: onboarding_it
-name: ACME Corp new-hire onboarding + IT helpdesk
+name: NorthHill Corp new-hire onboarding + IT helpdesk
 description: |
   Cross-domain enterprise tasks spanning HR onboarding (GSheets + GDocs),
   IT helpdesk ticketing (FakeTicketingResource at both L1 and L2 in v1),

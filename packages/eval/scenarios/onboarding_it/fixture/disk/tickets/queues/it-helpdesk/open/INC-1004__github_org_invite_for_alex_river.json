@@ -1,11 +1,11 @@
 {
   "ticket_id": "INC-1004",
-  "subject": "GitHub org invite for Alex Rivera (acme-platform)",
-  "body": "Per Access Matrix (sheet SH103), Software Engineer / Platform role requires membership in github.com/acme-platform. Send invite to alex.rivera@acme.com and close once accepted (per IT Runbook GD102).",
+  "subject": "GitHub org invite for Alex Rivera (northhill-platform)",
+  "body": "Per Access Matrix (sheet SH103), Software Engineer / Platform role requires membership in github.com/northhill-platform. Send invite to alex.rivera@northhill.com and close once accepted (per IT Runbook GD102).",
   "requester": {
     "id": "U101",
     "name": "Alex Rivera",
-    "email": "alex.rivera@acme.com"
+    "email": "alex.rivera@northhill.com"
   },
   "assignee": null,
   "queue": "it-helpdesk",

@@ -1,2 +1,0 @@
-{"type": "message", "user": "U007", "text": "Root cause identified: commit a1b2c3 changed Redis TTL from 3600 to 60 (seconds). This was a typo. Rolling back now.", "ts": "1715673000.000100", "team": "T_MERIDIAN"}
-{"type": "message", "user": "U001", "text": "Rollback confirmed. Token refresh success rate back to 99.97%. Scheduling postmortem for Friday.", "ts": "1715674800.000100", "team": "T_MERIDIAN"}

@@ -73,7 +73,7 @@ export default function App() {
     <div className="app-layout">
       <nav className="sidebar">
         <div className="sidebar-logo">
-          ACME Corp <span>portal</span>
+          NorthHill Corp <span>portal</span>
         </div>
         <div className="sidebar-section">Departments</div>
         {NAV.map((item) => (
@@ -89,7 +89,7 @@ export default function App() {
         <div className="sidebar-footer">
           <div className="connection-status">
             <div className="connection-dot connected" />
-            ACME Enterprise
+            NorthHill Enterprise
           </div>
         </div>
       </nav>

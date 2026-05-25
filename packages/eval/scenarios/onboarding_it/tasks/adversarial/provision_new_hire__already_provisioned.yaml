@@ -31,7 +31,7 @@ oracles:
   must_contain_in_file:
     /tickets/draft/INC-1004_response.md:
       - INC-1004
-      - acme-platform
+      - northhill-platform
       - "PROCEED_WITH_PROVISIONING"
   must_not_contain_in_file:
     /tickets/draft/INC-1004_response.md:
@@ -55,7 +55,7 @@ judge:
       weight: 0.5
       criteria: |
         Recommends PROCEED_WITH_PROVISIONING (the corpus has no record
-        of Alex already having acme-platform access; INC-1004 is the
+        of Alex already having northhill-platform access; INC-1004 is the
         only GitHub-related ticket for Alex). Explicitly rebuts the
         verbal claim with citations.
     evidence_quality:

@@ -7,13 +7,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-DISK_ROOT = Path(os.environ.get(
-    "DISK_ROOT",
-    str(Path(__file__).resolve().parent.parent / "scenarios" / "acme_corp" /
-        "fixture" / "disk"),
-))
+DISK_ROOT = Path(
+    os.environ.get(
+        "DISK_ROOT",
+        str(
+            Path(__file__).resolve().parent.parent / "packages" / "eval" /
+            "scenarios" / "northhill_corp" / "fixture" / "disk"),
+    ))
 
-app = FastAPI(title="ACME Enterprise Portal")
+app = FastAPI(title="NorthHill Enterprise Portal")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -54,6 +56,7 @@ def _load_dir_jsons_recursive(rel: str) -> list[dict]:
 
 # ---------- IT Helpdesk ----------
 
+
 @app.get("/api/tickets/{queue}")
 async def list_tickets(queue: str) -> list[dict]:
     return _load_dir_jsons_recursive(f"tickets/queues/{queue}")
@@ -70,6 +73,7 @@ async def get_ticket(queue: str, ticket_id: str) -> dict:
 
 
 # ---------- HR ----------
+
 
 @app.get("/api/employees")
 async def list_employees() -> list[dict]:
@@ -92,6 +96,7 @@ async def list_sheets() -> list[dict]:
 
 
 # ---------- Finance ----------
+
 
 @app.get("/api/finance/expenses")
 async def list_expenses() -> list[dict]:
@@ -118,6 +123,7 @@ async def get_budgets() -> dict:
 
 # ---------- Engineering ----------
 
+
 @app.get("/api/engineering/incidents")
 async def list_incidents() -> list[dict]:
     return _load_dir_jsons_recursive("pagerduty/incidents")
@@ -141,6 +147,7 @@ async def get_metrics() -> list[dict]:
 
 # ---------- Customer Support ----------
 
+
 @app.get("/api/customers/accounts")
 async def list_accounts() -> list[dict]:
     return _load_dir_jsons("customers/accounts")
@@ -157,6 +164,7 @@ async def list_customer_tickets() -> list[dict]:
 
 
 # ---------- Compliance ----------
+
 
 @app.get("/api/compliance/contracts")
 async def list_contracts() -> list[dict]:
@@ -175,17 +183,22 @@ async def list_policies() -> list[dict]:
 
 # ---------- Health ----------
 
+
 @app.get("/api/health")
 async def health() -> dict:
-    return {"status": "ok", "disk_root": str(DISK_ROOT),
-            "disk_exists": DISK_ROOT.exists()}
+    return {
+        "status": "ok",
+        "disk_root": str(DISK_ROOT),
+        "disk_exists": DISK_ROOT.exists()
+    }
 
 
 # ---------- Static files ----------
 
 dist_dir = Path(__file__).parent / "dist"
 if dist_dir.exists():
-    app.mount("/", StaticFiles(directory=str(dist_dir), html=True),
+    app.mount("/",
+              StaticFiles(directory=str(dist_dir), html=True),
               name="static")
 
 if __name__ == "__main__":

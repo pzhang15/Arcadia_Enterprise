@@ -71,7 +71,7 @@ services:
     working_dir: /app/packages/eval
     command: >
       uv run mirage-mcp
-      --scenario meridian_labs
+      --scenario northhill_corp
       --transport streamable-http
       --host 0.0.0.0
     ports:
@@ -92,7 +92,7 @@ services:
     environment:
       - DISK_ROOT=/app/fixture
     volumes:
-      - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
+      - ../packages/eval/scenarios/northhill_corp/fixture/disk:/app/fixture:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8083/api/health"]
       interval: 5s
@@ -114,7 +114,7 @@ services:
       - RELAY_URL=http://observability:8082
       - DISK_ROOT=/app/fixture
     volumes:
-      - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
+      - ../packages/eval/scenarios/northhill_corp/fixture/disk:/app/fixture:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8084/api/health"]
       interval: 5s

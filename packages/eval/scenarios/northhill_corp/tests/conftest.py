@@ -3,14 +3,13 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from scenarios.onboarding_it import seed
-from scenarios.onboarding_it.mounts import build_l1_workspace
+from scenarios.northhill_corp import seed
+from scenarios.northhill_corp.mounts import build_l1_workspace
 
 
 @pytest.fixture
 def disk_root() -> Path:
-    """A fresh on-disk corpus for the test, wiped on teardown."""
-    td = Path(tempfile.mkdtemp(prefix="mirage-eval-test-"))
+    td = Path(tempfile.mkdtemp(prefix="mirage-eval-nh-"))
     try:
         seed.main(td, clean=True)
         yield td

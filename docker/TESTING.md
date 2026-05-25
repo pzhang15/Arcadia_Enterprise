@@ -13,8 +13,8 @@ From the repo root:
 ```bash
 # 1. Seed all scenarios (writes fixture JSON to disk — needed before Docker build)
 cd packages/eval
-uv run mirage-eval seed --scenario acme_corp
-uv run mirage-eval seed --scenario meridian_labs
+uv run mirage-eval seed --scenario northhill_corp
+uv run mirage-eval seed --scenario northhill_corp
 uv run mirage-eval seed --scenario onboarding_it
 
 # 2. Build and start the full stack
@@ -35,11 +35,11 @@ Then the remaining services start in dependency order.
 | Service         | Port | URL                            | Data source        |
 |-----------------|------|--------------------------------|--------------------|
 | observability   | 8082 | http://localhost:8082           | Trace SQLite + SSE |
-| portal          | 8083 | http://localhost:8083           | ACME Corp fixture  |
-| console         | 8084 | http://localhost:8084           | ACME Corp fixture  |
-| mock-services   | 3000 | http://localhost:3000           | Meridian Labs seed |
+| portal          | 8083 | http://localhost:8083           | NorthHill Corp fixture  |
+| console         | 8084 | http://localhost:8084           | NorthHill Corp fixture  |
+| mock-services   | 3000 | http://localhost:3000           | NorthHill Corp seed |
 | mirage-api      | 8080 | http://localhost:8080           | Mirage HTTP daemon |
-| mirage-mcp      | 8081 | http://localhost:8081/mcp       | Meridian Labs MCP  |
+| mirage-mcp      | 8081 | http://localhost:8081/mcp       | NorthHill Corp MCP  |
 
 ## Health Checks
 
@@ -52,7 +52,7 @@ curl -sf http://localhost:8084/api/health
 
 ## Verifying Seed Data
 
-### Portal (ACME Corp departments)
+### Portal (NorthHill Corp departments)
 
 ```bash
 # IT tickets
@@ -85,7 +85,7 @@ curl -s http://localhost:8082/api/traces/stats/summary | python3 -m json.tool
 curl -s 'http://localhost:8082/api/traces?limit=5' | python3 -m json.tool | head -30
 ```
 
-### Mock Services (Meridian Labs)
+### Mock Services (NorthHill Corp)
 
 ```bash
 curl -s http://localhost:3000/slack/api/users.list | python3 -m json.tool | head -20
@@ -101,8 +101,8 @@ curl -s http://localhost:3000/finance/expenses | python3 -m json.tool | head -20
 # From the repo root — run everything
 cd packages/eval && uv run pytest
 
-# ACME Corp seed + workspace + portal data tests (64 tests)
-uv run pytest scenarios/acme_corp/tests/ -v
+# NorthHill Corp seed + workspace + portal data tests (64 tests)
+uv run pytest scenarios/northhill_corp/tests/ -v
 
 # Lineage / trace pipeline tests (67 tests)
 cd ../../
@@ -127,7 +127,7 @@ uv run pytest packages/lineage/tests/ packages/eval/ -v
 | `test_span.py` | 8 | Span/SpanEvent/SpanMetrics construction |
 | `test_mirage_ops_contract.py` | 6 | OpRecord field contracts with mirage |
 
-**ACME Corp tests** (`packages/eval/scenarios/acme_corp/tests/`):
+**NorthHill Corp tests** (`packages/eval/scenarios/northhill_corp/tests/`):
 
 | File | Tests | Coverage |
 |------|-------|----------|
@@ -148,7 +148,7 @@ pre-commit run --all-files
 
 ```bash
 cd packages/eval
-uv run mirage-eval seed --scenario acme_corp
+uv run mirage-eval seed --scenario northhill_corp
 ```
 
 ### 2. Start the portal
@@ -160,7 +160,7 @@ python server.py
 # → http://localhost:8083
 ```
 
-The portal auto-detects seed data at `packages/eval/scenarios/acme_corp/fixture/disk/`.
+The portal auto-detects seed data at `packages/eval/scenarios/northhill_corp/fixture/disk/`.
 
 ### 3. Generate traces + start observability
 

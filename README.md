@@ -89,8 +89,8 @@ uv sync
 
 # Seed and run an eval scenario
 cd packages/eval
-uv run mirage-eval seed --scenario meridian_labs
-uv run mirage-eval run --scenario meridian_labs --task incident_investigation --model gpt-5-mini --seed 1
+uv run mirage-eval seed --scenario northhill_corp
+uv run mirage-eval run --scenario northhill_corp --task enterprise_review --model gpt-5-mini --seed 1
 
 # Or start everything in Docker
 cd docker
@@ -105,9 +105,9 @@ git subtree pull --prefix=vendor/mirage upstream main --squash
 
 ## Roadmap
 
-| Phase | Sources | Timeline |
-|-------|---------|----------|
-| MVP | Iceberg, Snowflake, PostgreSQL, Jira, S3/GCS | Months 1–9 |
-| v1.1 | Delta Lake, Salesforce, GitHub, Google Workspace, MySQL | Months 9–12 |
-| v1.2 | BigQuery, MongoDB, Vector Stores, Slack, Confluence | Months 12–18 |
-| v2 | Hudi, DynamoDB, ServiceNow, Datadog, Elasticsearch | Months 18+ |
+| Phase | Sources                                                 | Timeline     |
+| ----- | ------------------------------------------------------- | ------------ |
+| MVP   | Iceberg, Snowflake, PostgreSQL, Jira, S3/GCS            | Months 1–9   |
+| v1.1  | Delta Lake, Salesforce, GitHub, Google Workspace, MySQL | Months 9–12  |
+| v1.2  | BigQuery, MongoDB, Vector Stores, Slack, Confluence     | Months 12–18 |
+| v2    | Hudi, DynamoDB, ServiceNow, Datadog, Elasticsearch      | Months 18+   |

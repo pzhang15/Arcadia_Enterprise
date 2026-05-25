@@ -31,7 +31,6 @@ def test_load_each_task_validates():
         assert task.id
         assert task.prompt
         assert task.judge.rubric
-        weights = sum(item.weight
-                      for item in task.judge.rubric.values())
+        weights = sum(item.weight for item in task.judge.rubric.values())
         assert 0.99 <= weights <= 1.01, (
             f"{p.stem} weights sum to {weights}, expected ~1.0")

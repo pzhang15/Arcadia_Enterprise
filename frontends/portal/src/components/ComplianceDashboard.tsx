@@ -53,7 +53,7 @@ export default function ComplianceDashboard() {
       <div className="empty-state">
         <div className="empty-state-icon">📋</div>
         <div className="empty-state-text">
-          No compliance data found. Run <code>uv run mirage-eval seed --scenario acme_corp</code> to generate data.
+          No compliance data found. Run <code>uv run mirage-eval seed --scenario northhill_corp</code> to generate data.
         </div>
       </div>
     );

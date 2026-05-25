@@ -51,7 +51,7 @@ packages/eval/
 │
 ├── scenarios/                     # ── Per-scenario data + tasks ──
 │   │
-│   ├── acme_corp/                 # Full enterprise (6 departments, 28 employees, 143 files)
+│   ├── northhill_corp/             # Full enterprise (6 departments, 28 employees, 143 files)
 │   │   ├── scenario.yaml          #   Manifest (id, builders, paths)
 │   │   ├── seed.py                #   Generates all department data
 │   │   ├── mounts.py              #   build_l1_workspace (11 mounts)
@@ -61,7 +61,7 @@ packages/eval/
 │   │   ├── tests/
 │   │   └── fixture/               #   Seed output (gitignored)
 │   │
-│   ├── onboarding_it/             # ACME Corp HR + IT helpdesk
+│   ├── onboarding_it/             # NorthHill Corp HR + IT helpdesk
 │   │   ├── scenario.yaml
 │   │   ├── seed.py                #   Generates Slack/Sheets/Docs/Tickets corpus
 │   │   ├── mounts.py              #   build_l1_workspace (6 mounts)
@@ -76,7 +76,7 @@ packages/eval/
 │   │   ├── tests/
 │   │   └── fixture/
 │   │
-│   ├── meridian_labs/             # SRE incident response (fintech)
+│   ├── bi_analytics/              # BI analytics (placeholder)
 │   │   ├── scenario.yaml
 │   │   ├── seed.py                #   Generates Slack/Tickets/GitHub/PagerDuty/Datadog
 │   │   ├── mounts.py              #   build_l1_workspace (6 mounts)
@@ -139,7 +139,7 @@ docker/docker-compose.yml defines 6 services:
        ↑ depends_on
   mirage-api    (:8080)  ← Mirage HTTP daemon (workspace CRUD + execute)
   mirage-mcp    (:8081)  ← MCP server over streamable-http
-  portal        (:8083)  ← Enterprise portal (frontends/portal, reads acme_corp fixture)
+  portal        (:8083)  ← Enterprise portal (frontends/portal, reads northhill_corp fixture)
   console       (:8084)  ← Agent console (frontends/console, session manager + agent runner)
 ```
 
@@ -163,20 +163,26 @@ Browser (Observability UI or Agent Console)
 ## Key data shapes
 
 ### OpRecord (python/mirage/observe/record.py)
+
 Fields: op, path, source, bytes, timestamp, duration_ms, mount_prefix, fingerprint, revision
 
 ### LogEntry (python/mirage/observe/log_entry.py)
+
 Two types:
+
 - `type="op"`: agent, session, timestamp, op, path, source, bytes, duration_ms
 - `type="command"`: agent, session, timestamp, command, exit_code, stdout (truncated 4096)
 
 ### ExecutionRecord (python/mirage/workspace/types.py)
+
 Fields: agent, command, stdout, stdin, exit_code, tree (ExecutionNode), timestamp, session_id
 
 ### ScoreCard (enterprise/mirage_eval/scorers/composite.py)
+
 Fields: scenario_id, task_id, surface, model, seed, sweep_id, passed_gates, programmatic, trajectory, judge, composite, failure_modes, error
 
 ### Event types emitted to relay
+
 - `mcp_tool_call`: tool, arguments, result, result_bytes, duration_ms, error
 - `command`: agent, session, command, exit_code, stdout
 - `op`: agent, session, op, path, source, bytes, duration_ms, mount_prefix
@@ -186,9 +192,10 @@ Fields: scenario_id, task_id, surface, model, seed, sweep_id, passed_gates, prog
 ## Scenario seed pattern
 
 Each scenario has a `seed.py` with a `main(root, *, clean=True) -> Path` function that:
+
 1. Creates the `fixture/disk/` directory tree
-2. Writes JSON files organized by service mount (slack/, tickets/, sheets/, etc.)
-3. Returns the root path
+1. Writes JSON files organized by service mount (slack/, tickets/, sheets/, etc.)
+1. Returns the root path
 
 The `scenario.yaml` references the seed function via `fixture.seed: scenarios.<name>.seed:main`.
 
@@ -197,18 +204,20 @@ The `mounts.py` creates a Workspace with mounts pointing at the seed output. Eac
 ## Fixture resource pattern
 
 All fake resources extend `mirage.resource.disk.DiskResource`:
+
 - Define a `PROMPT` class variable describing the filesystem layout
 - Optionally define `WRITE_PROMPT` and register `@command` functions for mutation
 - Constructor takes `root: Path` and passes to `super().__init__(root)`
 
 To add a new service:
-1. Create `enterprise/mirage_eval/fixtures/fake_<service>.py` with `Fake<Service>Resource(DiskResource)`
-2. Add to `fixtures/__init__.py`
-3. Add seed data generation to the scenario's `seed.py`
-4. Add mount in the scenario's `mounts.py`
-5. Optionally add mock HTTP endpoints in `docker/mock_server.py`
 
-## acme_corp scenario: cross-reference map
+1. Create `enterprise/mirage_eval/fixtures/fake_<service>.py` with `Fake<Service>Resource(DiskResource)`
+1. Add to `fixtures/__init__.py`
+1. Add seed data generation to the scenario's `seed.py`
+1. Add mount in the scenario's `mounts.py`
+1. Optionally add mock HTTP endpoints in `docker/mock_server.py`
+
+## northhill_corp scenario: cross-reference map
 
 ```
 INC-5521 (PagerDuty triggered)

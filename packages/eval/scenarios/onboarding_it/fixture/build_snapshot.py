@@ -6,8 +6,7 @@ from scenarios.onboarding_it import seed
 from scenarios.onboarding_it.mounts import (DEFAULT_DISK_ROOT,
                                             build_l1_workspace)
 
-DEFAULT_SNAPSHOT = (
-    Path(__file__).resolve().parent / "corpus.tar")
+DEFAULT_SNAPSHOT = (Path(__file__).resolve().parent / "corpus.tar")
 
 
 def build(disk_root: str | Path | None = None,

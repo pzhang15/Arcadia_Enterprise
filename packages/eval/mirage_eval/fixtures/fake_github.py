@@ -12,9 +12,9 @@ PROMPT = """\
   Pull request JSON: number, title, user.login, state, merged, head, base, body.
 
   Listing helpers:
-    ls   {prefix}/repos/meridian-labs/payments-api/deployments/
-    cat  {prefix}/repos/meridian-labs/payments-api/commits/f3a1b2c8.json
-    jq  '.commit.message' {prefix}/repos/meridian-labs/payments-api/commits/*.json"""
+    ls   {prefix}/repos/northhill/platform-api/deployments/
+    cat  {prefix}/repos/northhill/platform-api/commits/f3a1b2c8.json
+    jq  '.commit.message' {prefix}/repos/northhill/platform-api/commits/*.json"""
 
 WRITE_PROMPT = ""
 

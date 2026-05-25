@@ -35,8 +35,7 @@ COPY docker/mock_server.py /app/docker/mock_server.py
 COPY docker/generate_traces.py /app/docker/generate_traces.py
 
 RUN uv run --directory /app/packages/eval mirage-eval seed --scenario onboarding_it
-RUN uv run --directory /app/packages/eval mirage-eval seed --scenario meridian_labs
-RUN uv run --directory /app/packages/eval mirage-eval seed --scenario acme_corp
+RUN uv run --directory /app/packages/eval mirage-eval seed --scenario northhill_corp
 
 WORKDIR /app
 EXPOSE 3000 8080 8081

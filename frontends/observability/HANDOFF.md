@@ -40,7 +40,7 @@ flowchart TB
     Scorer --> Results
 ```
 
----
+______________________________________________________________________
 
 ## Layer 1: MCP Protocol Traffic
 
@@ -66,7 +66,7 @@ flowchart TB
 
 **Recommended file:** Add event emission to `enterprise/mirage_eval/mcp_server.py` around the `execute` function body (before/after `await _ws.execute(command)`).
 
----
+______________________________________________________________________
 
 ## Layer 2: Workspace Execution (richest data source)
 
@@ -78,16 +78,16 @@ File: `python/mirage/workspace/history.py`
 
 Each command produces an `ExecutionRecord` with:
 
-| Field | Type | UI use |
-|---|---|---|
-| `agent` | str | Who ran it |
-| `command` | str | Full command text |
-| `stdout` | str | **Full** decoded output (not truncated) |
-| `stdin` | str or null | Piped input |
-| `exit_code` | int | Color red/green |
-| `timestamp` | float (seconds) | Timeline position |
-| `session_id` | str | Group by session |
-| `tree` | nested dict | **Parse tree** of pipes, &&, sub-shells |
+| Field        | Type            | UI use                                  |
+| ------------ | --------------- | --------------------------------------- |
+| `agent`      | str             | Who ran it                              |
+| `command`    | str             | Full command text                       |
+| `stdout`     | str             | **Full** decoded output (not truncated) |
+| `stdin`      | str or null     | Piped input                             |
+| `exit_code`  | int             | Color red/green                         |
+| `timestamp`  | float (seconds) | Timeline position                       |
+| `session_id` | str             | Group by session                        |
+| `tree`       | nested dict     | **Parse tree** of pipes, &&, sub-shells |
 
 The `tree` contains `ExecutionNode.to_dict()` with nested `children`, `records` (full `OpRecord` list per node including `mount_prefix`, `fingerprint`, `revision`), and per-node `stderr`.
 
@@ -100,11 +100,13 @@ File: `python/mirage/observe/observer.py`, `log_entry.py`
 Written to `/.sessions/{YYYY-MM-DD}/{session_id}.jsonl`. Two line types:
 
 **Op lines:**
+
 ```json
 {"type":"op","agent":"mcp-server","session":"default","timestamp":1715759400000,"op":"read","path":"/pagerduty/incidents/triggered/INC-5521.json","source":"disk","bytes":1234,"duration_ms":2}
 ```
 
 **Command lines:**
+
 ```json
 {"type":"command","agent":"mcp-server","session":"default","timestamp":1715759400000,"command":"cat /pagerduty/incidents/triggered/INC-5521.json","exit_code":0,"stdout":"(first 4096 chars)"}
 ```
@@ -115,21 +117,21 @@ Written to `/.sessions/{YYYY-MM-DD}/{session_id}.jsonl`. Two line types:
 
 File: `python/mirage/observe/record.py`
 
-| Field | Type | UI use |
-|---|---|---|
-| `op` | str | read/write/stat/readdir/append/mkdir/unlink |
-| `path` | str | Virtual path accessed |
-| `source` | str | Resource type (disk, ram, s3, slack, etc.) |
-| `bytes` | int | Data transferred |
-| `timestamp` | int (epoch ms) | Timeline |
-| `duration_ms` | int | Latency coloring |
-| `mount_prefix` | str | Which service mount (/slack, /tickets, etc.) |
-| `fingerprint` | str or null | Content hash |
-| `revision` | str or null | Version pin |
+| Field          | Type           | UI use                                       |
+| -------------- | -------------- | -------------------------------------------- |
+| `op`           | str            | read/write/stat/readdir/append/mkdir/unlink  |
+| `path`         | str            | Virtual path accessed                        |
+| `source`       | str            | Resource type (disk, ram, s3, slack, etc.)   |
+| `bytes`        | int            | Data transferred                             |
+| `timestamp`    | int (epoch ms) | Timeline                                     |
+| `duration_ms`  | int            | Latency coloring                             |
+| `mount_prefix` | str            | Which service mount (/slack, /tickets, etc.) |
+| `fingerprint`  | str or null    | Content hash                                 |
+| `revision`     | str or null    | Version pin                                  |
 
 Accessible at `workspace.ops.records` (list, grows per command).
 
----
+______________________________________________________________________
 
 ## Layer 3: Mock Backend HTTP Traffic
 
@@ -153,12 +155,13 @@ Accessible at `workspace.ops.records` (list, grows per command).
 ```
 
 **Stateful data already tracked:**
+
 - `_posted_messages`: list of Slack messages the agent posted
 - `_ticket_comments`: dict of Jira comments the agent added
 
 These mutations are the key "write" events to surface.
 
----
+______________________________________________________________________
 
 ## Layer 4: Eval Results (post-run)
 
@@ -216,7 +219,7 @@ results/<scenario>/<sweep_id>/
             scorecard.json      # ScoreCard
 ```
 
----
+______________________________________________________________________
 
 ## Recommended UI Views
 
@@ -265,10 +268,10 @@ Side-by-side JSON-RPC request/response pairs. Shows the raw protocol.
 
 Table of HTTP requests hitting the mock server, filterable by service.
 
-| Time | Service | Method | Path | Status | Size | Duration |
-|---|---|---|---|---|---|---|
-| 14:00:03 | pagerduty | GET | /incidents?statuses[]=triggered | 200 | 1.2KB | 3ms |
-| 14:00:05 | jira | GET | /rest/api/2/issue/OPS-1247 | 200 | 2.1KB | 4ms |
+| Time     | Service   | Method | Path                            | Status | Size  | Duration |
+| -------- | --------- | ------ | ------------------------------- | ------ | ----- | -------- |
+| 14:00:03 | pagerduty | GET    | /incidents?statuses[]=triggered | 200    | 1.2KB | 3ms      |
+| 14:00:05 | jira      | GET    | /rest/api/2/issue/OPS-1247      | 200    | 2.1KB | 4ms      |
 
 **Data source:** Mock server middleware (new).
 
@@ -278,7 +281,7 @@ Already exists as a Cursor Canvas (`enterprise/mirage_eval/report/canvas.py`). A
 
 **Data source:** `scorecard.json` and `aggregate.json`.
 
----
+______________________________________________________________________
 
 ## Implementation Recommendation
 
@@ -312,8 +315,8 @@ enterprise/app/
 ### Backend instrumentation (Python side)
 
 1. **`enterprise/mirage_eval/mcp_server.py`** — add an event buffer + SSE endpoint (`/events`) that streams tool call events
-2. **`enterprise/docker/mock_server.py`** — add FastAPI middleware logging requests to an in-memory buffer + SSE endpoint (`/events`)
-3. Both expose events at `GET /events` as SSE (Server-Sent Events) for easy browser consumption
+1. **`enterprise/docker/mock_server.py`** — add FastAPI middleware logging requests to an in-memory buffer + SSE endpoint (`/events`)
+1. Both expose events at `GET /events` as SSE (Server-Sent Events) for easy browser consumption
 
 ### Docker integration
 
@@ -351,24 +354,24 @@ flowchart LR
 ### Priority order
 
 1. **Command Timeline** (View 1) — highest value, shows what the agent is doing in real-time
-2. **Mock Request Log** (View 4) — validates the backend is being called correctly
-3. **Scorecard Dashboard** (View 5) — already exists as Canvas, adapt to standalone
-4. **Resource Map** (View 2) — nice visualization but lower priority
-5. **MCP Traffic** (View 3) — useful for debugging protocol issues
+1. **Mock Request Log** (View 4) — validates the backend is being called correctly
+1. **Scorecard Dashboard** (View 5) — already exists as Canvas, adapt to standalone
+1. **Resource Map** (View 2) — nice visualization but lower priority
+1. **MCP Traffic** (View 3) — useful for debugging protocol issues
 
----
+______________________________________________________________________
 
 ## Key files to read before building
 
-| File | Why |
-|---|---|
-| `enterprise/mirage_eval/mcp_server.py` | Where to add tool call event emission |
-| `enterprise/docker/mock_server.py` | Where to add request logging middleware |
-| `python/mirage/observe/record.py` | OpRecord shape (I/O data) |
-| `python/mirage/observe/log_entry.py` | JSONL line shape (session journal) |
-| `python/mirage/workspace/history.py` | ExecutionHistory + ExecutionRecord shape |
-| `python/mirage/workspace/types.py` | ExecutionRecord.to_dict() + ExecutionNode.to_dict() |
-| `enterprise/mirage_eval/scorers/composite.py` | ScoreCard shape |
-| `enterprise/mirage_eval/report/aggregate.py` | AggregateReport shape |
-| `enterprise/mirage_eval/report/canvas.py` | Existing Canvas dashboard (TypeScript types for scores) |
-| `enterprise/docker/docker-compose.yml` | Service topology |
+| File                                          | Why                                                     |
+| --------------------------------------------- | ------------------------------------------------------- |
+| `enterprise/mirage_eval/mcp_server.py`        | Where to add tool call event emission                   |
+| `enterprise/docker/mock_server.py`            | Where to add request logging middleware                 |
+| `python/mirage/observe/record.py`             | OpRecord shape (I/O data)                               |
+| `python/mirage/observe/log_entry.py`          | JSONL line shape (session journal)                      |
+| `python/mirage/workspace/history.py`          | ExecutionHistory + ExecutionRecord shape                |
+| `python/mirage/workspace/types.py`            | ExecutionRecord.to_dict() + ExecutionNode.to_dict()     |
+| `enterprise/mirage_eval/scorers/composite.py` | ScoreCard shape                                         |
+| `enterprise/mirage_eval/report/aggregate.py`  | AggregateReport shape                                   |
+| `enterprise/mirage_eval/report/canvas.py`     | Existing Canvas dashboard (TypeScript types for scores) |
+| `enterprise/docker/docker-compose.yml`        | Service topology                                        |

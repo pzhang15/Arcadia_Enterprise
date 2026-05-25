@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/api/client.ts","./src/components/commandtimeline.tsx","./src/components/mcptraffic.tsx","./src/components/mockrequestlog.tsx","./src/components/resourcemap.tsx","./src/components/scorecarddashboard.tsx","./src/components/traceexplorer.tsx","./src/hooks/useeventstream.ts"],"version":"5.8.3"}

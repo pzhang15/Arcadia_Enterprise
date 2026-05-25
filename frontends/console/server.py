@@ -18,11 +18,11 @@ except ImportError:
     AsyncOpenAI = None
 
 try:
-    from scenarios.acme_corp.mounts import build_l1_workspace
-    from scenarios.acme_corp.seed import main as _seed_acme
+    from scenarios.northhill_corp.mounts import build_l1_workspace
+    from scenarios.northhill_corp.seed import main as _seed_northhill
 except ImportError:
     build_l1_workspace = None
-    _seed_acme = None
+    _seed_northhill = None
 
 logger = logging.getLogger(__name__)
 
@@ -105,10 +105,8 @@ def _get_relay_client() -> httpx.AsyncClient:
 def _get_openai_client():
     global _openai_client
     if AsyncOpenAI is None:
-        raise RuntimeError(
-            "The 'openai' package is not installed. "
-            "Install it with: pip install openai"
-        )
+        raise RuntimeError("The 'openai' package is not installed. "
+                           "Install it with: pip install openai")
     if _openai_client is None:
         _openai_client = AsyncOpenAI(
             api_key=OPENAI_API_KEY,
@@ -134,11 +132,12 @@ async def _emit_event(session_id: str, event: dict) -> None:
 
 def _build_workspace(services: list[str]):
     """Build a Mirage workspace with mounts for the selected services."""
-    if _seed_acme is None or build_l1_workspace is None:
-        logger.warning("workspace modules not available (packages/eval not installed)")
+    if _seed_northhill is None or build_l1_workspace is None:
+        logger.warning(
+            "workspace modules not available (packages/eval not installed)")
         return None
     try:
-        _seed_acme()
+        _seed_northhill()
         return build_l1_workspace(agent_id="console-agent",
                                   session_id="default")
     except Exception as exc:
@@ -160,7 +159,7 @@ def _build_file_prompt(services: list[str]) -> str:
             "## Finance\n/finance/expenses/{pending,approved,rejected}/ — expense reports (JSON)\n/finance/purchase_orders/{open,approved,received}/ — POs (JSON)\n/finance/invoices/{pending,paid,disputed}/ — invoices (JSON)\n/finance/budgets/Q2_2026.json — department budgets",
         ],
         "engineering": [
-            "## Engineering / SRE\n/pagerduty/incidents/{triggered,acknowledged,resolved}/ — PagerDuty incidents\n/pagerduty/services/ — service definitions\n/github/repos/acme-corp/platform-api/{deployments,commits,pulls}/ — GitHub\n/datadog/logs/platform-api/ — application logs\n/datadog/metrics/platform-api/ — metrics time series",
+            "## Engineering / SRE\n/pagerduty/incidents/{triggered,acknowledged,resolved}/ — PagerDuty incidents\n/pagerduty/services/ — service definitions\n/github/repos/northhill/platform-api/{deployments,commits,pulls}/ — GitHub\n/datadog/logs/platform-api/ — application logs\n/datadog/metrics/platform-api/ — metrics time series",
         ],
         "support": [
             "## Customer Support\n/customers/accounts/ — customer accounts with health scores\n/customers/escalations/ — active escalations\n/tickets/queues/customer-support/{open,in_progress,resolved}/ — support tickets",
