@@ -32,7 +32,6 @@ def _load_json(rel: str) -> object:
 
 
 def _load_dir_jsons(rel: str) -> list[dict]:
-    """Load all .json files from a directory (non-recursive)."""
     d = DISK_ROOT / rel
     if not d.exists() or not d.is_dir():
         return []
@@ -44,7 +43,6 @@ def _load_dir_jsons(rel: str) -> list[dict]:
 
 
 def _load_dir_jsons_recursive(rel: str) -> list[dict]:
-    """Load all .json files from a directory and its subdirectories."""
     d = DISK_ROOT / rel
     if not d.exists() or not d.is_dir():
         return []
@@ -52,6 +50,85 @@ def _load_dir_jsons_recursive(rel: str) -> list[dict]:
     for f in sorted(d.rglob("*.json")):
         results.append(json.loads(f.read_text()))
     return results
+
+
+def _flatten_user(obj) -> str:
+    if isinstance(obj, dict):
+        return obj.get("name") or obj.get("login") or str(obj)
+    return str(obj) if obj else ""
+
+
+def _normalize_incident(raw: dict) -> dict:
+    severity = raw.get("severity", "")
+    if isinstance(severity, dict):
+        severity = severity.get("value", "")
+    service = raw.get("service", "")
+    if isinstance(service, dict):
+        service = service.get("name", "")
+    assignee = ""
+    assignments = raw.get("assignments", [])
+    if assignments and isinstance(assignments[0], dict):
+        a = assignments[0].get("assignee", {})
+        assignee = a.get("name", "") if isinstance(a, dict) else str(a)
+    elif raw.get("assignee"):
+        assignee = _flatten_user(raw["assignee"])
+    return {
+        "id": raw.get("id", ""),
+        "title": raw.get("title", ""),
+        "status": raw.get("status", ""),
+        "severity": severity,
+        "service": service,
+        "assignee": assignee,
+        "created_at": raw.get("created_at", ""),
+    }
+
+
+def _normalize_deployment(raw: dict) -> dict:
+    status = raw.get("status", "")
+    statuses = raw.get("statuses", [])
+    if statuses and isinstance(statuses[0], dict):
+        status = statuses[0].get("state", "")
+    return {
+        "id": raw.get("id", ""),
+        "ref": raw.get("ref", ""),
+        "environment": raw.get("environment", ""),
+        "created_at": raw.get("created_at", ""),
+        "status": status,
+        "creator": _flatten_user(raw.get("creator")),
+    }
+
+
+def _normalize_account(raw: dict) -> dict:
+    out = dict(raw)
+    out["csm"] = _flatten_user(raw.get("csm"))
+    return out
+
+
+def _normalize_escalation(raw: dict) -> dict:
+    out = dict(raw)
+    out["owner"] = _flatten_user(raw.get("owner"))
+    return out
+
+
+def _normalize_contract(raw: dict) -> dict:
+    out = dict(raw)
+    out["owner"] = _flatten_user(raw.get("owner"))
+    return out
+
+
+def _normalize_audit(raw: dict) -> dict:
+    out = dict(raw)
+    checklist = raw.get("checklist", [])
+    normalized_cl = []
+    for item in checklist:
+        ni = dict(item)
+        ni["owner"] = _flatten_user(item.get("owner"))
+        status = ni.get("status", "")
+        if status == "complete":
+            ni["status"] = "completed"
+        normalized_cl.append(ni)
+    out["checklist"] = normalized_cl
+    return out
 
 
 # ---------- IT Helpdesk ----------
@@ -126,7 +203,8 @@ async def get_budgets() -> dict:
 
 @app.get("/api/engineering/incidents")
 async def list_incidents() -> list[dict]:
-    return _load_dir_jsons_recursive("pagerduty/incidents")
+    raw = _load_dir_jsons_recursive("pagerduty/incidents")
+    return [_normalize_incident(r) for r in raw]
 
 
 @app.get("/api/engineering/deployments")
@@ -136,7 +214,7 @@ async def list_deployments() -> list[dict]:
         return []
     results = []
     for f in sorted(deploy_dir.rglob("deployments/*.json")):
-        results.append(json.loads(f.read_text()))
+        results.append(_normalize_deployment(json.loads(f.read_text())))
     return results
 
 
@@ -150,12 +228,14 @@ async def get_metrics() -> list[dict]:
 
 @app.get("/api/customers/accounts")
 async def list_accounts() -> list[dict]:
-    return _load_dir_jsons("customers/accounts")
+    raw = _load_dir_jsons("customers/accounts")
+    return [_normalize_account(r) for r in raw]
 
 
 @app.get("/api/customers/escalations")
 async def list_escalations() -> list[dict]:
-    return _load_dir_jsons("customers/escalations")
+    raw = _load_dir_jsons("customers/escalations")
+    return [_normalize_escalation(r) for r in raw]
 
 
 @app.get("/api/customers/tickets")
@@ -168,12 +248,14 @@ async def list_customer_tickets() -> list[dict]:
 
 @app.get("/api/compliance/contracts")
 async def list_contracts() -> list[dict]:
-    return _load_dir_jsons_recursive("compliance/contracts")
+    raw = _load_dir_jsons_recursive("compliance/contracts")
+    return [_normalize_contract(r) for r in raw]
 
 
 @app.get("/api/compliance/audits")
 async def list_audits() -> list[dict]:
-    return _load_dir_jsons("compliance/audits")
+    raw = _load_dir_jsons("compliance/audits")
+    return [_normalize_audit(r) for r in raw]
 
 
 @app.get("/api/compliance/policies")

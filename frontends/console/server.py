@@ -251,7 +251,6 @@ async def _run_conversation_turn(
             resp = await client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=messages,
-                temperature=0.0,
                 max_tokens=4096,
             )
             assistant_text = resp.choices[0].message.content or ""

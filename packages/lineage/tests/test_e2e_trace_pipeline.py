@@ -73,7 +73,7 @@ async def test_sqlite_readable_after_checkpoint(trace_db, tmp_path):
     conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     conn.close()
 
-    ro_conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    ro_conn = sqlite3.connect(db_path)
     ro_conn.row_factory = sqlite3.Row
     rows = ro_conn.execute(
         "SELECT * FROM spans WHERE parent_span_id IS NULL"

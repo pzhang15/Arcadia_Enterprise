@@ -47,7 +47,7 @@ def populated_db(tmp_path):
 
 def _query_traces_list(db_path: str, limit: int = 50, offset: int = 0) -> list[dict]:
     """Replicate the /api/traces endpoint logic."""
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         "SELECT trace_id, name, start_time_ms, end_time_ms, status, "
@@ -75,7 +75,7 @@ def _query_traces_list(db_path: str, limit: int = 50, offset: int = 0) -> list[d
 
 def _query_trace_detail(db_path: str, trace_id: str) -> dict:
     """Replicate the /api/traces/{trace_id} endpoint logic."""
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         "SELECT * FROM spans WHERE trace_id = ? ORDER BY start_time_ms",
@@ -103,7 +103,7 @@ def _query_trace_detail(db_path: str, trace_id: str) -> dict:
 
 def _query_stats(db_path: str) -> dict:
     """Replicate the /api/traces/stats/summary endpoint logic."""
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     total_spans = conn.execute("SELECT COUNT(*) FROM spans").fetchone()[0]
     total_traces = conn.execute(
@@ -230,20 +230,18 @@ class TestStatsEndpoint:
 
 class TestReadOnlyAccess:
     def test_readonly_connection_works(self, populated_db):
-        """Read-only SQLite URI should work for all queries."""
-        conn = sqlite3.connect(
-            f"file:{populated_db}?mode=ro", uri=True
-        )
+        """query_only pragma should allow reads."""
+        conn = sqlite3.connect(populated_db)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA query_only = ON")
         count = conn.execute("SELECT COUNT(*) FROM spans").fetchone()[0]
         assert count > 0
         conn.close()
 
     def test_readonly_cannot_write(self, populated_db):
-        """Read-only connection should reject writes."""
-        conn = sqlite3.connect(
-            f"file:{populated_db}?mode=ro", uri=True
-        )
+        """query_only pragma should reject writes."""
+        conn = sqlite3.connect(populated_db)
+        conn.execute("PRAGMA query_only = ON")
         with pytest.raises(sqlite3.OperationalError):
             conn.execute("DELETE FROM spans")
         conn.close()
