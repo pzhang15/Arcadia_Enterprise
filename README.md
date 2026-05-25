@@ -1,16 +1,25 @@
 # Arcadia
 
-**The governed intelligence platform for autonomous agents.**
+**An experimental platform exploring end-to-end [Mirage](https://github.com/strukto-ai/mirage) capabilities in real-world enterprise scenarios.**
 
-Sandboxes solved isolation. Isolation without governed data access is a sandbox with nothing useful inside it. Arcadia is what makes the sandbox worth booting.
+Arcadia is a reference implementation and testing ground built on top of the Mirage virtual filesystem. It exercises Mirage's full surface area — agent integration, data source mounting, workspace execution, observability, and multi-service orchestration — by simulating realistic enterprise environments where AI agents navigate cross-departmental data.
 
-## What we're building
+This project does not replace or compete with Mirage. It extends it. Mirage provides the VFS primitives; Arcadia wires them into a governed, observable stack that demonstrates what production Mirage deployments look like when agents need to work across Slack threads, IT tickets, finance records, PagerDuty incidents, and compliance audits simultaneously.
 
-Arcadia gives AI agents governed, discoverable access to enterprise data through a virtual filesystem. The agent runs `ls`, `cat`, and `read` — the same operations every LLM already knows — and Arcadia handles discovery, access control, credential security, and audit trails behind the scenes.
+## Why this exists
 
-No new SDKs. No custom tool definitions. Works with any agent framework.
+Mirage gives agents a powerful filesystem abstraction over any data source. But building confidence in that abstraction requires testing it against messy, interconnected, real-world data — the kind where a PagerDuty incident references a deployment, which references a commit, which caused customer escalations, which appear in Slack threads and support tickets.
 
-## Target architecture
+Arcadia provides that testing surface:
+
+- **End-to-end Mirage validation** — exercises `Workspace`, `DiskResource`, custom `FakeResource` subclasses, `execute()`, `MountMode`, and the observation pipeline against 11 concurrent mount points.
+- **Agent integration testing** — runs real LLM agents (OpenAI, Kimi, any OpenAI-compatible provider) through Mirage workspaces via MCP and direct execution, measuring correctness, efficiency, and cost.
+- **Enterprise simulation** — 28 employees, 10 Slack channels, 6 departments, 140+ cross-referenced data files spanning IT, HR, Finance, Engineering, Customer Support, and Legal/Compliance.
+- **Observability stack** — real-time command tracing, mount-level I/O tracking, and hierarchical span waterfalls showing exactly how agents interact with the VFS.
+
+Everything feeds back into making Mirage better by surfacing edge cases, performance characteristics, and integration patterns that only emerge at scale.
+
+## Architecture (layered on Mirage)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -55,12 +64,12 @@ No new SDKs. No custom tool definitions. Works with any agent framework.
    (Snowflake, Iceberg, PostgreSQL, Jira, Slack, S3, ...)
 ```
 
-## Key principles
+## Key principles (enabled by Mirage)
 
-- **Discovery through navigation.** Agents explore a directory tree instead of receiving thousands of tokens of tool definitions upfront.
-- **Governance by construction.** If the policy says column X is denied, the FUSE layer physically does not return data for column X. No prompt override, no code path around it.
+- **Discovery through navigation.** Mirage's virtual filesystem lets agents explore a directory tree instead of receiving thousands of tokens of tool definitions upfront.
+- **Governance by construction.** Policy enforcement happens at the VFS layer. If column X is denied, the mount physically does not return data for it. No prompt override, no code path around it.
 - **Credentials never enter the sandbox.** The broker issues short-lived, scoped tokens through a hypervisor channel. A fully compromised agent finds only an ephemeral token that expires in minutes.
-- **Lineage is complete by construction.** Every data access goes through the VFS. There is no path that bypasses it.
+- **Lineage is complete by construction.** Every data access goes through Mirage's workspace. There is no path that bypasses it.
 
 ## Repo layout
 
@@ -75,7 +84,7 @@ arcadia/
 │   └── workspace-vfs/        # Dot-file metadata, query.json, output registration
 ├── frontends/
 │   └── platform/             # Unified React app (Portal + Console + Observability)
-├── vendor/mirage/            # Upstream mirage VFS (git subtree)
+├── vendor/mirage/            # Upstream Mirage VFS (git subtree from strukto-ai/mirage)
 ├── docker/                   # Docker compose for the full stack
 └── pyproject.toml            # Workspace root
 ```
@@ -211,11 +220,22 @@ uv run python docker/generate_traces.py
 TRACES_DB=data/traces.db uv run python frontends/platform/server.py
 ```
 
-## Syncing upstream mirage
+## Syncing upstream Mirage
+
+Arcadia tracks Mirage as a git subtree. To pull the latest upstream changes:
 
 ```bash
 git subtree pull --prefix=vendor/mirage upstream main --squash
 ```
+
+## Relationship to Mirage
+
+Arcadia depends on [Mirage](https://github.com/strukto-ai/mirage) and would not exist without it. The relationship is:
+
+- **Mirage** provides the virtual filesystem core — workspace creation, resource mounting, shell command execution, observation recording, and the MCP server transport.
+- **Arcadia** provides the enterprise integration layer — synthetic data generation, multi-department scenarios, agent evaluation, a governance stack (policy, lineage, credential broker), and a full-stack UI for visualization and interactive agent sessions.
+
+Bugs and patterns discovered in Arcadia flow upstream as issues and contributions to Mirage. Arcadia's eval harness serves as an integration test suite for Mirage's workspace API across diverse, concurrent mount configurations.
 
 ## Roadmap
 
