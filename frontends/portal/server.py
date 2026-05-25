@@ -11,8 +11,8 @@ DISK_ROOT = Path(
     os.environ.get(
         "DISK_ROOT",
         str(
-            Path(__file__).resolve().parent.parent / "packages" / "eval" /
-            "scenarios" / "northhill_corp" / "fixture" / "disk"),
+            Path(__file__).resolve().parent.parent.parent / "packages" /
+            "eval" / "scenarios" / "northhill_corp" / "fixture" / "disk"),
     ))
 
 app = FastAPI(title="NorthHill Enterprise Portal")
