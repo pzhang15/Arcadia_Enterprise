@@ -85,16 +85,15 @@ arcadia/
 ## Quick start
 
 ```bash
+# All commands run from the repo root
 uv sync
 
 # Seed and run an eval scenario
-cd packages/eval
 uv run mirage-eval seed --scenario northhill_corp
 uv run mirage-eval run --scenario northhill_corp --task enterprise_review --model gpt-5-mini --seed 1
 
 # Or start everything in Docker
-cd docker
-docker compose up --build
+cd docker && docker compose up --build
 ```
 
 ## Syncing upstream mirage

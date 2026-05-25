@@ -18,7 +18,7 @@ ______________________________________________________________________
 ## 1. Install
 
 ```bash
-# From the repo root
+# All commands run from the repo root — never cd into packages/eval
 uv sync
 cp .env.example .env
 ```
@@ -48,8 +48,7 @@ uv run mirage-eval seed --scenario onboarding_it
 Runs all services — mock backends, Mirage daemon, MCP server, portal, console, and observability — in one command.
 
 ```bash
-cd docker  # from repo root
-docker compose up --build
+cd docker && docker compose up --build
 ```
 
 | Service       | Port | What it does                                               |
@@ -72,17 +71,16 @@ curl http://localhost:8084/api/health
 
 ## 4. Run an agent against the stack
 
-With `.env` configured:
+With `.env` configured (all commands from the repo root):
 
 ```bash
-cd packages/eval
 uv sync                       # must run after pulling new changes
 
 # Against Docker MCP server (HTTP, port 8081 — Docker must be running)
-uv run python ../../vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode docker
+uv run python vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode docker
 
 # Against local MCP server (stdio, no Docker needed)
-uv run python ../../vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode local
+uv run python vendor/mirage/examples/python/mcp/mcp_agent_demo.py --mode local
 ```
 
 The agent connects via MCP, discovers the `execute` tool, and uses shell commands (`ls`, `cat`, `jq`, `grep`) to investigate the NorthHill Corp enterprise data across all services.

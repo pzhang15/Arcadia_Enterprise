@@ -8,18 +8,18 @@
 
 ## Quick Start (Docker)
 
-From the repo root:
+All commands run from the repo root:
 
 ```bash
-# 1. Seed all scenarios (writes fixture JSON to disk — needed before Docker build)
-cd packages/eval
-uv run mirage-eval seed --scenario northhill_corp
+# 1. Install dependencies
+uv sync
+
+# 2. Seed all scenarios (writes fixture JSON to disk — needed before Docker build)
 uv run mirage-eval seed --scenario northhill_corp
 uv run mirage-eval seed --scenario onboarding_it
 
-# 2. Build and start the full stack
-cd ../../docker
-docker compose up --build
+# 3. Build and start the full stack
+cd docker && docker compose up --build
 ```
 
 Wait for all services to report healthy. The trace generator runs first and prints:
@@ -98,17 +98,18 @@ curl -s http://localhost:3000/finance/expenses | python3 -m json.tool | head -20
 ### Unit + Integration tests (no Docker needed)
 
 ```bash
-# From the repo root — run everything
-cd packages/eval && uv run pytest
+# All commands from the repo root
+
+# Run everything
+uv run pytest
 
 # NorthHill Corp seed + workspace + portal data tests (64 tests)
-uv run pytest scenarios/northhill_corp/tests/ -v
+uv run pytest packages/eval/scenarios/northhill_corp/tests/ -v
 
 # Lineage / trace pipeline tests (67 tests)
-cd ../../
 uv run pytest packages/lineage/tests/ -v
 
-# All tests together (runs from repo root)
+# All tests together
 uv run pytest packages/lineage/tests/ packages/eval/ -v
 ```
 
@@ -144,47 +145,37 @@ pre-commit run --all-files
 
 ## Local Development (Without Docker)
 
+All commands from the repo root.
+
 ### 1. Seed data
 
 ```bash
-cd packages/eval
 uv run mirage-eval seed --scenario northhill_corp
 ```
 
 ### 2. Start the portal
 
 ```bash
-cd frontends/portal
-pip install fastapi uvicorn httpx
-python server.py
+uv run python frontends/portal/server.py
 # → http://localhost:8083
 ```
-
-The portal auto-detects seed data at `packages/eval/scenarios/northhill_corp/fixture/disk/`.
 
 ### 3. Generate traces + start observability
 
 ```bash
-# Generate trace data to a local file
 uv run python docker/generate_traces.py
-
-# Start the observability relay
-cd frontends/observability
-pip install fastapi uvicorn httpx
-TRACES_DB=/app/data/traces.db python server.py
+TRACES_DB=/app/data/traces.db uv run python frontends/observability/server.py
 # → http://localhost:8082
 
 # For hot-reload frontend dev
-npm install && npm run dev
+cd frontends/observability && npm install && npm run dev
 # → http://localhost:5173
 ```
 
 ### 4. Start the console (requires OpenAI key)
 
 ```bash
-cd frontends/console
-pip install fastapi uvicorn httpx openai
-OPENAI_API_KEY=sk-... python server.py
+OPENAI_API_KEY=sk-... uv run python frontends/console/server.py
 # → http://localhost:8084
 ```
 
@@ -201,6 +192,5 @@ After starting the stack, open http://localhost:8082 and click **Trace Explorer*
 ## Teardown
 
 ```bash
-cd docker
-docker compose down -v    # -v removes the trace-data volume
+cd docker && docker compose down -v    # -v removes the trace-data volume
 ```
