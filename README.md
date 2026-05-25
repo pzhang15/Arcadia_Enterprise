@@ -92,6 +92,9 @@ uv sync
 uv run mirage-eval seed --scenario northhill_corp
 uv run mirage-eval run --scenario northhill_corp --task enterprise_review --model gpt-5-mini --seed 1
 
+# Run tests
+uv run pytest
+
 # Or start everything in Docker
 cd docker && docker compose up --build
 ```
