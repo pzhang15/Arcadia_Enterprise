@@ -4,7 +4,7 @@
 
 - Docker and Docker Compose installed
 - `uv` installed (`pip install uv`)
-- Ports 3000, 8080–8084 available
+- Ports 3000, 8080–8081 available
 
 ## Quick Start (Docker)
 
@@ -32,22 +32,17 @@ Then the remaining services start in dependency order.
 
 ## Services
 
-| Service         | Port | URL                            | Data source        |
-|-----------------|------|--------------------------------|--------------------|
-| observability   | 8082 | http://localhost:8082           | Trace SQLite + SSE |
-| portal          | 8083 | http://localhost:8083           | NorthHill Corp fixture  |
-| console         | 8084 | http://localhost:8084           | NorthHill Corp fixture  |
-| mock-services   | 3000 | http://localhost:3000           | NorthHill Corp seed |
-| mirage-api      | 8080 | http://localhost:8080           | Mirage HTTP daemon |
-| mirage-mcp      | 8081 | http://localhost:8081/mcp       | NorthHill Corp MCP  |
+| Service           | Port | URL                      | Purpose                          |
+|-------------------|------|--------------------------|----------------------------------|
+| arcadia-platform  | 8080 | http://localhost:8080     | Unified UI + API (Portal + Console + Observability) |
+| mock-services     | 3000 | http://localhost:3000     | Mock HTTP APIs (Slack, GitHub, Jira, PagerDuty, Datadog) |
+| mirage            | 8081 | http://localhost:8081/mcp | MCP server over Streamable HTTP  |
 
 ## Health Checks
 
 ```bash
+curl -sf http://localhost:8080/api/health
 curl -sf http://localhost:3000/health
-curl -sf http://localhost:8082/api/health
-curl -sf http://localhost:8083/api/health
-curl -sf http://localhost:8084/api/health
 ```
 
 ## Verifying Seed Data
@@ -55,34 +50,19 @@ curl -sf http://localhost:8084/api/health
 ### Portal (NorthHill Corp departments)
 
 ```bash
-# IT tickets
-curl -s http://localhost:8083/api/tickets/it-helpdesk | python3 -m json.tool | head -20
-
-# Employees
-curl -s http://localhost:8083/api/employees | python3 -m json.tool | head -20
-
-# Finance
-curl -s http://localhost:8083/api/finance/expenses | python3 -m json.tool | head -20
-curl -s http://localhost:8083/api/finance/budgets | python3 -m json.tool | head -20
-
-# Engineering
-curl -s http://localhost:8083/api/engineering/incidents | python3 -m json.tool | head -20
-
-# Customers
-curl -s http://localhost:8083/api/customers/accounts | python3 -m json.tool | head -20
-
-# Compliance
-curl -s http://localhost:8083/api/compliance/contracts | python3 -m json.tool | head -20
+curl -s http://localhost:8080/api/tickets/it-helpdesk | python3 -m json.tool | head -20
+curl -s http://localhost:8080/api/employees | python3 -m json.tool | head -20
+curl -s http://localhost:8080/api/finance/expenses | python3 -m json.tool | head -20
+curl -s http://localhost:8080/api/engineering/incidents | python3 -m json.tool | head -20
+curl -s http://localhost:8080/api/customers/accounts | python3 -m json.tool | head -20
+curl -s http://localhost:8080/api/compliance/contracts | python3 -m json.tool | head -20
 ```
 
 ### Trace Explorer
 
 ```bash
-# Stats
-curl -s http://localhost:8082/api/traces/stats/summary | python3 -m json.tool
-
-# List traces
-curl -s 'http://localhost:8082/api/traces?limit=5' | python3 -m json.tool | head -30
+curl -s http://localhost:8080/api/traces/stats/summary | python3 -m json.tool
+curl -s 'http://localhost:8080/api/traces?limit=5' | python3 -m json.tool | head -30
 ```
 
 ### Mock Services (NorthHill Corp)
@@ -90,16 +70,13 @@ curl -s 'http://localhost:8082/api/traces?limit=5' | python3 -m json.tool | head
 ```bash
 curl -s http://localhost:3000/slack/api/users.list | python3 -m json.tool | head -20
 curl -s http://localhost:3000/pagerduty/incidents | python3 -m json.tool | head -20
-curl -s http://localhost:3000/finance/expenses | python3 -m json.tool | head -20
 ```
 
 ## Running Tests
 
-### Unit + Integration tests (no Docker needed)
+All commands from the repo root:
 
 ```bash
-# All commands from the repo root
-
 # Run everything
 uv run pytest
 
@@ -119,7 +96,7 @@ uv run pytest packages/lineage/tests/ packages/eval/ -v
 
 | File | Tests | Coverage |
 |------|-------|----------|
-| `test_e2e_trace_pipeline.py` | 9 | Full execute → SQLite → API query patterns, WAL checkpoint, cache hits, error traces |
+| `test_e2e_trace_pipeline.py` | 9 | Full execute -> SQLite -> API query patterns, WAL checkpoint, cache hits, error traces |
 | `test_e2e_observability_server.py` | 14 | Replicates `/api/traces`, `/api/traces/{id}`, `/api/traces/stats/summary` SQL queries |
 | `test_tracing_workspace.py` | 9 | TracingWorkspace delegation, span creation, parent-child linkage |
 | `test_sqlite_store.py` | 7 | Write/query/count/idempotency for the SQLite store |
@@ -153,41 +130,36 @@ All commands from the repo root.
 uv run mirage-eval seed --scenario northhill_corp
 ```
 
-### 2. Start the portal
+### 2. Start the unified platform
 
 ```bash
-uv run python frontends/portal/server.py
-# → http://localhost:8083
+uv run python frontends/platform/server.py
+# -> http://localhost:8080
 ```
 
-### 3. Generate traces + start observability
+### 3. Frontend hot-reload dev
+
+```bash
+cd frontends/platform && npm install && npm run dev
+# -> http://localhost:5173
+```
+
+### 4. Generate traces
 
 ```bash
 uv run python docker/generate_traces.py
-TRACES_DB=/app/data/traces.db uv run python frontends/observability/server.py
-# → http://localhost:8082
-
-# For hot-reload frontend dev
-cd frontends/observability && npm install && npm run dev
-# → http://localhost:5173
-```
-
-### 4. Start the console (requires OpenAI key)
-
-```bash
-OPENAI_API_KEY=sk-... uv run python frontends/console/server.py
-# → http://localhost:8084
+TRACES_DB=/app/data/traces.db uv run python frontends/platform/server.py
 ```
 
 ## Trace Explorer Walkthrough
 
-After starting the stack, open http://localhost:8082 and click **Trace Explorer** in the sidebar.
+After starting the stack, open http://localhost:8080 and click **Trace Explorer** in the Observability section.
 
-1. **Trace list** — 20 traces with command, status (OK/ERR), duration, span count, bytes, cache rate
-2. **Click a trace** — waterfall timeline: root span + child I/O spans (read/write/readdir)
-3. **Click a span** — detail panel: timing, bytes, cache hits, attributes, span IDs
-4. **Error trace** — `cat /data/nonexistent.txt` shows red ERROR badge, non-zero exit code
-5. **Cache hits** — last two traces re-read earlier files, child spans show `cache_hit: true` (green bars)
+1. **Trace list** -- 20 traces with command, status (OK/ERR), duration, span count, bytes, cache rate
+2. **Click a trace** -- waterfall timeline: root span + child I/O spans (read/write/readdir)
+3. **Click a span** -- detail panel: timing, bytes, cache hits, attributes, span IDs
+4. **Error trace** -- `cat /data/nonexistent.txt` shows red ERROR badge, non-zero exit code
+5. **Cache hits** -- last two traces re-read earlier files, child spans show `cache_hit: true` (green bars)
 
 ## Teardown
 

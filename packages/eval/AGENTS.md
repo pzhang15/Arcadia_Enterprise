@@ -104,7 +104,7 @@ packages/eval/
 └── results/                       #   Sweep outputs (gitignored)
 ```
 
-Note: Frontends (observability, portal, console) live at `frontends/` in the repo root.
+Note: The unified frontend lives at `frontends/platform/` in the repo root.
 Docker config lives at `docker/` in the repo root.
 
 ## How the pieces connect
@@ -133,26 +133,26 @@ Agent (OpenAI/Kimi)
 ```
 docker/docker-compose.yml defines 6 services:
 
-  observability (:8082)  ← event relay + observability React app (frontends/observability)
+  arcadia-platform (:8080) ← unified UI + API (frontends/platform)
        ↑ POST /ingest
   mock-services (:3000)  ← FastAPI mocking Slack/GitHub/Jira/PD/DD/Finance/CRM/Compliance
        ↑ depends_on
   mirage-api    (:8080)  ← Mirage HTTP daemon (workspace CRUD + execute)
   mirage-mcp    (:8081)  ← MCP server over streamable-http
-  portal        (:8083)  ← Enterprise portal (frontends/portal, reads northhill_corp fixture)
-  console       (:8084)  ← Agent console (frontends/console, session manager + agent runner)
+  mock-services   (:3000) ← mock HTTP APIs
+  mirage          (:8081) ← MCP server
 ```
 
 ## Data flow: real-time observability
 
 ```
 MCP Server execute()
-  → POST event to Relay (:8082/ingest)
+  → POST event to Platform (:8080/ingest)
     → Relay buffers in deque(maxlen=5000)
     → Fan-out to SSE subscribers via asyncio.Queue
 
 Mock Server middleware
-  → POST event to Relay (:8082/ingest)
+  → POST event to Platform (:8080/ingest)
 
 Browser (Observability UI or Agent Console)
   → EventSource("/events")

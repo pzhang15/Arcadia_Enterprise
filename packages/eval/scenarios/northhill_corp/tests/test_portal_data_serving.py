@@ -156,15 +156,15 @@ class TestPortalEnvVarConfig:
         raise FileNotFoundError("repo root not found")
 
     def test_disk_root_env_var_name(self):
-        """The portal server reads DISK_ROOT, not SCENARIO_ROOT."""
-        server_path = self._repo_root() / "frontends" / "portal" / "server.py"
+        """The platform server reads DISK_ROOT."""
+        server_path = self._repo_root() / "frontends" / "platform" / "server.py"
         content = server_path.read_text()
         assert "DISK_ROOT" in content, \
-            "Portal server should read DISK_ROOT env var"
+            "Platform server should read DISK_ROOT env var"
 
     def test_docker_compose_sets_disk_root(self):
-        """docker-compose should set DISK_ROOT for the portal."""
+        """docker-compose should set DISK_ROOT for the platform."""
         compose_path = self._repo_root() / "docker" / "docker-compose.yml"
         content = compose_path.read_text()
         assert "DISK_ROOT=/app/fixture" in content, \
-            "docker-compose should set DISK_ROOT=/app/fixture for the portal"
+            "docker-compose should set DISK_ROOT=/app/fixture for arcadia-platform"

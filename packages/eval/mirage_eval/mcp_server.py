@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 _ws = None
 _mcp = FastMCP("mirage")
-_relay_url = os.environ.get("RELAY_URL", "http://localhost:8082")
+_relay_url = os.environ.get("RELAY_URL", "http://localhost:8080")
 _relay_client: httpx.AsyncClient | None = None
 
 

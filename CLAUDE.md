@@ -18,10 +18,8 @@ arcadia/
 │   ├── lineage/            # Lineage Emitter (OpenLineage events)
 │   ├── policy/             # Policy Engine (column ACL, row filters, budgets)
 │   └── workspace-vfs/      # VFS extensions (dot-file metadata, query.json)
-├── frontends/              # React apps
-│   ├── observability/      # Observability UI (:8082)
-│   ├── portal/             # Enterprise Portal (:8083)
-│   └── console/            # Agent Console (:8084)
+├── frontends/
+│   └── platform/           # Unified Arcadia Platform (:8080)
 ├── docker/                 # Docker compose + Dockerfile
 ├── pyproject.toml          # uv workspace root
 └── .pre-commit-config.yaml

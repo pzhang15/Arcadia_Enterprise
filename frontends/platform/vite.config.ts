@@ -7,11 +7,15 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:8082",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
       "/events": {
-        target: "http://localhost:8082",
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+      "/ingest": {
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
     },

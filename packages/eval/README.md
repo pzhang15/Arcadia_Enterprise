@@ -45,28 +45,23 @@ uv run mirage-eval seed --scenario onboarding_it
 
 ## 3. Start the Docker stack (recommended)
 
-Runs all services — mock backends, Mirage daemon, MCP server, portal, console, and observability — in one command.
+Runs all services in one command.
 
 ```bash
 cd docker && docker compose up --build
 ```
 
-| Service       | Port | What it does                                               |
-| ------------- | ---- | ---------------------------------------------------------- |
-| observability | 8082 | Observability UI + event relay (SSE + results API)         |
-| portal        | 8083 | Enterprise department portal (6 departments)               |
-| console       | 8084 | Agent console (interactive AI agent workspace)             |
-| mock-services | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog |
-| mirage-api    | 8080 | Mirage HTTP daemon (workspace CRUD, execute, sessions)     |
-| mirage-mcp    | 8081 | MCP server over Streamable HTTP                            |
+| Service          | Port | What it does                                                      |
+| ---------------- | ---- | ----------------------------------------------------------------- |
+| arcadia-platform | 8080 | Unified UI (Portal + Console + Observability) + all APIs          |
+| mock-services    | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog        |
+| mirage           | 8081 | MCP server over Streamable HTTP                                   |
 
 Verify the stack is up:
 
 ```bash
+curl http://localhost:8080/api/health
 curl http://localhost:3000/health
-curl http://localhost:8082/api/health
-curl http://localhost:8083/api/health
-curl http://localhost:8084/api/health
 ```
 
 ## 4. Run an agent against the stack
@@ -144,30 +139,11 @@ uv run mirage-eval run --scenario my_scenario --task <id>
 
 ______________________________________________________________________
 
-## Apps
+## Arcadia Platform UI
 
-### Observability UI
+The unified platform at http://localhost:8080 (Docker) combines three sections:
 
-Real-time observability dashboard for agent sessions. Shows every command the agent runs, every resource it touches, and how it scores.
-
-| View             | What it shows                                                                         |
-| ---------------- | ------------------------------------------------------------------------------------- |
-| Command Timeline | Live stream of every `execute()` call — command, exit code, timing, stdout, mount I/O |
-| MCP Traffic      | JSON-RPC request/response pairs for the MCP protocol layer                            |
-| Request Log      | HTTP requests hitting the mock backend services, filterable by service                |
-| Resource Map     | Which mounts the agent touched, read/write counts, bytes transferred                  |
-| Scorecard        | Eval results — composite scores, gate pass/fail, judge rubric, failure modes          |
-
-Open http://localhost:8082 (Docker) or run in dev mode:
-
-```bash
-cd frontends/observability && pip install fastapi uvicorn httpx && python server.py
-cd frontends/observability && npm install && npm run dev   # http://localhost:5173
-```
-
-### Enterprise Portal
-
-Simulates the enterprise tools employees use daily — ServiceNow, Workday, Zendesk, etc. — organized by department.
+**Portal** — simulated enterprise department tools:
 
 | Department       | What it shows                                                   |
 | ---------------- | --------------------------------------------------------------- |
@@ -178,25 +154,22 @@ Simulates the enterprise tools employees use daily — ServiceNow, Workday, Zend
 | Customer Support | Support tickets (Zendesk-style), account health cards           |
 | Compliance       | Contract review queue, audit checklists, policy acknowledgments |
 
-Open http://localhost:8083 (Docker) or run in dev mode:
+**Console** — interactive AI agent workspace. Select departments, describe a task, watch the agent work.
+
+**Observability** — real-time agent monitoring:
+
+| View             | What it shows                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| Command Timeline | Live stream of every `execute()` call — command, exit code, timing, stdout, mount I/O |
+| MCP Traffic      | JSON-RPC request/response pairs for the MCP protocol layer                            |
+| Request Log      | HTTP requests hitting the mock backend services, filterable by service                |
+| Resource Map     | Which mounts the agent touched, read/write counts, bytes transferred                  |
+| Trace Explorer   | Hierarchical span waterfall for every VFS operation                                   |
+| Scorecard        | Eval results — composite scores, gate pass/fail, judge rubric, failure modes          |
+
+For local dev:
 
 ```bash
-cd frontends/portal && pip install fastapi uvicorn httpx && python server.py
-cd frontends/portal && npm install && npm run dev   # http://localhost:5174
-```
-
-### Agent Console
-
-The interactive AI agent workspace. Users select which department services to connect, describe a task in natural language, and watch the agent work across services in real-time.
-
-1. **Service Connector** — toggle which departments the agent can access
-1. **Task Dialog** — type a task or use quick-action presets
-1. **Live Execution** — watch the agent run commands in real-time via SSE
-1. **Results Summary** — see what the agent accomplished: services touched, files created, structured report
-
-Open http://localhost:8084 (Docker) or run in dev mode:
-
-```bash
-cd frontends/console && pip install fastapi uvicorn httpx && python server.py
-cd frontends/console && npm install && npm run dev   # http://localhost:5175
+uv run python frontends/platform/server.py                    # backend on :8080
+cd frontends/platform && npm install && npm run dev            # frontend on :5173
 ```

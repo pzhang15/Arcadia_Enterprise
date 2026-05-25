@@ -73,10 +73,8 @@ arcadia/
 │   ├── lineage/              # OpenLineage event capture for every access
 │   ├── policy/               # Column ACL, row filters, compute budgets
 │   └── workspace-vfs/        # Dot-file metadata, query.json, output registration
-├── frontends/                # React apps
-│   ├── observability/        # Real-time agent monitoring dashboard
-│   ├── portal/               # Simulated enterprise department tools
-│   └── console/              # Interactive agent task runner
+├── frontends/
+│   └── platform/             # Unified React app (Portal + Console + Observability)
 ├── vendor/mirage/            # Upstream mirage VFS (git subtree)
 ├── docker/                   # Docker compose for the full stack
 └── pyproject.toml            # Workspace root

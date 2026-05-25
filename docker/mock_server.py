@@ -30,7 +30,7 @@ app.add_middleware(
 
 _posted_messages: list[dict] = []
 _ticket_comments: dict[str, list[dict]] = {}
-_relay_url = os.environ.get("RELAY_URL", "http://localhost:8082")
+_relay_url = os.environ.get("RELAY_URL", "http://localhost:8080")
 _relay_client: httpx.AsyncClient | None = None
 
 
