@@ -29,18 +29,17 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DISK_ROOT = Path(
     os.environ.get(
         "DISK_ROOT",
-        str(
-            Path(__file__).resolve().parent.parent / "packages" / "eval" /
-            "scenarios" / "northhill_corp" / "fixture" / "disk"),
+        str(_REPO_ROOT / "packages" / "eval" / "scenarios" /
+            "northhill_corp" / "fixture" / "disk"),
     ))
 RESULTS_DIR = Path(
     os.environ.get(
         "RESULTS_DIR",
-        str(Path(__file__).resolve().parent.parent / "packages" / "eval" /
-            "results"),
+        str(_REPO_ROOT / "packages" / "eval" / "results"),
     ))
 TRACES_DB = os.environ.get("TRACES_DB", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
