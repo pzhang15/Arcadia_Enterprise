@@ -72,6 +72,7 @@ async def main():
 
     conn = sqlite3.connect(str(DB_PATH))
     conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    conn.execute("PRAGMA journal_mode=DELETE")
     conn.close()
 
     print(

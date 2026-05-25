@@ -146,10 +146,12 @@ def _get_traces_db() -> sqlite3.Connection | None:
     db_path = TRACES_DB
     if not db_path or not Path(db_path).exists():
         return None
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA query_only = ON")
-    return conn
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?immutable=1", uri=True)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.OperationalError:
+        return None
 
 
 @app.get("/api/traces")
