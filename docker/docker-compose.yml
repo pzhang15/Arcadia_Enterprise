@@ -90,7 +90,7 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - SCENARIO_ROOT=/app/fixture
+      - DISK_ROOT=/app/fixture
     volumes:
       - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
     healthcheck:
@@ -112,7 +112,7 @@ services:
       - ../.env
     environment:
       - RELAY_URL=http://observability:8082
-      - SCENARIO_ROOT=/app/fixture
+      - DISK_ROOT=/app/fixture
     volumes:
       - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
     healthcheck:

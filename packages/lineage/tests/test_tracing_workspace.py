@@ -1,10 +1,8 @@
 import pytest
-
-from mirage import MountMode, RAMResource, Workspace
-
 from lineage_emitter.tracing.config import TraceConfig
-from lineage_emitter.tracing.span import SpanKind, SpanStatus, TraceLevel
+from lineage_emitter.tracing.span import SpanKind, SpanStatus
 from lineage_emitter.workspace import TracingWorkspace
+from mirage import MountMode, RAMResource, Workspace
 
 
 @pytest.fixture()

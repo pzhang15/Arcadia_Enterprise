@@ -1,8 +1,7 @@
-from mirage.observe.record import OpRecord
-
 from lineage_emitter.tracing.buffer import RingBuffer
 from lineage_emitter.tracing.collector import SpanCollector
 from lineage_emitter.tracing.span import SpanKind, SpanStatus, TraceLevel
+from mirage.observe.record import OpRecord
 
 
 def _make_op_record(
@@ -55,8 +54,16 @@ def test_build_trace_child_spans():
     collector = SpanCollector(buf)
 
     records = [
-        _make_op_record(op="readdir", path="/s3/", nbytes=0, timestamp=1000, duration_ms=10),
-        _make_op_record(op="read", path="/s3/data.csv", nbytes=2048, timestamp=1020, duration_ms=80),
+        _make_op_record(op="readdir",
+                        path="/s3/",
+                        nbytes=0,
+                        timestamp=1000,
+                        duration_ms=10),
+        _make_op_record(op="read",
+                        path="/s3/data.csv",
+                        nbytes=2048,
+                        timestamp=1020,
+                        duration_ms=80),
     ]
     root = collector.build_trace(
         command="ls /s3/ && cat /s3/data.csv",

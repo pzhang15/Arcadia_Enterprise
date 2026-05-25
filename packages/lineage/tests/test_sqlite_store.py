@@ -1,16 +1,7 @@
-import tempfile
-
 import pytest
-
 from lineage_emitter.sinks.sqlite import SQLiteSpanStore
-from lineage_emitter.tracing.span import (
-    Span,
-    SpanEvent,
-    SpanKind,
-    SpanMetrics,
-    SpanStatus,
-    TraceLevel,
-)
+from lineage_emitter.tracing.span import (Span, SpanEvent, SpanKind,
+                                          SpanMetrics, SpanStatus, TraceLevel)
 
 
 @pytest.fixture()
@@ -89,11 +80,12 @@ def test_write_empty_list(store):
 
 def test_span_events_persisted(store):
     span = _make_span()
-    span.events.append(SpanEvent(
-        timestamp_ms=1050,
-        name="cache_miss",
-        attributes={"path": "/data/file.txt"},
-    ))
+    span.events.append(
+        SpanEvent(
+            timestamp_ms=1050,
+            name="cache_miss",
+            attributes={"path": "/data/file.txt"},
+        ))
     store.write_spans([span])
 
     events = store.query_events(span.span_id)

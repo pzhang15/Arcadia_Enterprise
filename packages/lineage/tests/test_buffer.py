@@ -1,8 +1,6 @@
-import pytest
-
 from lineage_emitter.tracing.buffer import RingBuffer
 from lineage_emitter.tracing.config import TraceConfig
-from lineage_emitter.tracing.span import Span, SpanKind, TraceLevel
+from lineage_emitter.tracing.span import Span, TraceLevel
 
 
 def _make_span(level: TraceLevel = TraceLevel.TRACE, start: int = 0) -> Span:

@@ -1,13 +1,5 @@
-import time
-
-from lineage_emitter.tracing.span import (
-    Span,
-    SpanEvent,
-    SpanKind,
-    SpanMetrics,
-    SpanStatus,
-    TraceLevel,
-)
+from lineage_emitter.tracing.span import (Span, SpanKind, SpanMetrics,
+                                          SpanStatus, TraceLevel)
 
 
 def test_span_defaults():

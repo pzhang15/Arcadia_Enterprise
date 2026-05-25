@@ -1,131 +1,206 @@
-# Trace Explorer — End-to-End Testing Guide
-
-This guide walks you through building, running, and visually inspecting the hierarchical tracing system from end to end.
+# Docker Stack — Setup, Seed Data & Testing Guide
 
 ## Prerequisites
 
 - Docker and Docker Compose installed
-- Ports 8082 (and optionally 3000, 8080-8084) available
+- `uv` installed (`pip install uv`)
+- Ports 3000, 8080–8084 available
 
-## Quick Start
+## Quick Start (Docker)
 
 From the repo root:
 
 ```bash
-cd docker
+# 1. Seed all scenarios (writes fixture JSON to disk — needed before Docker build)
+cd packages/eval
+uv run mirage-eval seed --scenario acme_corp
+uv run mirage-eval seed --scenario meridian_labs
+uv run mirage-eval seed --scenario onboarding_it
+
+# 2. Build and start the full stack
+cd ../../docker
 docker compose up --build
 ```
 
-This starts the full Arcadia stack including:
+Wait for all services to report healthy. The trace generator runs first and prints:
 
-1. **trace-generator** — Runs 20 demo commands through `TracingWorkspace`, writing hierarchical spans to SQLite
-2. **observability** — Observability UI on **port 8082**, reading trace data from the shared SQLite volume
-3. **mock-services, mirage-api, mirage-mcp, portal, console** — The rest of the Arcadia stack
+```
+Done: 20 traces, ... total spans written to /app/data/traces.db
+```
 
-Once you see `Done: 20 traces, ... total spans written`, the UI is ready.
+Then the remaining services start in dependency order.
 
-Open **http://localhost:8082** in your browser.
+## Services
 
-## Step-by-Step Walkthrough
+| Service         | Port | URL                            | Data source        |
+|-----------------|------|--------------------------------|--------------------|
+| observability   | 8082 | http://localhost:8082           | Trace SQLite + SSE |
+| portal          | 8083 | http://localhost:8083           | ACME Corp fixture  |
+| console         | 8084 | http://localhost:8084           | ACME Corp fixture  |
+| mock-services   | 3000 | http://localhost:3000           | Meridian Labs seed |
+| mirage-api      | 8080 | http://localhost:8080           | Mirage HTTP daemon |
+| mirage-mcp      | 8081 | http://localhost:8081/mcp       | Meridian Labs MCP  |
 
-### Step 1: Navigate to Trace Explorer
+## Health Checks
 
-In the left sidebar, click **Trace Explorer** under the "Traces" section.
+```bash
+curl -sf http://localhost:3000/health
+curl -sf http://localhost:8082/api/health
+curl -sf http://localhost:8083/api/health
+curl -sf http://localhost:8084/api/health
+```
 
-You should see:
-- Stats cards showing total traces and total spans
-- A table listing all 20 traces, each with: timestamp, command, status (OK/ERR), duration, span count, bytes, and cache hit rate
+## Verifying Seed Data
 
-**What to verify:**
-- All 20 traces are listed
-- One trace shows ERR status (the `cat /data/nonexistent.txt` command)
-- Duration values look reasonable (sub-second)
-- Span counts are > 1 for read commands (root span + child I/O spans)
+### Portal (ACME Corp departments)
 
-### Step 2: Inspect a Trace (Waterfall View)
+```bash
+# IT tickets
+curl -s http://localhost:8083/api/tickets/it-helpdesk | python3 -m json.tool | head -20
 
-Click any row in the trace table (try a `cat` command).
+# Employees
+curl -s http://localhost:8083/api/employees | python3 -m json.tool | head -20
 
-You should see:
-- A **waterfall timeline** showing the root `execute` span at the top
-- Child spans indented below, each representing an I/O operation (read, write, readdir)
-- Horizontal bars showing relative timing
-- Color coding: blue = root, cyan = cache miss, green = cache hit, red = error
+# Finance
+curl -s http://localhost:8083/api/finance/expenses | python3 -m json.tool | head -20
+curl -s http://localhost:8083/api/finance/budgets | python3 -m json.tool | head -20
 
-**What to verify:**
-- The root span spans the full width
-- Child spans (read operations) are nested under the root
-- Bar widths reflect actual timing proportions
-- The time ruler at the top shows the trace duration range
+# Engineering
+curl -s http://localhost:8083/api/engineering/incidents | python3 -m json.tool | head -20
 
-### Step 3: Inspect a Span (Detail Panel)
+# Customers
+curl -s http://localhost:8083/api/customers/accounts | python3 -m json.tool | head -20
 
-Click on any span in the waterfall to open the detail panel on the right.
+# Compliance
+curl -s http://localhost:8083/api/compliance/contracts | python3 -m json.tool | head -20
+```
 
-You should see:
-- **Timing section** — duration, start/end timestamps
-- **Metrics section** — bytes read/written, API calls, cache hits/misses, hit rate
-- **Attributes section** — operation type, path, source, mount prefix, cache hit boolean
-- **Span IDs** — trace_id, span_id, parent_span_id (truncated)
+### Trace Explorer
 
-**What to verify:**
-- Root span attributes show the full command string and exit code
-- Child span attributes show the specific I/O operation (e.g., `op: read`, `path: /data/app_log.txt`)
-- Cache hit boolean reflects whether the data was served from RAM cache
-- Bytes values match expected sizes
+```bash
+# Stats
+curl -s http://localhost:8082/api/traces/stats/summary | python3 -m json.tool
 
-### Step 4: Inspect an Error Trace
+# List traces
+curl -s 'http://localhost:8082/api/traces?limit=5' | python3 -m json.tool | head -30
+```
 
-Go back to the trace list and click the trace with ERR status (`cat /data/nonexistent.txt`).
+### Mock Services (Meridian Labs)
 
-**What to verify:**
-- Root span shows red "ERROR" badge
-- Exit code in attributes is non-zero
-- The waterfall bar is red
-- No child I/O spans (the read failed before producing OpRecords)
+```bash
+curl -s http://localhost:3000/slack/api/users.list | python3 -m json.tool | head -20
+curl -s http://localhost:3000/pagerduty/incidents | python3 -m json.tool | head -20
+curl -s http://localhost:3000/finance/expenses | python3 -m json.tool | head -20
+```
 
-### Step 5: Observe Cache Hits
+## Running Tests
 
-The last two traces re-read `/data/incident.txt` and `/data/app_log.txt` — data that was already written earlier. These may show cache hits.
+### Unit + Integration tests (no Docker needed)
 
-**What to verify:**
-- Child spans for cached reads show `cache_hit: true` in attributes
-- The span bar is green for cache hits
-- Root span metrics show cache_hits > 0
+```bash
+# From the repo root — run everything
+cd packages/eval && uv run pytest
+
+# ACME Corp seed + workspace + portal data tests (64 tests)
+uv run pytest scenarios/acme_corp/tests/ -v
+
+# Lineage / trace pipeline tests (67 tests)
+cd ../../
+uv run pytest packages/lineage/tests/ -v
+
+# All tests together (runs from repo root)
+uv run pytest packages/lineage/tests/ packages/eval/ -v
+```
+
+### What the tests cover
+
+**Lineage tests** (`packages/lineage/tests/`):
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `test_e2e_trace_pipeline.py` | 9 | Full execute → SQLite → API query patterns, WAL checkpoint, cache hits, error traces |
+| `test_e2e_observability_server.py` | 14 | Replicates `/api/traces`, `/api/traces/{id}`, `/api/traces/stats/summary` SQL queries |
+| `test_tracing_workspace.py` | 9 | TracingWorkspace delegation, span creation, parent-child linkage |
+| `test_sqlite_store.py` | 7 | Write/query/count/idempotency for the SQLite store |
+| `test_collector.py` | 6 | SpanCollector trace tree building from OpRecords |
+| `test_buffer.py` | 8 | Ring buffer tiers, eviction, back-pressure |
+| `test_span.py` | 8 | Span/SpanEvent/SpanMetrics construction |
+| `test_mirage_ops_contract.py` | 6 | OpRecord field contracts with mirage |
+
+**ACME Corp tests** (`packages/eval/scenarios/acme_corp/tests/`):
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `test_seed_completeness.py` | 21 | All departments seeded, JSON validity, idempotency |
+| `test_portal_data_serving.py` | 20 | Portal's disk-reading patterns, env var config, Docker wiring |
+| `test_mock_server_data.py` | 12 | Mock server data loading, status values, cross-reference integrity |
+| `test_workspace_integration.py` | 11 | Full Mirage workspace: ls, cat, find across all 11 mounts |
+
+### Linting
+
+```bash
+pre-commit run --all-files
+```
 
 ## Local Development (Without Docker)
 
-### 1. Generate traces
+### 1. Seed data
 
 ```bash
-cd /path/to/Arcadia_Enterprise
+cd packages/eval
+uv run mirage-eval seed --scenario acme_corp
+```
+
+### 2. Start the portal
+
+```bash
+cd frontends/portal
+pip install fastapi uvicorn httpx
+python server.py
+# → http://localhost:8083
+```
+
+The portal auto-detects seed data at `packages/eval/scenarios/acme_corp/fixture/disk/`.
+
+### 3. Generate traces + start observability
+
+```bash
+# Generate trace data to a local file
 uv run python docker/generate_traces.py
-```
 
-This creates `/app/data/traces.db`. To override the path, set `DB_PATH` in the script.
-
-### 2. Start the observability server
-
-```bash
+# Start the observability relay
 cd frontends/observability
+pip install fastapi uvicorn httpx
 TRACES_DB=/app/data/traces.db python server.py
+# → http://localhost:8082
+
+# For hot-reload frontend dev
+npm install && npm run dev
+# → http://localhost:5173
 ```
 
-### 3. Start the Vite dev server (for hot-reload during development)
+### 4. Start the console (requires OpenAI key)
 
 ```bash
-cd frontends/observability
-npm install
-npm run dev
+cd frontends/console
+pip install fastapi uvicorn httpx openai
+OPENAI_API_KEY=sk-... python server.py
+# → http://localhost:8084
 ```
 
-Open **http://localhost:5173** — the Vite dev server proxies API calls to the Python server on 8082.
+## Trace Explorer Walkthrough
+
+After starting the stack, open http://localhost:8082 and click **Trace Explorer** in the sidebar.
+
+1. **Trace list** — 20 traces with command, status (OK/ERR), duration, span count, bytes, cache rate
+2. **Click a trace** — waterfall timeline: root span + child I/O spans (read/write/readdir)
+3. **Click a span** — detail panel: timing, bytes, cache hits, attributes, span IDs
+4. **Error trace** — `cat /data/nonexistent.txt` shows red ERROR badge, non-zero exit code
+5. **Cache hits** — last two traces re-read earlier files, child spans show `cache_hit: true` (green bars)
 
 ## Teardown
 
 ```bash
 cd docker
-docker compose down -v
+docker compose down -v    # -v removes the trace-data volume
 ```
-
-The `-v` flag removes the `trace-data` volume.

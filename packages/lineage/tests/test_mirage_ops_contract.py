@@ -1,5 +1,4 @@
 import pytest
-
 from mirage import MountMode, RAMResource, Workspace
 from mirage.observe.record import OpRecord
 

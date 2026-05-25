@@ -146,7 +146,7 @@ def _get_traces_db() -> sqlite3.Connection | None:
     db_path = TRACES_DB
     if not db_path or not Path(db_path).exists():
         return None
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -169,7 +169,7 @@ async def list_traces(limit: int = 50, offset: int = 0) -> list[dict]:
             d = dict(row)
             child_count = conn.execute(
                 "SELECT COUNT(*) FROM spans WHERE trace_id = ? AND parent_span_id IS NOT NULL",
-                (d["trace_id"],),
+                (d["trace_id"], ),
             ).fetchone()[0]
             d["child_count"] = child_count
             if d.get("attributes"):
@@ -190,7 +190,7 @@ async def get_trace(trace_id: str) -> dict:
     try:
         rows = conn.execute(
             "SELECT * FROM spans WHERE trace_id = ? ORDER BY start_time_ms",
-            (trace_id,),
+            (trace_id, ),
         ).fetchall()
         if not rows:
             return {"error": "trace not found", "spans": []}
@@ -203,7 +203,7 @@ async def get_trace(trace_id: str) -> dict:
                 d["metrics"] = json.loads(d["metrics"])
             events = conn.execute(
                 "SELECT * FROM span_events WHERE span_id = ? ORDER BY timestamp_ms",
-                (d["span_id"],),
+                (d["span_id"], ),
             ).fetchall()
             d["events"] = [dict(e) for e in events]
             for e in d["events"]:
@@ -223,15 +223,16 @@ async def trace_stats() -> dict:
     try:
         total_spans = conn.execute("SELECT COUNT(*) FROM spans").fetchone()[0]
         total_traces = conn.execute(
-            "SELECT COUNT(DISTINCT trace_id) FROM spans"
-        ).fetchone()[0]
+            "SELECT COUNT(DISTINCT trace_id) FROM spans").fetchone()[0]
         by_level = {}
         for row in conn.execute(
-            "SELECT level, COUNT(*) as cnt FROM spans GROUP BY level"
+                "SELECT level, COUNT(*) as cnt FROM spans GROUP BY level"
         ).fetchall():
-            level_name = {0: "audit", 1: "trace", 2: "operational"}.get(
-                row["level"], str(row["level"])
-            )
+            level_name = {
+                0: "audit",
+                1: "trace",
+                2: "operational"
+            }.get(row["level"], str(row["level"]))
             by_level[level_name] = row["cnt"]
         return {
             "total_traces": total_traces,

@@ -1,20 +1,24 @@
 import asyncio
-import sys
+import sqlite3
 from pathlib import Path
-
-from mirage import MountMode, RAMResource, Workspace
 
 from lineage_emitter.tracing.config import TraceConfig
 from lineage_emitter.workspace import TracingWorkspace
+from mirage import MountMode, RAMResource, Workspace
 
 DB_PATH = Path("/app/data/traces.db")
 
 DEMO_COMMANDS = [
-    ("echo 'Incident INC-5521: Payment gateway timeout' > /data/incident.txt", "Write incident report"),
-    ("echo '{\"severity\": \"high\", \"service\": \"payments-api\"}' > /data/incident_meta.json", "Write incident metadata"),
-    ("echo 'Connection pool exhaustion detected at 14:32 UTC' > /data/app_log.txt", "Write application logs"),
-    ("echo 'p99 latency spiked to 12s at 14:30 UTC' > /data/metrics_log.txt", "Write metrics log"),
-    ("echo 'Deploy d4e5f6 rolled back at 14:45 UTC' > /data/deploy_log.txt", "Write deploy log"),
+    ("echo 'Incident INC-5521: Payment gateway timeout' > /data/incident.txt",
+     "Write incident report"),
+    ("echo '{\"severity\": \"high\", \"service\": \"payments-api\"}' > /data/incident_meta.json",
+     "Write incident metadata"),
+    ("echo 'Connection pool exhaustion detected at 14:32 UTC' > /data/app_log.txt",
+     "Write application logs"),
+    ("echo 'p99 latency spiked to 12s at 14:30 UTC' > /data/metrics_log.txt",
+     "Write metrics log"),
+    ("echo 'Deploy d4e5f6 rolled back at 14:45 UTC' > /data/deploy_log.txt",
+     "Write deploy log"),
     ("cat /data/incident.txt", "Read incident report"),
     ("cat /data/incident_meta.json", "Read incident metadata"),
     ("cat /data/app_log.txt", "Read application logs"),
@@ -22,10 +26,12 @@ DEMO_COMMANDS = [
     ("cat /data/deploy_log.txt", "Read deploy log"),
     ("grep timeout /data/incident.txt", "Search for timeout"),
     ("wc -l /data/app_log.txt", "Count log lines"),
-    ("echo 'Root cause: pool max_size=10, load spike to 500 req/s' > /data/root_cause.txt", "Write root cause"),
+    ("echo 'Root cause: pool max_size=10, load spike to 500 req/s' > /data/root_cause.txt",
+     "Write root cause"),
     ("cat /data/root_cause.txt", "Read root cause"),
     ("cat /data/nonexistent.txt", "Read missing file (error case)"),
-    ("echo 'Remediation: increase pool to 50, add breaker' > /data/remediation.txt", "Write remediation"),
+    ("echo 'Remediation: increase pool to 50, add breaker' > /data/remediation.txt",
+     "Write remediation"),
     ("cat /data/remediation.txt", "Read remediation plan"),
     ("ls /data/", "List all workspace files"),
     ("cat /data/incident.txt", "Re-read incident (cache test)"),
@@ -60,7 +66,17 @@ async def main():
 
     span_count = tw.store.count_spans() if tw.store else 0
     trace_count = tw.store.count_spans(level=0) if tw.store else 0
-    print(f"\nDone: {trace_count} traces, {span_count} total spans written to {DB_PATH}")
+
+    if tw.store:
+        tw.store.close()
+
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    conn.close()
+
+    print(
+        f"\nDone: {trace_count} traces, {span_count} total spans written to {DB_PATH}"
+    )
 
 
 if __name__ == "__main__":
