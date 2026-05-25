@@ -2,12 +2,11 @@ import os
 from pathlib import Path
 
 from mirage import MountMode, RAMResource, Workspace
-
 from mirage_eval.fixtures import (FakeGDocsResource, FakeGSheetsResource,
                                   FakeSlackResource, FakeTicketingResource)
 
-DEFAULT_DISK_ROOT = (Path(__file__).resolve().parent / "fixture"
-                     / "disk").resolve()
+DEFAULT_DISK_ROOT = (Path(__file__).resolve().parent / "fixture" /
+                     "disk").resolve()
 
 
 def build_l1_workspace(
@@ -35,11 +34,11 @@ def build_l1_workspace(
         {
             "/": (RAMResource(), MountMode.WRITE),
             "/slack": (FakeSlackResource(str(root / "slack")), MountMode.READ),
-            "/sheets": (FakeGSheetsResource(str(root / "sheets")),
-                        MountMode.READ),
+            "/sheets":
+            (FakeGSheetsResource(str(root / "sheets")), MountMode.READ),
             "/gdocs": (FakeGDocsResource(str(root / "gdocs")), MountMode.READ),
-            "/tickets": (FakeTicketingResource(str(root / "tickets")),
-                         MountMode.WRITE),
+            "/tickets":
+            (FakeTicketingResource(str(root / "tickets")), MountMode.WRITE),
         },
         mode=MountMode.WRITE,
         agent_id=agent_id,
@@ -92,8 +91,8 @@ def build_l2_workspace(
             "/slack": (slack, MountMode.READ),
             "/sheets": (sheets, MountMode.READ),
             "/gdocs": (docs, MountMode.READ),
-            "/tickets": (FakeTicketingResource(str(tickets_root)),
-                         MountMode.WRITE),
+            "/tickets":
+            (FakeTicketingResource(str(tickets_root)), MountMode.WRITE),
         },
         mode=MountMode.WRITE,
         agent_id=agent_id,

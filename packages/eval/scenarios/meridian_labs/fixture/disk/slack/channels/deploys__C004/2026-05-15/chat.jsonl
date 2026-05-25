@@ -1,2 +1,0 @@
-{"type": "message", "user": "U001", "text": "Deploy succeeded - merchant-dashboard v2.41.3 -> production. Commit: e7f8g9 by @james.wilson - 'fix transaction history pagination'. Duration: 3m 42s | Status: healthy", "ts": "1715755800.000100", "team": "T_MERIDIAN"}
-{"type": "message", "user": "U001", "text": "Deploy succeeded - payments-api v3.18.7 -> production. Commit: f3a1b2c8 by @frank.osei - 'optimize connection pool settings'. Duration: 4m 15s | Status: healthy", "ts": "1715758740.000100", "team": "T_MERIDIAN"}

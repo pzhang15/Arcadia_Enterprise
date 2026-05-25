@@ -1,16 +1,34 @@
 services:
-  observability:
+  trace-generator:
     build:
-      context: ../frontends/observability
-      dockerfile: Dockerfile
-    ports:
-      - "8082:8082"
-    environment:
-      - RESULTS_DIR=/app/results
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app
+    command: uv run python /app/docker/generate_traces.py
     volumes:
+      - trace-data:/app/data
+
+  arcadia-platform:
+    build:
+      context: ..
+      dockerfile: frontends/platform/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DISK_ROOT=/app/fixture
+      - TRACES_DB=/app/data/traces.db
+      - RESULTS_DIR=/app/results
+    env_file:
+      - ../.env
+    volumes:
+      - ../packages/eval/scenarios/northhill_corp/fixture/disk:/app/fixture:ro
       - ../packages/eval/results:/app/results:ro
+      - trace-data:/app/data:ro
+    depends_on:
+      trace-generator:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8082/api/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/api/health"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -19,42 +37,29 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    working_dir: /app/packages/eval
     command: uv run python /app/docker/mock_server.py
     ports:
       - "3000:3000"
     depends_on:
-      observability:
+      arcadia-platform:
         condition: service_healthy
     environment:
-      - RELAY_URL=http://observability:8082
+      - RELAY_URL=http://arcadia-platform:8080
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
       interval: 5s
       timeout: 3s
       retries: 5
 
-  mirage-api:
+  mirage:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    command: >
-      uv run python -m uvicorn mirage.server.app:build_app
-      --factory --host 0.0.0.0 --port 8080
-    ports:
-      - "8080:8080"
-    depends_on:
-      mock-services:
-        condition: service_healthy
-    environment:
-      - MOCK_SERVICES_URL=http://mock-services:3000
-
-  mirage-mcp:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    working_dir: /app/packages/eval
     command: >
       uv run mirage-mcp
-      --scenario meridian_labs
+      --scenario northhill_corp
       --transport streamable-http
       --host 0.0.0.0
     ports:
@@ -64,40 +69,7 @@ services:
         condition: service_healthy
     environment:
       - MOCK_SERVICES_URL=http://mock-services:3000
-      - RELAY_URL=http://observability:8082
+      - RELAY_URL=http://arcadia-platform:8080
 
-  portal:
-    build:
-      context: ../frontends/portal
-      dockerfile: Dockerfile
-    ports:
-      - "8083:8083"
-    environment:
-      - SCENARIO_ROOT=/app/fixture
-    volumes:
-      - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8083/api/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  console:
-    build:
-      context: ../frontends/console
-      dockerfile: Dockerfile
-    ports:
-      - "8084:8084"
-    depends_on:
-      observability:
-        condition: service_healthy
-    environment:
-      - RELAY_URL=http://observability:8082
-      - SCENARIO_ROOT=/app/fixture
-    volumes:
-      - ../packages/eval/scenarios/acme_corp/fixture/disk:/app/fixture:ro
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8084/api/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+volumes:
+  trace-data:

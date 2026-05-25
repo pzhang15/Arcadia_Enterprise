@@ -47,7 +47,7 @@
           "elements": [
             {
               "textRun": {
-                "content": "On 2026-04-22 at 09:14 PT, ACME's Okta IdP rotated a SAML signing certificate without coordinating the new public key with Slack. All Slack workspace SSO sign-ins began failing. Outage lasted ~40 minutes (resolved 09:54 PT) when the new cert was registered with Slack admin.\n",
+                "content": "On 2026-04-22 at 09:14 PT, NorthHill's Okta IdP rotated a SAML signing certificate without coordinating the new public key with Slack. All Slack workspace SSO sign-ins began failing. Outage lasted ~40 minutes (resolved 09:54 PT) when the new cert was registered with Slack admin.\n",
                 "textStyle": {}
               }
             }

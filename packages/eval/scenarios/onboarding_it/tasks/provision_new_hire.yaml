@@ -28,7 +28,7 @@ oracles:
     - /tickets/draft/INC-1004_response.md
   must_contain_in_file:
     /tickets/draft/INC-1004_response.md:
-      - acme-platform
+      - northhill-platform
       - INC-1004
       - "P3"
       - "48h"
@@ -55,7 +55,7 @@ judge:
     correctness:
       weight: 0.4
       criteria: |
-        Identifies acme-platform as the target GitHub org. Correctly
+        Identifies northhill-platform as the target GitHub org. Correctly
         classifies the ticket as P3 with a 48h SLA per the IT Runbook
         and IT_SLA_Matrix. Notes that INC-1006 / INC-1003 are related
         (correctly), without conflating with unrelated tickets.

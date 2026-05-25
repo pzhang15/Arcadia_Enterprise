@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 
 def _read_json(p: Path) -> dict:
     return json.loads(p.read_text())
@@ -11,24 +9,22 @@ def _read_json(p: Path) -> dict:
 def _gsheet_cells(p: Path) -> list[list[str]]:
     sheet = _read_json(p)
     rows = sheet["sheets"][0]["data"][0]["rowData"]
-    return [
-        [cell.get("formattedValue", "") for cell in row.get("values", [])]
-        for row in rows
-    ]
+    return [[cell.get("formattedValue", "") for cell in row.get("values", [])]
+            for row in rows]
 
 
 def test_inc_1001_references_equipment_inventory_row(disk_root):
     """INC-1001 mentions Asset MBP-2026-014; that asset must exist in
     IT_Equipment_Inventory assigned to Alex Rivera."""
     ticket_dir = disk_root / "tickets/queues/it-helpdesk/open"
-    candidates = [p for p in ticket_dir.iterdir()
-                  if p.name.startswith("INC-1001__")]
+    candidates = [
+        p for p in ticket_dir.iterdir() if p.name.startswith("INC-1001__")
+    ]
     assert candidates, "INC-1001 missing"
     body = _read_json(candidates[0])["body"]
     assert "MBP-2026-014" in body
-    inv = _gsheet_cells(
-        disk_root / "sheets/owned"
-        / "2026-05-12_IT_Equipment_Inventory__SH102.gsheet.json")
+    inv = _gsheet_cells(disk_root / "sheets/owned" /
+                        "2026-05-12_IT_Equipment_Inventory__SH102.gsheet.json")
     matching_rows = [r for r in inv if r and r[0] == "MBP-2026-014"]
     assert matching_rows, "MBP-2026-014 not in inventory"
     assert matching_rows[0][4] == "Alex Rivera"
@@ -36,42 +32,38 @@ def test_inc_1001_references_equipment_inventory_row(disk_root):
 
 
 def test_inc_1004_references_access_matrix_role(disk_root):
-    """INC-1004 routes to acme-platform GitHub org; the Access Matrix
+    """INC-1004 routes to northhill-platform GitHub org; the Access Matrix
     must list that org for Software Engineer / Platform."""
     ticket_dir = disk_root / "tickets/queues/it-helpdesk/open"
-    candidates = [p for p in ticket_dir.iterdir()
-                  if p.name.startswith("INC-1004__")]
+    candidates = [
+        p for p in ticket_dir.iterdir() if p.name.startswith("INC-1004__")
+    ]
     assert candidates, "INC-1004 missing"
     body = _read_json(candidates[0])["body"]
-    assert "acme-platform" in body
-    matrix = _gsheet_cells(
-        disk_root / "sheets/owned"
-        / "2026-05-12_Access_Matrix__SH103.gsheet.json")
-    platform_rows = [r for r in matrix
-                     if len(r) >= 3 and r[0] == "Software Engineer"
-                     and r[1] == "Platform"]
+    assert "northhill-platform" in body
+    matrix = _gsheet_cells(disk_root / "sheets/owned" /
+                           "2026-05-12_Access_Matrix__SH103.gsheet.json")
+    platform_rows = [
+        r for r in matrix
+        if len(r) >= 3 and r[0] == "Software Engineer" and r[1] == "Platform"
+    ]
     assert platform_rows, "Software Engineer / Platform row missing"
-    assert "acme-platform" in platform_rows[0][2]
+    assert "northhill-platform" in platform_rows[0][2]
 
 
 def test_postmortem_aligns_with_new_hire_tracker(disk_root):
     """Slack outage postmortem GD105 says two hires (Priya Wong, Marcus
     Davis) had Day 1 on the outage date 2026-04-22; the New Hire Tracker
     must list those rows."""
-    pm_doc = _read_json(
-        disk_root / "gdocs/owned"
-        / "2026-04-22_Slack_Outage_Postmortem__GD105.gdoc.json")
-    pm_text = "".join(
-        elt["textRun"]["content"]
-        for c in pm_doc["body"]["content"]
-        if "paragraph" in c
-        for elt in c["paragraph"]["elements"]
-        if "textRun" in elt
-    )
+    pm_doc = _read_json(disk_root / "gdocs/owned" /
+                        "2026-04-22_Slack_Outage_Postmortem__GD105.gdoc.json")
+    pm_text = "".join(elt["textRun"]["content"]
+                      for c in pm_doc["body"]["content"] if "paragraph" in c
+                      for elt in c["paragraph"]["elements"]
+                      if "textRun" in elt)
     assert "Priya Wong" in pm_text and "Marcus Davis" in pm_text
-    tracker = _gsheet_cells(
-        disk_root / "sheets/owned"
-        / "2026-05-12_New_Hire_Tracker__SH101.gsheet.json")
+    tracker = _gsheet_cells(disk_root / "sheets/owned" /
+                            "2026-05-12_New_Hire_Tracker__SH101.gsheet.json")
     names = {r[0] for r in tracker if r}
     assert "Priya Wong" in names
     assert "Marcus Davis" in names

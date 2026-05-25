@@ -32,7 +32,8 @@ def _empty_artifacts(**overrides):
 
 
 def test_matches_prefix_exact():
-    assert _matches_prefix(["/sheets/owned/foo.json"], "/sheets/owned/foo.json")
+    assert _matches_prefix(["/sheets/owned/foo.json"],
+                           "/sheets/owned/foo.json")
 
 
 def test_matches_prefix_resource_relative():
@@ -47,12 +48,16 @@ def test_matches_prefix_negative():
 
 def test_programmatic_passes_when_oracles_empty():
     a = _empty_artifacts()
-    task = TaskConfig(
-        id="t", description="d", prompt="p",
-        oracles=TaskOracles(),
-        judge=JudgeConfig(model="gpt-5",
-                          rubric={"x": JudgeRubricItem(weight=1.0,
-                                                       criteria="c")}))
+    task = TaskConfig(id="t",
+                      description="d",
+                      prompt="p",
+                      oracles=TaskOracles(),
+                      judge=JudgeConfig(model="gpt-5",
+                                        rubric={
+                                            "x":
+                                            JudgeRubricItem(weight=1.0,
+                                                            criteria="c")
+                                        }))
     r = score_programmatic(a, task)
     assert r.all_passed
     assert r.fraction_passed >= 0.99
@@ -60,12 +65,16 @@ def test_programmatic_passes_when_oracles_empty():
 
 def test_programmatic_files_must_exist_fails_when_missing():
     a = _empty_artifacts()
-    task = TaskConfig(
-        id="t", description="d", prompt="p",
-        oracles=TaskOracles(files_must_exist=["/out.md"]),
-        judge=JudgeConfig(model="gpt-5",
-                          rubric={"x": JudgeRubricItem(weight=1.0,
-                                                       criteria="c")}))
+    task = TaskConfig(id="t",
+                      description="d",
+                      prompt="p",
+                      oracles=TaskOracles(files_must_exist=["/out.md"]),
+                      judge=JudgeConfig(model="gpt-5",
+                                        rubric={
+                                            "x":
+                                            JudgeRubricItem(weight=1.0,
+                                                            criteria="c")
+                                        }))
     r = score_programmatic(a, task)
     assert not r.all_passed
 
@@ -86,8 +95,7 @@ def test_trajectory_breach_when_over_budget():
 
 
 def test_composite_gate_failure_halves_score():
-    from mirage_eval.scorers.programmatic import (GateResult,
-                                                  ProgrammaticResult)
+    from mirage_eval.scorers.programmatic import GateResult, ProgrammaticResult
     prog = ProgrammaticResult(gates=[
         GateResult(name="g1", passed=True),
         GateResult(name="g2", passed=False),
@@ -100,8 +108,7 @@ def test_composite_gate_failure_halves_score():
 
 
 def test_failure_modes_tags_known_categories():
-    from mirage_eval.scorers.programmatic import (GateResult,
-                                                  ProgrammaticResult)
+    from mirage_eval.scorers.programmatic import GateResult, ProgrammaticResult
     prog = ProgrammaticResult(gates=[
         GateResult(name="file_exists:/x.md", passed=False),
         GateResult(name="must_contain:/x.md:hello", passed=False),

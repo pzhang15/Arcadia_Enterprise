@@ -6,13 +6,13 @@ import time
 import httpx
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from mirage_eval.scenario import ENTERPRISE_ROOT, REPO_ROOT, ScenarioManifest
+from mirage_eval.scenario import REPO_ROOT, ScenarioManifest
 
 logger = logging.getLogger(__name__)
 
 _ws = None
 _mcp = FastMCP("mirage")
-_relay_url = os.environ.get("RELAY_URL", "http://localhost:8082")
+_relay_url = os.environ.get("RELAY_URL", "http://localhost:8080")
 _relay_client: httpx.AsyncClient | None = None
 
 
@@ -126,7 +126,7 @@ def serve(scenario: str,
     """Build a workspace and run the MCP server.
 
     Args:
-        scenario (str): Scenario id (e.g. ``meridian_labs``).
+        scenario (str): Scenario id (e.g. ``northhill_corp``).
         surface (str): ``l1`` (synthetic) or ``l2`` (real APIs).
         transport (str): ``stdio`` (default) or ``streamable-http``.
         host (str): Bind address for HTTP transports (default 127.0.0.1,
@@ -145,7 +145,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Mirage MCP server")
     parser.add_argument("--scenario",
                         required=True,
-                        help="Scenario id (e.g. meridian_labs)")
+                        help="Scenario id (e.g. northhill_corp)")
     parser.add_argument("--surface",
                         default="l1",
                         help="l1 (synthetic) or l2 (real APIs)")

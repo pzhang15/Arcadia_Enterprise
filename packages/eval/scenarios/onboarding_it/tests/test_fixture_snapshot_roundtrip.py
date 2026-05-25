@@ -2,11 +2,10 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from mirage import Workspace
 from mirage_eval.fixtures.build_snapshot import snapshot_workspace
 from scenarios.onboarding_it import seed
 from scenarios.onboarding_it.mounts import build_l1_workspace
-
-from mirage import Workspace
 
 
 def test_seed_writes_expected_top_level_dirs():

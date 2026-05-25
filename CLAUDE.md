@@ -18,10 +18,8 @@ arcadia/
 │   ├── lineage/            # Lineage Emitter (OpenLineage events)
 │   ├── policy/             # Policy Engine (column ACL, row filters, budgets)
 │   └── workspace-vfs/      # VFS extensions (dot-file metadata, query.json)
-├── frontends/              # React apps
-│   ├── observability/      # Observability UI (:8082)
-│   ├── portal/             # Enterprise Portal (:8083)
-│   └── console/            # Agent Console (:8084)
+├── frontends/
+│   └── platform/           # Unified Arcadia Platform (:8080)
 ├── docker/                 # Docker compose + Dockerfile
 ├── pyproject.toml          # uv workspace root
 └── .pre-commit-config.yaml
@@ -81,6 +79,18 @@ When asked to create a PR, follow these steps:
 
 ```bash
 ./vendor/mirage/python/.venv/bin/pre-commit run --all-files
+```
+
+### Backend Tests (Python)
+
+```bash
+cd packages/eval && uv run pytest
+```
+
+### Frontend Tests (TypeScript)
+
+```bash
+cd frontends/platform && npm run test:run
 ```
 
 ## Type Conventions

@@ -24,6 +24,12 @@ arcadia-lineage = { workspace = true }
 arcadia-policy-engine = { workspace = true }
 arcadia-workspace-vfs = { workspace = true }
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["packages/eval/tests", "packages/eval/scenarios"]
 addopts = "-q --import-mode=importlib"
