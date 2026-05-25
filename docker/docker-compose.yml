@@ -10,8 +10,8 @@ services:
 
   arcadia-platform:
     build:
-      context: ../frontends/platform
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: frontends/platform/Dockerfile
     ports:
       - "8080:8080"
     environment:

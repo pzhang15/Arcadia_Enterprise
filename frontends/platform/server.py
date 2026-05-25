@@ -605,15 +605,34 @@ async def _emit_event(session_id: str, event: dict) -> None:
 
 def _build_workspace(services: list[str]):
     if _seed_northhill is None or build_l1_workspace is None:
-        logger.warning(
-            "workspace modules not available (packages/eval not installed)")
-        return None
+        logger.info("eval package not installed, using disk workspace")
+        return _build_disk_workspace()
     try:
         _seed_northhill()
         return build_l1_workspace(agent_id="console-agent",
                                   session_id="default")
     except Exception as exc:
-        logger.warning("workspace build failed: %s", exc)
+        logger.warning("workspace build failed, using disk workspace: %s", exc)
+        return _build_disk_workspace()
+
+
+def _build_disk_workspace():
+    if not DISK_ROOT.exists():
+        logger.warning("DISK_ROOT %s does not exist", DISK_ROOT)
+        return None
+    try:
+        from mirage import MountMode, Workspace
+        from mirage.resource.disk import DiskResource
+        mounts = {}
+        for subdir in sorted(DISK_ROOT.iterdir()):
+            if subdir.is_dir():
+                mounts[f"/{subdir.name}"] = (
+                    DiskResource(root=str(subdir)), MountMode.READ)
+        if not mounts:
+            return None
+        return Workspace(mounts, mode=MountMode.READ)
+    except ImportError:
+        logger.warning("mirage not installed, workspace unavailable")
         return None
 
 
