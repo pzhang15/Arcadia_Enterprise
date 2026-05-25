@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.csplit import csplit
 from mirage.commands.builtin.generic.join import join_cmd
 from mirage.commands.builtin.generic.split import split

@@ -1,2 +1,0 @@
-{"type": "message", "user": "U212", "text": "CODE FREEZE in effect for payments-api. Do not merge until INC-5521 is resolved. Incident bridge: #incidents channel.", "ts": "1715758800.000100", "team": "T_ACME"}
-{"type": "message", "user": "U215", "text": "Post-incident note: we need connection pool config to go through the capacity planning review process. Adding to the architecture review checklist.", "ts": "1715762400.000200", "team": "T_ACME"}

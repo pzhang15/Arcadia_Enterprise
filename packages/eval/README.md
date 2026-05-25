@@ -6,7 +6,7 @@ It simulates realistic enterprise environments where AI agents navigate cross-do
 
 What you get:
 
-- **Simulated enterprise scenarios** with coherent, cross-referenced data across 5+ services (Slack, Jira, GitHub, PagerDuty, Datadog, GSheets, GDocs, ITSM). Every ticket references a deployment, every Slack thread references a ticket, every log entry correlates with a commit.
+- **Simulated enterprise scenarios** with coherent, cross-referenced data across 13 services (Slack, ITSM, GitHub, PagerDuty, Datadog, GSheets, GDocs, Finance, CRM, Compliance, Database, S3). Every ticket references a deployment, every Slack thread references a ticket, every log entry correlates with a commit, every database subscription FKs to a real customer account.
 - **Graded agent evaluation** measuring programmatic correctness (did it find the right data?), trajectory efficiency (how many commands, tokens, dollars?), and LLM-judged quality (is the output actually useful?) — all in a single composite score.
 - **MCP server** exposing any scenario as a standard Model Context Protocol endpoint, so Claude, Cursor, OpenAI agents, or any MCP client can connect and drive the workspace interactively.
 - **Docker mock suite** with fake HTTP backends for all services, a Mirage daemon, and an MCP server — one `docker compose up` to stand up the entire test environment.
@@ -114,6 +114,14 @@ uv run mirage-eval sweep \
 
 Results: `results/<scenario>/<sweep_id>/SUMMARY.md`
 
+### Available tasks (northhill_corp)
+
+| Task                        | Mounts exercised                                                   | What the agent must do                                                                      |
+| --------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `enterprise_review`         | All 13                                                             | Cross-department review covering IT, HR, Finance, Engineering, Customer Support, Compliance |
+| `customer_revenue_analysis` | `/database`, `/customers`                                          | Cross-reference subscriptions with CRM accounts to identify revenue risk                    |
+| `incident_forensics`        | `/pagerduty`, `/datadog`, `/github`, `/s3`, `/customers`, `/slack` | Deep forensic investigation of INC-5521 across logs, metrics, code, and customer impact     |
+
 ## 7. Run tests
 
 ```bash
@@ -129,22 +137,24 @@ cd frontends/platform && npm run test:run
 
 ### Test coverage
 
-| Suite | Tests | What it covers |
-| ----- | ----- | -------------- |
-| `test_seed_completeness.py` | 21 | All departments seeded, JSON validity, idempotency |
-| `test_portal_data_serving.py` | 20 | Portal disk-reading patterns, env var config, Docker wiring |
-| `test_platform_server_integration.py` | 32 | FastAPI server: health, sessions, workspace execution, all portal endpoints, disk fallback |
-| `test_workspace_integration.py` | 11 | Full Mirage workspace: ls, cat, find across all 11 mounts |
-| `test_mock_server_data.py` | 12 | Mock server data loading, status values, cross-reference integrity |
-| Frontend (Vitest) | 106 | API client, SSE hook, all 16 React components, App integration |
+| Suite                                 | Tests | What it covers                                                                               |
+| ------------------------------------- | ----- | -------------------------------------------------------------------------------------------- |
+| `test_seed_completeness.py`           | 31    | All mounts seeded, generated entities, cross-references, JSON validity, idempotency          |
+| `test_end_to_end.py`                  | 18    | Full workspace: mount discovery, database/S3 reads, cross-system correlation, agent workflow |
+| `test_docker_deployment.py`           | 18    | Dockerfile structure, compose services, seeded data compatibility, file format validation    |
+| `test_portal_data_serving.py`         | 20    | Portal disk-reading patterns, env var config, Docker wiring                                  |
+| `test_platform_server_integration.py` | 32    | FastAPI server: health, sessions, workspace execution, all portal endpoints, disk fallback   |
+| `test_workspace_integration.py`       | 11    | Full Mirage workspace: ls, cat, find across all 13 mounts                                    |
+| `test_mock_server_data.py`            | 12    | Mock server data loading, status values, cross-reference integrity                           |
+| Frontend (Vitest)                     | 106   | API client, SSE hook, all 16 React components, App integration                               |
 
 ## Scenarios
 
-| Scenario         | Domain                          | Services                                                                        |
-| ---------------- | ------------------------------- | ------------------------------------------------------------------------------- |
-| `northhill_corp` | Full enterprise (6 departments) | Slack, Sheets, Docs, ITSM, GitHub, PagerDuty, Datadog, Finance, CRM, Compliance |
-| `onboarding_it`  | HR onboarding + IT helpdesk     | Slack, GSheets, GDocs, ITSM                                                     |
-| `bi_analytics`   | (placeholder)                   | ---                                                                             |
+| Scenario         | Domain                          | Services                                                                                      |
+| ---------------- | ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `northhill_corp` | Full enterprise (6 departments) | Slack, Sheets, Docs, ITSM, GitHub, PagerDuty, Datadog, Finance, CRM, Compliance, Database, S3 |
+| `onboarding_it`  | HR onboarding + IT helpdesk     | Slack, GSheets, GDocs, ITSM                                                                   |
+| `bi_analytics`   | (placeholder)                   | ---                                                                                           |
 
 ## Adding a scenario
 

@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.tail import tail
 
 

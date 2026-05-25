@@ -16,7 +16,6 @@ import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.gdocs import GDocsAccessor
 from mirage.commands.builtin.gdocs.gws_docs_documents_batchUpdate import \
     gws_docs_documents_batchUpdate

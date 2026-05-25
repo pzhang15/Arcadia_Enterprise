@@ -16,12 +16,11 @@ import logging
 import os
 from collections.abc import Iterable
 
-from starlette.responses import PlainTextResponse
-from starlette.types import ASGIApp, Receive, Scope, Send
-
 from mirage.server.env import ENV_ALLOWED_HOSTS
 from mirage.server.host_validation_constants import (DEFAULT_ALLOWED_HOSTS,
                                                      HOST_PATTERN)
+from starlette.responses import PlainTextResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 logger = logging.getLogger(__name__)
 

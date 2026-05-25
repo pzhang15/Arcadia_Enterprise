@@ -18,9 +18,8 @@ from pathlib import Path
 
 import av
 import numpy as np
-from tinytag import TinyTag
-
 from mirage.io.sync_bridge import sync_to_async_iter
+from tinytag import TinyTag
 
 _METADATA_RANGE = 131072
 

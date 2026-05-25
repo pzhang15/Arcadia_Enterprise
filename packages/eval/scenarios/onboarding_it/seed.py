@@ -388,8 +388,9 @@ ACCESS_MATRIX_ROWS = [
     ],
     [
         "IT Lead", "IT", "northhill-it,northhill-org-admin",
-        "it-helpdesk,eng,general,leadership", "northhill-it-prod,northhill-billing",
-        "ops_db,billing_db", "IT,Leadership", "IT"
+        "it-helpdesk,eng,general,leadership",
+        "northhill-it-prod,northhill-billing", "ops_db,billing_db",
+        "IT,Leadership", "IT"
     ],
     [
         "HR Partner", "People", "(none)", "onboarding,general,people-ops",
@@ -876,7 +877,8 @@ def main(root: str | Path = DEFAULT_ROOT, *, clean: bool = True) -> Path:
 
 def _cli() -> None:
     parser = argparse.ArgumentParser(
-        description="Seed the NorthHill onboarding+IT helpdesk corpus on disk.")
+        description="Seed the NorthHill onboarding+IT helpdesk corpus on disk."
+    )
     parser.add_argument("--root",
                         default=DEFAULT_ROOT,
                         help=f"Synthetic root (default {DEFAULT_ROOT}).")

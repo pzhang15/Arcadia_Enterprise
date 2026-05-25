@@ -12,9 +12,8 @@
 # limitations under the License.
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
-from pydantic import BaseModel, ConfigDict, SecretStr
-
 from mirage.resource.s3 import S3Config
+from pydantic import BaseModel, ConfigDict, SecretStr
 
 
 class OCIConfig(BaseModel):

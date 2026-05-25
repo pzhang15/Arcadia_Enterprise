@@ -1,7 +1,6 @@
 import hashlib
 
 import pytest
-
 from mirage.commands.builtin.generic.cmp import cmp_cmd
 from mirage.commands.builtin.generic.md5 import md5
 from mirage.commands.builtin.generic.sha256sum import sha256sum

@@ -15,7 +15,6 @@
 import fnmatch
 
 import asyncssh
-
 from mirage.accessor.ssh import SSHAccessor
 from mirage.core.ssh._client import _abs
 from mirage.types import PathSpec

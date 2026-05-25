@@ -22,7 +22,6 @@ import uuid
 from dataclasses import asdict
 
 import mfusepy as fuse
-
 from mirage.bridge.sync import run_async_from_sync
 from mirage.fuse.platform.macos import is_macos_metadata
 from mirage.ops import Ops

@@ -16,7 +16,7 @@ sys.path.insert(
     0, str(Path(__file__).resolve().parent.parent / "packages" / "eval"))
 
 from scenarios.northhill_corp.seed import (CHANNEL_MESSAGES, CHANNELS, USERS,
-                                          _slack_msg)
+                                           _slack_msg)
 
 logger = logging.getLogger(__name__)
 

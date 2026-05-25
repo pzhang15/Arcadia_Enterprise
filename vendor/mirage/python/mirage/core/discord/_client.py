@@ -15,7 +15,6 @@
 import asyncio
 
 import aiohttp
-
 from mirage.resource.discord.config import DiscordConfig
 from mirage.resource.secrets import reveal_secret
 

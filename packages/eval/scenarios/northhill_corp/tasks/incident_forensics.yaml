@@ -1,0 +1,66 @@
+id: incident_forensics
+description: Deep incident investigation spanning logs, metrics, deployments, code, and customer impact.
+prompt: |
+  Conduct a forensic investigation of incident INC-5521:
+
+  (1) Read /pagerduty/incidents/triggered/ to identify the incident.
+  (2) Correlate with /datadog/logs/platform-api/ and /datadog/metrics/platform-api/
+      to establish the timeline and error pattern.
+  (3) Check /github/repos/northhill/platform-api/deployments/ and
+      /github/repos/northhill/platform-api/commits/ to identify the causal
+      deployment and exact code change.
+  (4) Check /s3/northhill-data/artifacts/deployments/ for the build log.
+  (5) Check /s3/northhill-data/logs/platform-api/2026/05/15/ for raw app logs.
+  (6) Identify customer impact via /customers/escalations/ and
+      /tickets/queues/customer-support/.
+  (7) Check /slack/channels/incidents__C305/ for the incident bridge conversation.
+
+  Write a root cause analysis to /rca_inc_5521.md with:
+  - Timeline (UTC timestamps)
+  - Root cause (specific config change + commit SHA)
+  - Customer impact (account names, ticket IDs)
+  - Remediation steps taken
+  - Prevention recommendations
+
+oracles:
+  files_must_exist:
+    - /rca_inc_5521.md
+  must_contain_in_file:
+    /rca_inc_5521.md:
+      - f3a1b2c8
+      - connectionPoolSize
+      - GlobalTech
+      - frank
+  ops_must_touch_prefix:
+    - /pagerduty/incidents/triggered/
+    - /datadog/logs/platform-api/
+    - /github/repos/northhill/platform-api/
+    - /s3/northhill-data/
+    - /customers/escalations/
+    - /slack/channels/incidents
+
+trajectory_budget:
+  max_turns: 35
+  max_commands: 100
+  max_wallclock_s: 300
+  max_tokens: 250000
+
+judge:
+  model: gpt-5
+  rubric:
+    timeline_accuracy:
+      weight: 0.30
+      criteria: |
+        Timeline includes deployment time, first error, PagerDuty trigger,
+        and rollback with correct UTC timestamps.
+    root_cause_depth:
+      weight: 0.30
+      criteria: |
+        Identifies the exact config change (connection pool 50 to 10),
+        the commit, and the deployer.
+    cross_system_evidence:
+      weight: 0.25
+      criteria: Evidence gathered from at least 5 different mount paths.
+    recommendations:
+      weight: 0.15
+      criteria: Prevention recommendations are specific and actionable.

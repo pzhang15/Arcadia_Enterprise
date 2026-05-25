@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.diff import diff
 from mirage.commands.builtin.generic.jq import jq
 from mirage.commands.builtin.generic.patch import patch

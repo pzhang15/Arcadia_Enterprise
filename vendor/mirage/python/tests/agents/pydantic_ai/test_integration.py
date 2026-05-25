@@ -15,12 +15,11 @@
 from dataclasses import dataclass
 
 import pytest
+from mirage import MountMode, RAMResource, Workspace
+from mirage.agents.pydantic_ai.backend import PydanticAIWorkspace
 from pydantic_ai import Agent
 from pydantic_ai.models.test import TestModel
 from pydantic_ai_backends import create_console_toolset
-
-from mirage import MountMode, RAMResource, Workspace
-from mirage.agents.pydantic_ai.backend import PydanticAIWorkspace
 
 
 @dataclass

@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import typer
-
 from mirage.cli.client import make_client
 from mirage.cli.output import emit, handle_response
 

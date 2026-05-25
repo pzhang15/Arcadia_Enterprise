@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import jq as _libjq
-
 from mirage.core.jq.format import JQ_EMPTY
 
 

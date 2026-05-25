@@ -19,7 +19,6 @@ from agents import Runner
 from agents.run import RunConfig
 from agents.sandbox import SandboxAgent, SandboxRunConfig
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.agents.openai_agents import MirageSandboxClient
 from mirage.resource.ram import RAMResource

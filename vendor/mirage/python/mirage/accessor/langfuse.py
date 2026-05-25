@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 from langfuse import Langfuse
-
 from mirage.accessor.base import Accessor
 from mirage.resource.langfuse.config import LangfuseConfig
 from mirage.resource.secrets import reveal_secret

@@ -15,7 +15,6 @@
 import asyncio
 
 import pytest
-
 from mirage.agents.camel._async import AsyncRunner
 
 

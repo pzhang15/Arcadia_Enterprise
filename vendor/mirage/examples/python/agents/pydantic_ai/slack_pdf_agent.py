@@ -17,12 +17,11 @@ import time
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
-from pydantic_ai import Agent
-from pydantic_ai_backends import create_console_toolset
-
 from mirage import MountMode, Workspace
 from mirage.agents.pydantic_ai import PydanticAIWorkspace
 from mirage.resource.slack import SlackConfig, SlackResource
+from pydantic_ai import Agent
+from pydantic_ai_backends import create_console_toolset
 
 load_dotenv(".env.development")
 

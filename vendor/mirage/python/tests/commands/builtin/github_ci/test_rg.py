@@ -15,7 +15,6 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.github_ci import GitHubCIAccessor
 from mirage.cache.index.ram import RAMIndexCacheStore
 from mirage.commands.builtin.github_ci.rg import rg

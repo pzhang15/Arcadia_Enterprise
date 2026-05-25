@@ -17,7 +17,6 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import aiohttp
-
 from mirage.resource.secrets import reveal_secret
 from mirage.types import PathSpec
 

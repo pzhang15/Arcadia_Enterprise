@@ -16,7 +16,6 @@ import base64
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from mirage.agents.openai_agents.runner import MirageRunner
 from mirage.types import FileStat, FileType
 

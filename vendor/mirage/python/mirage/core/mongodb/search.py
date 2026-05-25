@@ -15,10 +15,9 @@
 import asyncio
 
 from bson.json_util import RELAXED_JSON_OPTIONS, dumps
-from motor.motor_asyncio import AsyncIOMotorClient
-
 from mirage.core.mongodb._client import get_indexes, list_collections
 from mirage.core.mongodb.types import PRIMARY_KEY, EntityKind
+from motor.motor_asyncio import AsyncIOMotorClient
 
 
 def _collect_string_paths(value, prefix: str, out: set[str]) -> None:

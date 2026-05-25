@@ -14,9 +14,8 @@
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
-
 from mirage.types import IndexType
+from pydantic import BaseModel, Field
 
 
 class ResourceType(str, Enum):

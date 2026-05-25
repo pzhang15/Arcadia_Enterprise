@@ -16,7 +16,6 @@ import asyncio
 
 from agents import Agent, ApplyPatchTool, Runner, ShellTool
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.agents.openai_agents import (MirageEditor, MirageShellExecutor,
                                          build_system_prompt)

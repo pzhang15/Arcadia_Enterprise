@@ -15,7 +15,6 @@
 import io as _io
 
 import pyarrow.feather as feather
-
 from mirage.accessor.s3 import S3Accessor
 from mirage.cache.index import IndexCacheStore
 from mirage.commands.registry import command

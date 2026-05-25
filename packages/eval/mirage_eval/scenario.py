@@ -3,9 +3,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
-
 from mirage_eval.config import TaskConfig
+from pydantic import BaseModel, ConfigDict, Field
 
 EVAL_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = EVAL_ROOT.parent.parent
@@ -147,8 +146,7 @@ class ScenarioManifest(BaseModel):
             raise ValueError(f"unknown surface: {surface!r}")
         module_name, _, attr = spec.partition(":")
         if not attr:
-            raise ValueError(
-                f"builder spec {spec!r} must be 'module:attr'")
+            raise ValueError(f"builder spec {spec!r} must be 'module:attr'")
         module = importlib.import_module(module_name)
         return getattr(module, attr)
 

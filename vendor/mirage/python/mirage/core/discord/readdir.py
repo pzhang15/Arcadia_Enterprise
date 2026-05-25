@@ -16,7 +16,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import aiohttp
-
 from mirage.accessor.discord import DiscordAccessor
 from mirage.cache.index import IndexCacheStore, IndexEntry
 from mirage.core.discord.channels import list_channels

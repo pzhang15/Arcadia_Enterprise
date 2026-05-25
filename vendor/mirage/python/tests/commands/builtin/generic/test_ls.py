@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
 import pytest
-
 from mirage.commands.builtin.generic.ls import (format_simple, get_extension,
                                                 ls, walk)
 from mirage.types import FileStat, FileType, LsSortBy, PathSpec

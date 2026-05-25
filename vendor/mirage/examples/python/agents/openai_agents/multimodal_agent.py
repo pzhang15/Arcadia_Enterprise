@@ -18,12 +18,11 @@ from pathlib import Path
 
 from agents import Agent
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
-
 from mirage import MountMode, Workspace
 from mirage.agents.openai_agents import MirageRunner, build_system_prompt
 from mirage.resource.disk import DiskResource
 from mirage.resource.ram import RAMResource
+from openai import AsyncOpenAI
 
 load_dotenv(".env.development")
 

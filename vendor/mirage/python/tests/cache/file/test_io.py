@@ -15,7 +15,6 @@
 import asyncio
 
 import pytest
-
 from mirage.cache.file import io as cache_io
 from mirage.cache.file.ram import RAMFileCacheStore
 from mirage.io import CachableAsyncIterator, IOResult

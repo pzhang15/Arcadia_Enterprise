@@ -15,7 +15,6 @@
 from agents.apply_diff import apply_diff
 from agents.editor import (ApplyPatchEditor, ApplyPatchOperation,
                            ApplyPatchResult)
-
 from mirage.workspace.workspace import Workspace
 
 

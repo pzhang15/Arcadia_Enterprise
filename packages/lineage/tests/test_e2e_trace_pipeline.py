@@ -2,13 +2,10 @@ import json
 import sqlite3
 
 import pytest
-
-from mirage import MountMode, RAMResource, Workspace
-
-from lineage_emitter.sinks.sqlite import SQLiteSpanStore
 from lineage_emitter.tracing.config import TraceConfig
-from lineage_emitter.tracing.span import SpanKind, SpanStatus, TraceLevel
+from lineage_emitter.tracing.span import SpanStatus, TraceLevel
 from lineage_emitter.workspace import TracingWorkspace
+from mirage import MountMode, RAMResource, Workspace
 
 
 @pytest.fixture()
@@ -53,8 +50,7 @@ async def test_full_pipeline_generates_and_flushes(trace_db):
     trace_spans = store.count_spans(level=int(TraceLevel.TRACE))
 
     assert audit_spans == len(PIPELINE_COMMANDS), (
-        f"Expected {len(PIPELINE_COMMANDS)} root spans, got {audit_spans}"
-    )
+        f"Expected {len(PIPELINE_COMMANDS)} root spans, got {audit_spans}")
     assert total_spans > audit_spans, "No child spans produced"
 
 
@@ -76,8 +72,7 @@ async def test_sqlite_readable_after_checkpoint(trace_db, tmp_path):
     ro_conn = sqlite3.connect(db_path)
     ro_conn.row_factory = sqlite3.Row
     rows = ro_conn.execute(
-        "SELECT * FROM spans WHERE parent_span_id IS NULL"
-    ).fetchall()
+        "SELECT * FROM spans WHERE parent_span_id IS NULL").fetchall()
     ro_conn.close()
 
     assert len(rows) == len(PIPELINE_COMMANDS), (
@@ -102,8 +97,7 @@ async def test_trace_api_list_format(trace_db):
         "SELECT trace_id, name, start_time_ms, end_time_ms, status, "
         "attributes, metrics, session_id, agent_id "
         "FROM spans WHERE parent_span_id IS NULL "
-        "ORDER BY start_time_ms DESC LIMIT 50 OFFSET 0"
-    ).fetchall()
+        "ORDER BY start_time_ms DESC LIMIT 50 OFFSET 0").fetchall()
     conn.close()
 
     assert len(rows) == 2
@@ -139,15 +133,14 @@ async def test_trace_detail_api_format(trace_db):
 
     root_rows_all = conn.execute(
         "SELECT trace_id FROM spans WHERE parent_span_id IS NULL "
-        "ORDER BY start_time_ms"
-    ).fetchall()
+        "ORDER BY start_time_ms").fetchall()
     assert len(root_rows_all) == 2
 
     cat_trace_id = root_rows_all[1]["trace_id"]
 
     rows = conn.execute(
         "SELECT * FROM spans WHERE trace_id = ? ORDER BY start_time_ms",
-        (cat_trace_id,),
+        (cat_trace_id, ),
     ).fetchall()
 
     assert len(rows) >= 2, "Expected root + at least one child span"
@@ -157,7 +150,8 @@ async def test_trace_detail_api_format(trace_db):
 
     assert len(root_rows) == 1
     assert len(child_rows) >= 1
-    assert all(r["parent_span_id"] == root_rows[0]["span_id"] for r in child_rows)
+    assert all(r["parent_span_id"] == root_rows[0]["span_id"]
+               for r in child_rows)
     assert all(r["trace_id"] == cat_trace_id for r in rows)
     conn.close()
 
@@ -177,19 +171,20 @@ async def test_trace_stats_summary_format(trace_db):
 
     total_spans = conn.execute("SELECT COUNT(*) FROM spans").fetchone()[0]
     total_traces = conn.execute(
-        "SELECT COUNT(DISTINCT trace_id) FROM spans"
-    ).fetchone()[0]
+        "SELECT COUNT(DISTINCT trace_id) FROM spans").fetchone()[0]
 
     assert total_traces == 2
     assert total_spans >= 3  # 2 roots + at least 1 child
 
     by_level = {}
     for row in conn.execute(
-        "SELECT level, COUNT(*) as cnt FROM spans GROUP BY level"
+            "SELECT level, COUNT(*) as cnt FROM spans GROUP BY level"
     ).fetchall():
-        level_name = {0: "audit", 1: "trace", 2: "operational"}.get(
-            row["level"], str(row["level"])
-        )
+        level_name = {
+            0: "audit",
+            1: "trace",
+            2: "operational"
+        }.get(row["level"], str(row["level"]))
         by_level[level_name] = row["cnt"]
 
     assert "audit" in by_level
@@ -209,8 +204,7 @@ async def test_error_trace_marked_correctly(trace_db):
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
-        "SELECT * FROM spans WHERE parent_span_id IS NULL"
-    ).fetchall()
+        "SELECT * FROM spans WHERE parent_span_id IS NULL").fetchall()
     conn.close()
 
     assert len(rows) == 1
@@ -257,17 +251,16 @@ async def test_child_count_matches_api_pattern(trace_db):
     conn.row_factory = sqlite3.Row
 
     roots = conn.execute(
-        "SELECT trace_id FROM spans WHERE parent_span_id IS NULL"
-    ).fetchall()
+        "SELECT trace_id FROM spans WHERE parent_span_id IS NULL").fetchall()
 
     for root in roots:
         child_count = conn.execute(
             "SELECT COUNT(*) FROM spans WHERE trace_id = ? AND parent_span_id IS NOT NULL",
-            (root["trace_id"],),
+            (root["trace_id"], ),
         ).fetchone()[0]
         total = conn.execute(
             "SELECT COUNT(*) FROM spans WHERE trace_id = ?",
-            (root["trace_id"],),
+            (root["trace_id"], ),
         ).fetchone()[0]
         assert total == child_count + 1
 

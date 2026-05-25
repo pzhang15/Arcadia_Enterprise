@@ -17,11 +17,10 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorClient
-
 from mirage.accessor.base import Accessor
 from mirage.resource.mongodb.config import MongoDBConfig
 from mirage.resource.secrets import reveal_secret
+from motor.motor_asyncio import AsyncIOMotorClient
 
 
 class MongoDBAccessor(Accessor):

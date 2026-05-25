@@ -14,10 +14,9 @@
 
 from typing import Any, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from mirage.vfp.capability import CapabilityDeclaration
 from mirage.vfp.types import Entry, FileStat, Implementation, SnapshotInfo
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class _Msg(BaseModel):

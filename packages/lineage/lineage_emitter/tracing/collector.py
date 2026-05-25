@@ -2,16 +2,10 @@ from __future__ import annotations
 
 import uuid
 
-from mirage.observe.record import OpRecord
-
 from lineage_emitter.tracing.buffer import RingBuffer
-from lineage_emitter.tracing.span import (
-    Span,
-    SpanKind,
-    SpanMetrics,
-    SpanStatus,
-    TraceLevel,
-)
+from lineage_emitter.tracing.span import (Span, SpanKind, SpanMetrics,
+                                          SpanStatus, TraceLevel)
+from mirage.observe.record import OpRecord
 
 _READ_OPS = frozenset({"read", "readdir", "stat", "read_stream"})
 _WRITE_OPS = frozenset({"write", "write_stream"})
@@ -91,7 +85,8 @@ class SpanCollector:
             agent_id=agent_id,
         )
 
-        children = _build_child_spans(trace_id, root.span_id, session_id, agent_id, op_records)
+        children = _build_child_spans(trace_id, root.span_id, session_id,
+                                      agent_id, op_records)
 
         self._buffer.append(root)
         for child in children:

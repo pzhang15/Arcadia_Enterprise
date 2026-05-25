@@ -6,6 +6,8 @@ from mirage_eval.fixtures.fake_gdocs import FakeGDocsResource
 from mirage_eval.fixtures.fake_github import FakeGitHubResource
 from mirage_eval.fixtures.fake_gsheets import FakeGSheetsResource
 from mirage_eval.fixtures.fake_pagerduty import FakePagerDutyResource
+from mirage_eval.fixtures.fake_postgres import FakePostgresResource
+from mirage_eval.fixtures.fake_s3 import FakeS3Resource
 from mirage_eval.fixtures.fake_slack import FakeSlackResource
 from mirage_eval.fixtures.fake_ticketing import FakeTicketingResource
 
@@ -18,6 +20,8 @@ __all__ = [
     "FakeGitHubResource",
     "FakeGSheetsResource",
     "FakePagerDutyResource",
+    "FakePostgresResource",
+    "FakeS3Resource",
     "FakeSlackResource",
     "FakeTicketingResource",
 ]

@@ -15,7 +15,6 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.commands.builtin.discord.grep.grep import grep
 from mirage.commands.builtin.discord.rg import rg
 from mirage.types import PathSpec

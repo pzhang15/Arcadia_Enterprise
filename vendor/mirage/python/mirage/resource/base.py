@@ -15,12 +15,11 @@
 from functools import partial
 from typing import Any, Callable
 
-from pydantic import BaseModel
-
 from mirage.accessor.base import Accessor
 from mirage.cache.index import (IndexCacheStore, IndexConfig,
                                 RAMIndexCacheStore, RedisIndexConfig)
 from mirage.resource.secrets import redacted_config_dump
+from pydantic import BaseModel
 
 try:
     from mirage.cache.index import RedisIndexCacheStore

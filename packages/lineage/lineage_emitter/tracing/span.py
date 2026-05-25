@@ -35,7 +35,8 @@ class SpanEvent:
 
     timestamp_ms: int
     name: str
-    attributes: dict[str, str | int | float | bool] = field(default_factory=dict)
+    attributes: dict[str,
+                     str | int | float | bool] = field(default_factory=dict)
 
 
 @dataclass
@@ -86,7 +87,8 @@ class Span:
     start_time_ms: int = field(default_factory=lambda: int(time.time() * 1000))
     end_time_ms: int = 0
     status: SpanStatus = SpanStatus.OK
-    attributes: dict[str, str | int | float | bool] = field(default_factory=dict)
+    attributes: dict[str,
+                     str | int | float | bool] = field(default_factory=dict)
     events: list[SpanEvent] = field(default_factory=list)
     metrics: SpanMetrics = field(default_factory=SpanMetrics)
     level: TraceLevel = TraceLevel.TRACE
@@ -108,15 +110,20 @@ class Span:
         self.end_time_ms = int(time.time() * 1000)
         self.status = status
 
-    def add_event(self, name: str, attributes: dict[str, str | int | float | bool] | None = None) -> None:
+    def add_event(
+            self,
+            name: str,
+            attributes: dict[str, str | int | float | bool] | None = None
+    ) -> None:
         """Attach a timestamped event to this span.
 
         Args:
             name (str): Event name.
             attributes (dict[str, str | int | float | bool] | None): Event metadata.
         """
-        self.events.append(SpanEvent(
-            timestamp_ms=int(time.time() * 1000),
-            name=name,
-            attributes=attributes or {},
-        ))
+        self.events.append(
+            SpanEvent(
+                timestamp_ms=int(time.time() * 1000),
+                name=name,
+                attributes=attributes or {},
+            ))

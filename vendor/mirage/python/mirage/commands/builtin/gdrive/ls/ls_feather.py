@@ -15,7 +15,6 @@
 import io as _io
 
 import pyarrow.feather as feather
-
 from mirage.accessor.gdrive import GDriveAccessor
 from mirage.commands.registry import command
 from mirage.commands.spec import SPECS

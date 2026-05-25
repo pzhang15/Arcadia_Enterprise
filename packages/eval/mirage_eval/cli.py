@@ -389,8 +389,8 @@ def report(
 
 @app.command("mcp-serve")
 def mcp_serve(
-    scenario: str = typer.Option(..., help="Scenario id"),
-    surface: str = typer.Option("l1", help="l1 or l2"),
+        scenario: str = typer.Option(..., help="Scenario id"),
+        surface: str = typer.Option("l1", help="l1 or l2"),
 ):
     """Start a stdio MCP server backed by a Mirage workspace."""
     from mirage_eval.mcp_server import serve

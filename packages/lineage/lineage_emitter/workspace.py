@@ -4,15 +4,13 @@ import logging
 import time
 from typing import Any
 
-from mirage.io.types import IOResult
-from mirage.workspace import Workspace
-
 from lineage_emitter.sinks.sqlite import SQLiteSpanStore
 from lineage_emitter.tracing.buffer import RingBuffer
 from lineage_emitter.tracing.collector import SpanCollector
 from lineage_emitter.tracing.config import TraceConfig
 from lineage_emitter.tracing.flusher import BackgroundFlusher
-from lineage_emitter.tracing.span import SpanStatus
+from mirage.io.types import IOResult
+from mirage.workspace import Workspace
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +42,8 @@ class TracingWorkspace:
 
         if self._config.db_path:
             self._store = SQLiteSpanStore(self._config.db_path)
-            self._flusher = BackgroundFlusher(self._buffer, self._store, self._config)
+            self._flusher = BackgroundFlusher(self._buffer, self._store,
+                                              self._config)
 
     @property
     def workspace(self) -> Workspace:
@@ -122,10 +121,8 @@ class TracingWorkspace:
         try:
             return len(self._ws.ops.records)
         except AttributeError:
-            logger.warning(
-                "Workspace.ops.records not available — "
-                "falling back to root-span-only tracing"
-            )
+            logger.warning("Workspace.ops.records not available — "
+                           "falling back to root-span-only tracing")
             return -1
 
     def _get_new_records(self, offset: int) -> list:

@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import aiohttp
-
 from mirage.resource.secrets import reveal_secret
 from mirage.resource.slack.config import SlackConfig
 

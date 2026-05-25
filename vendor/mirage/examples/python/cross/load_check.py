@@ -18,7 +18,6 @@ import os
 import sys
 
 from dotenv import load_dotenv
-
 from mirage.resource.discord import DiscordConfig, DiscordResource
 from mirage.resource.gdrive import GoogleDriveConfig, GoogleDriveResource
 from mirage.resource.gmail import GmailConfig, GmailResource

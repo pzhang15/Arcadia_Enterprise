@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import asyncpg
-
 from mirage.accessor.base import Accessor
 from mirage.resource.postgres.config import PostgresConfig
 from mirage.resource.secrets import reveal_secret

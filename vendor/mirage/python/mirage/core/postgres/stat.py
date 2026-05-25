@@ -15,7 +15,6 @@
 import hashlib
 
 import orjson
-
 from mirage.accessor.postgres import PostgresAccessor
 from mirage.cache.index import IndexCacheStore
 from mirage.core.postgres import _client

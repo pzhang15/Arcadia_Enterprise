@@ -15,7 +15,6 @@
 import io as _io
 
 import pyarrow.parquet as pq
-
 from mirage.accessor.redis import RedisAccessor
 from mirage.commands.registry import command
 from mirage.commands.spec import SPECS

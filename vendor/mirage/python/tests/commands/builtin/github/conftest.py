@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import pytest
-
 from mirage.resource.github.github import GitHubResource
 from tests.fixtures.github_mock import github_config, mock_github_api
 

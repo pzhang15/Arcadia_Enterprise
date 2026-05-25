@@ -17,7 +17,6 @@ import os
 from deepagents import create_deep_agent
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
-
 from mirage import MountMode, Workspace
 from mirage.agents.langchain import (LangchainWorkspace, build_system_prompt,
                                      extract_text)

@@ -15,8 +15,7 @@ PROMPT = (
     "    status, department\n"
     "  budgets/Q2_2026.json\n"
     "    Department budget breakdowns with spend-to-date\n\n"
-    "Use ls, cat, jq to browse. Amounts are in USD."
-)
+    "Use ls, cat, jq to browse. Amounts are in USD.")
 
 WRITE_PROMPT = ""
 

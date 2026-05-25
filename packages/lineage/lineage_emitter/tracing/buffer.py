@@ -35,10 +35,14 @@ class RingBuffer:
             TraceLevel.OPERATIONAL: cfg.buffer_capacity_operational,
         }
         self._tiers: dict[TraceLevel, deque[Span]] = {
-            level: deque(maxlen=cap) for level, cap in capacities.items()
+            level: deque(maxlen=cap)
+            for level, cap in capacities.items()
         }
         self._lock = threading.Lock()
-        self._dropped: dict[TraceLevel, int] = {level: 0 for level in TraceLevel}
+        self._dropped: dict[TraceLevel, int] = {
+            level: 0
+            for level in TraceLevel
+        }
 
     def append(self, span: Span) -> bool:
         """Append a completed span to the appropriate tier.
@@ -55,7 +59,8 @@ class RingBuffer:
         """
         tier = self._tiers.get(span.level)
         if tier is None:
-            logger.warning("Unknown TraceLevel %s, dropping span %s", span.level, span.span_id)
+            logger.warning("Unknown TraceLevel %s, dropping span %s",
+                           span.level, span.span_id)
             return False
 
         with self._lock:
@@ -98,7 +103,8 @@ class RingBuffer:
             return {
                 "audit_buffered": len(self._tiers[TraceLevel.AUDIT]),
                 "trace_buffered": len(self._tiers[TraceLevel.TRACE]),
-                "operational_buffered": len(self._tiers[TraceLevel.OPERATIONAL]),
+                "operational_buffered":
+                len(self._tiers[TraceLevel.OPERATIONAL]),
                 "audit_dropped": self._dropped[TraceLevel.AUDIT],
                 "trace_dropped": self._dropped[TraceLevel.TRACE],
                 "operational_dropped": self._dropped[TraceLevel.OPERATIONAL],

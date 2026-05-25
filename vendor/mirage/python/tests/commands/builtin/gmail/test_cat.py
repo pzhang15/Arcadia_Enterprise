@@ -16,7 +16,6 @@ import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.gmail import GmailAccessor
 from mirage.cache.index import IndexEntry, RAMIndexCacheStore
 from mirage.commands.builtin.gmail.cat import cat

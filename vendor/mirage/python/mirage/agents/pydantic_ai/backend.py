@@ -14,11 +14,6 @@
 
 import shlex
 
-from pydantic_ai import BinaryContent, ToolReturn
-from pydantic_ai_backends.protocol import SandboxProtocol
-from pydantic_ai_backends.types import (EditResult, ExecuteResponse, FileInfo,
-                                        GrepMatch, WriteResult)
-
 from mirage.agents.pydantic_ai._convert import (io_to_execute_response,
                                                 io_to_file_infos,
                                                 io_to_grep_matches)
@@ -27,6 +22,10 @@ from mirage.core.filetype.pdf import pages_to_images
 from mirage.io.types import IOResult
 from mirage.types import DEFAULT_SESSION_ID
 from mirage.workspace.workspace import Workspace
+from pydantic_ai import BinaryContent, ToolReturn
+from pydantic_ai_backends.protocol import SandboxProtocol
+from pydantic_ai_backends.types import (EditResult, ExecuteResponse, FileInfo,
+                                        GrepMatch, WriteResult)
 
 
 class PydanticAIWorkspace(SandboxProtocol):

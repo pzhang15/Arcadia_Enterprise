@@ -15,10 +15,9 @@
 from pathlib import Path
 
 import pytest
-from pydantic_ai import ToolReturn
-
 from mirage import MountMode, RAMResource, Workspace
 from mirage.agents.pydantic_ai.backend import PydanticAIWorkspace
+from pydantic_ai import ToolReturn
 
 DATA_DIR = Path(__file__).resolve().parents[4] / "data"
 

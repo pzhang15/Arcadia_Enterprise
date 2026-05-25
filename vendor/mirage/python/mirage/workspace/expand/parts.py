@@ -15,7 +15,6 @@
 from collections.abc import Callable
 
 import tree_sitter
-
 from mirage.shell.call_stack import CallStack
 from mirage.shell.types import NodeType as NT
 from mirage.types import PathSpec

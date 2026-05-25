@@ -1,5 +1,5 @@
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from mirage_eval.config import TaskConfig
@@ -7,8 +7,7 @@ from mirage_eval.runner.common import RunArtifacts
 from mirage_eval.scorers.llm_judge import JudgeResult, judge_output
 from mirage_eval.scorers.programmatic import (ProgrammaticResult,
                                               score_programmatic)
-from mirage_eval.scorers.trajectory import (TrajectoryMetrics,
-                                            score_trajectory)
+from mirage_eval.scorers.trajectory import TrajectoryMetrics, score_trajectory
 
 
 @dataclass
@@ -55,10 +54,8 @@ class ScoreCard:
             json.dumps(self.to_dict(), indent=2, ensure_ascii=False))
 
 
-def _failure_modes(prog: ProgrammaticResult,
-                   traj: TrajectoryMetrics,
-                   judge: JudgeResult,
-                   artifacts: RunArtifacts) -> list[str]:
+def _failure_modes(prog: ProgrammaticResult, traj: TrajectoryMetrics,
+                   judge: JudgeResult, artifacts: RunArtifacts) -> list[str]:
     out: list[str] = []
     for g in prog.gates:
         if g.passed:
@@ -102,8 +99,7 @@ def _composite(prog: ProgrammaticResult, traj: TrajectoryMetrics,
     return round(gate_score * quality, 4)
 
 
-async def score_run(artifacts: RunArtifacts,
-                    task: TaskConfig) -> ScoreCard:
+async def score_run(artifacts: RunArtifacts, task: TaskConfig) -> ScoreCard:
     """Compute the full ``ScoreCard`` for one run.
 
     Args:

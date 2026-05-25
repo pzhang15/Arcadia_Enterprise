@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import pytest
-
 from mirage import MountMode, Workspace
 from mirage.agents.camel import MirageTerminalToolkit
 from mirage.resource.ram import RAMResource

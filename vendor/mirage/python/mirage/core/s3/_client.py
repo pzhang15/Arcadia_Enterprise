@@ -14,7 +14,6 @@
 
 import aioboto3
 from botocore.config import Config
-
 from mirage.accessor.s3 import S3Config
 from mirage.resource.secrets import reveal_secret
 from mirage.utils import key_prefix as kp

@@ -15,7 +15,6 @@
 from collections.abc import AsyncIterator
 
 import pytest
-
 from mirage.commands.builtin.github.cat import cat
 from mirage.commands.builtin.github.head import head
 from mirage.commands.builtin.github.tail import tail

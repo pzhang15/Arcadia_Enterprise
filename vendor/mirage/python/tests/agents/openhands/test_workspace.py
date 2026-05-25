@@ -15,7 +15,6 @@
 from pathlib import Path
 
 import pytest
-
 from mirage.agents.openhands import MirageWorkspace
 from mirage.resource.ram import RAMResource
 from mirage.types import MountMode

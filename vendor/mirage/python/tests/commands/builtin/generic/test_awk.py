@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.awk import awk
 from mirage.types import PathSpec
 
