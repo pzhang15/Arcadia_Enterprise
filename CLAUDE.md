@@ -81,6 +81,18 @@ When asked to create a PR, follow these steps:
 ./vendor/mirage/python/.venv/bin/pre-commit run --all-files
 ```
 
+### Backend Tests (Python)
+
+```bash
+cd packages/eval && uv run pytest
+```
+
+### Frontend Tests (TypeScript)
+
+```bash
+cd frontends/platform && npm run test:run
+```
+
 ## Type Conventions
 
 - Paths must always be represented as `PathSpec`, never raw strings. All functions that accept or return paths use `list[str | PathSpec]` where `str` is for text arguments and `PathSpec` is for paths. Never pass a path as a plain `str` — wrap it in `PathSpec`.

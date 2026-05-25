@@ -51,11 +51,11 @@ Runs all services in one command.
 cd docker && docker compose up --build
 ```
 
-| Service          | Port | What it does                                                      |
-| ---------------- | ---- | ----------------------------------------------------------------- |
-| arcadia-platform | 8080 | Unified UI (Portal + Console + Observability) + all APIs          |
-| mock-services    | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog        |
-| mirage           | 8081 | MCP server over Streamable HTTP                                   |
+| Service          | Port | What it does                                               |
+| ---------------- | ---- | ---------------------------------------------------------- |
+| arcadia-platform | 8080 | Unified UI (Portal + Console + Observability) + all APIs   |
+| mock-services    | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog |
+| mirage           | 8081 | MCP server over Streamable HTTP                            |
 
 Verify the stack is up:
 
@@ -117,13 +117,31 @@ Results: `results/<scenario>/<sweep_id>/SUMMARY.md`
 ## 7. Run tests
 
 ```bash
+# Backend (Python) — all eval + scenario tests
 uv run pytest
+
+# NorthHill Corp tests only (seed, workspace, portal data, platform server)
+uv run pytest packages/eval/scenarios/northhill_corp/tests/ -v
+
+# Frontend (TypeScript) — from repo root
+cd frontends/platform && npm run test:run
 ```
+
+### Test coverage
+
+| Suite | Tests | What it covers |
+| ----- | ----- | -------------- |
+| `test_seed_completeness.py` | 21 | All departments seeded, JSON validity, idempotency |
+| `test_portal_data_serving.py` | 20 | Portal disk-reading patterns, env var config, Docker wiring |
+| `test_platform_server_integration.py` | 32 | FastAPI server: health, sessions, workspace execution, all portal endpoints, disk fallback |
+| `test_workspace_integration.py` | 11 | Full Mirage workspace: ls, cat, find across all 11 mounts |
+| `test_mock_server_data.py` | 12 | Mock server data loading, status values, cross-reference integrity |
+| Frontend (Vitest) | 106 | API client, SSE hook, all 16 React components, App integration |
 
 ## Scenarios
 
-| Scenario        | Domain                          | Services                                                                        |
-| --------------- | ------------------------------- | ------------------------------------------------------------------------------- |
+| Scenario         | Domain                          | Services                                                                        |
+| ---------------- | ------------------------------- | ------------------------------------------------------------------------------- |
 | `northhill_corp` | Full enterprise (6 departments) | Slack, Sheets, Docs, ITSM, GitHub, PagerDuty, Datadog, Finance, CRM, Compliance |
 | `onboarding_it`  | HR onboarding + IT helpdesk     | Slack, GSheets, GDocs, ITSM                                                     |
 | `bi_analytics`   | (placeholder)                   | ---                                                                             |

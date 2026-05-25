@@ -16,5 +16,6 @@ RUN pip install /tmp/mirage && rm -rf /tmp/mirage
 
 COPY frontends/platform/server.py .
 COPY --from=frontend /app/dist ./dist
+
 EXPOSE 8080
 CMD ["python", "server.py"]

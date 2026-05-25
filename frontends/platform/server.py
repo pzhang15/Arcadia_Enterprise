@@ -27,14 +27,22 @@ except ImportError:
     build_l1_workspace = None
     _seed_northhill = None
 
+try:
+    from mirage import MountMode, RAMResource, Workspace
+    from mirage.resource.disk import DiskResource
+
+    _HAS_MIRAGE = True
+except ImportError:
+    _HAS_MIRAGE = False
+
 logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DISK_ROOT = Path(
     os.environ.get(
         "DISK_ROOT",
-        str(_REPO_ROOT / "packages" / "eval" / "scenarios" /
-            "northhill_corp" / "fixture" / "disk"),
+        str(_REPO_ROOT / "packages" / "eval" / "scenarios" / "northhill_corp" /
+            "fixture" / "disk"),
     ))
 RESULTS_DIR = Path(
     os.environ.get(
@@ -608,7 +616,9 @@ def _build_workspace(services: list[str]):
         logger.info("eval package not installed, using disk workspace")
         return _build_disk_workspace()
     try:
-        _seed_northhill()
+        if not DISK_ROOT.exists() or not any(DISK_ROOT.iterdir()):
+            logger.info("seeding fixture data at %s", DISK_ROOT)
+            _seed_northhill()
         return build_l1_workspace(agent_id="console-agent",
                                   session_id="default")
     except Exception as exc:
@@ -620,20 +630,19 @@ def _build_disk_workspace():
     if not DISK_ROOT.exists():
         logger.warning("DISK_ROOT %s does not exist", DISK_ROOT)
         return None
-    try:
-        from mirage import MountMode, Workspace
-        from mirage.resource.disk import DiskResource
-        mounts = {}
-        for subdir in sorted(DISK_ROOT.iterdir()):
-            if subdir.is_dir():
-                mounts[f"/{subdir.name}"] = (
-                    DiskResource(root=str(subdir)), MountMode.READ)
-        if not mounts:
-            return None
-        return Workspace(mounts, mode=MountMode.READ)
-    except ImportError:
+    if not _HAS_MIRAGE:
         logger.warning("mirage not installed, workspace unavailable")
         return None
+    mounts: dict[str, tuple] = {
+        "/": (RAMResource(), MountMode.WRITE),
+    }
+    for subdir in sorted(DISK_ROOT.iterdir()):
+        if subdir.is_dir():
+            mounts[f"/{subdir.name}"] = (DiskResource(root=str(subdir)),
+                                         MountMode.READ)
+    if len(mounts) <= 1:
+        return None
+    return Workspace(mounts, mode=MountMode.WRITE)
 
 
 def _build_file_prompt(services: list[str]) -> str:
@@ -681,7 +690,7 @@ async def _execute_in_workspace(ws, command: str, session_id: str) -> str:
                 "exit_code": exit_code,
                 "stdout": stdout[:4096],
             })
-        for rec in (ws.ops.records or [])[-20:]:
+        for rec in (getattr(ws.ops, "records", None) or [])[-20:]:
             await _emit_event(
                 session_id, {
                     "type": "op",
@@ -790,7 +799,10 @@ async def _run_conversation_turn(
                 output = await _execute_in_workspace(session.workspace, cmd,
                                                      session.id)
             else:
-                output = "(workspace not available — set OPENAI_API_KEY and seed data)"
+                output = (
+                    "(workspace not available — run "
+                    "`uv run mirage-eval seed --scenario northhill_corp` "
+                    "to generate fixture data)")
             command_outputs.append(f"$ {cmd}\n{output}")
         combined_output = "\n\n".join(command_outputs)
         messages.append({
@@ -904,46 +916,68 @@ async def list_sessions() -> list[dict]:
 async def quick_actions() -> list[dict]:
     return [
         {
-            "id": "triage",
-            "label": "Triage IT helpdesk queue",
+            "id":
+            "triage",
+            "label":
+            "Triage IT helpdesk queue",
             "services": ["it", "hr"],
-            "task": "Triage all open IT helpdesk tickets. List each one with its priority, classify by severity, find any duplicates, and identify tickets needing escalation."
+            "task":
+            "Triage all open IT helpdesk tickets. List each one with its priority, classify by severity, find any duplicates, and identify tickets needing escalation."
         },
         {
-            "id": "onboarding",
-            "label": "Check onboarding status",
+            "id":
+            "onboarding",
+            "label":
+            "Check onboarding status",
             "services": ["it", "hr"],
-            "task": "Look up Alex Rivera's onboarding status. Check the New Hire Tracker spreadsheet, any open IT tickets for Alex, and relevant Slack messages."
+            "task":
+            "Look up Alex Rivera's onboarding status. Check the New Hire Tracker spreadsheet, any open IT tickets for Alex, and relevant Slack messages."
         },
         {
-            "id": "incident",
-            "label": "Investigate platform incident",
+            "id":
+            "incident",
+            "label":
+            "Investigate platform incident",
             "services": ["engineering"],
-            "task": "Investigate the active platform-api incident. Check PagerDuty for triggered incidents, correlate with recent deployments, check Datadog logs for errors, and identify root cause."
+            "task":
+            "Investigate the active platform-api incident. Check PagerDuty for triggered incidents, correlate with recent deployments, check Datadog logs for errors, and identify root cause."
         },
         {
-            "id": "expenses",
-            "label": "Review pending expenses",
+            "id":
+            "expenses",
+            "label":
+            "Review pending expenses",
             "services": ["finance"],
-            "task": "Review all pending expense reports. List each with submitter, amount, category, and flag any that exceed policy limits or are missing details. Summarize totals by department."
+            "task":
+            "Review all pending expense reports. List each with submitter, amount, category, and flag any that exceed policy limits or are missing details. Summarize totals by department."
         },
         {
-            "id": "escalations",
-            "label": "Handle customer escalations",
+            "id":
+            "escalations",
+            "label":
+            "Handle customer escalations",
             "services": ["support", "engineering"],
-            "task": "Review active customer escalations and at-risk accounts. Check account health scores, open support tickets, and cross-reference with any engineering incidents that may be affecting customers."
+            "task":
+            "Review active customer escalations and at-risk accounts. Check account health scores, open support tickets, and cross-reference with any engineering incidents that may be affecting customers."
         },
         {
-            "id": "audit",
-            "label": "SOC2 audit status",
+            "id":
+            "audit",
+            "label":
+            "SOC2 audit status",
             "services": ["compliance"],
-            "task": "Check the SOC2 audit progress. List all checklist items with their completion status, identify blockers, and check policy acknowledgment rates."
+            "task":
+            "Check the SOC2 audit progress. List all checklist items with their completion status, identify blockers, and check policy acknowledgment rates."
         },
         {
-            "id": "full",
-            "label": "Full enterprise review",
-            "services": ["it", "hr", "finance", "engineering", "support", "compliance"],
-            "task": "Do a comprehensive cross-department review. Check IT tickets, onboarding status, pending expenses, active incidents, customer health, and compliance audit progress. Give me an executive summary."
+            "id":
+            "full",
+            "label":
+            "Full enterprise review",
+            "services":
+            ["it", "hr", "finance", "engineering", "support", "compliance"],
+            "task":
+            "Do a comprehensive cross-department review. Check IT tickets, onboarding status, pending expenses, active incidents, customer health, and compliance audit progress. Give me an executive summary."
         },
     ]
 
@@ -962,10 +996,17 @@ async def get_config() -> dict:
 
 @app.get("/api/health")
 async def health() -> dict:
+    disk_subdirs = []
+    if DISK_ROOT.exists():
+        disk_subdirs = sorted(d.name for d in DISK_ROOT.iterdir()
+                              if d.is_dir())
     return {
         "status": "ok",
         "disk_root": str(DISK_ROOT),
         "disk_exists": DISK_ROOT.exists(),
+        "disk_subdirs": disk_subdirs,
+        "has_mirage": _HAS_MIRAGE,
+        "has_eval_package": build_l1_workspace is not None,
         "traces_db": TRACES_DB or None,
         "events_buffered": len(_event_buffer),
         "sessions": len(_sessions),
