@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { StreamEvent } from "../types";
+import type { CommandEvent, StreamEvent } from "../types";
 
 function formatTime(ms: number): string {
   const d = new Date(ms);
@@ -53,14 +53,12 @@ export default function LiveExecutionView({ events, sessionId }: Props) {
     if (!sessionId) return [];
     return events
       .filter(
-        (e) =>
+        (e): e is CommandEvent =>
           e.type === "command" &&
-          ((e as Record<string, unknown>).session === sessionId ||
-            e.session_id === sessionId),
+          (e as CommandEvent).session === sessionId,
       )
       .map((e) => {
-        const cmd = e as Record<string, unknown>;
-        const command = (cmd.command as string) || "";
+        const command = e.command || "";
         const parts = command.split(" ");
         const lastArg = parts[parts.length - 1] || "";
         const mount =
@@ -70,8 +68,8 @@ export default function LiveExecutionView({ events, sessionId }: Props) {
         return {
           timestamp: e.timestamp,
           command,
-          exit_code: (cmd.exit_code as number) ?? 0,
-          stdout: (cmd.stdout as string) || null,
+          exit_code: e.exit_code ?? 0,
+          stdout: e.stdout || null,
           mount,
         } as CommandRow;
       });
