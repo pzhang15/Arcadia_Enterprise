@@ -194,3 +194,21 @@ export async function getQuickActions() {
 export async function getConfig() {
   return fetchJson<{ has_api_key: boolean; model: string }>("/api/config");
 }
+
+export async function vfsList(
+  sessionId: string,
+  path: string = "/",
+): Promise<{
+  entries: { name: string; type: "dir" | "file"; size?: number }[];
+}> {
+  return fetchJson(`/api/sessions/${sessionId}/vfs?path=${encodeURIComponent(path)}`);
+}
+
+export async function vfsFile(
+  sessionId: string,
+  path: string,
+): Promise<{ content: string; size: number; path: string }> {
+  return fetchJson(
+    `/api/sessions/${sessionId}/vfs/file?path=${encodeURIComponent(path)}`,
+  );
+}

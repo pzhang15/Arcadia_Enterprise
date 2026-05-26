@@ -675,8 +675,13 @@ def _build_file_prompt(services: list[str]) -> str:
     return "# Available Data\n\n" + "\n\n".join(sections)
 
 
-async def _execute_in_workspace(ws, command: str, session_id: str) -> str:
+async def _execute_in_workspace_detailed(
+    ws,
+    command: str,
+    session_id: str,
+) -> tuple[str, int, list]:
     try:
+        ops_before = len(getattr(ws.ops, "records", None) or [])
         result = await ws.execute(command, session_id="default")
         stdout = (result.stdout or b"").decode(errors="replace")
         stderr = (result.stderr or b"").decode(errors="replace")
@@ -690,7 +695,9 @@ async def _execute_in_workspace(ws, command: str, session_id: str) -> str:
                 "exit_code": exit_code,
                 "stdout": stdout[:4096],
             })
-        for rec in (getattr(ws.ops, "records", None) or [])[-20:]:
+        all_records = getattr(ws.ops, "records", None) or []
+        new_records = list(all_records[ops_before:])
+        for rec in new_records[-20:]:
             await _emit_event(
                 session_id, {
                     "type": "op",
@@ -708,9 +715,15 @@ async def _execute_in_workspace(ws, command: str, session_id: str) -> str:
             output += f"\n[stderr] {stderr.rstrip()}"
         if exit_code != 0:
             output += f"\n[exit_code={exit_code}]"
-        return output or "(no output)"
+        return output or "(no output)", exit_code, new_records
     except Exception as exc:
-        return f"[error] {type(exc).__name__}: {exc}"
+        return f"[error] {type(exc).__name__}: {exc}", 1, []
+
+
+async def _execute_in_workspace(ws, command: str, session_id: str) -> str:
+    output, _exit_code, _ops = await _execute_in_workspace_detailed(
+        ws, command, session_id)
+    return output
 
 
 async def _run_conversation_turn(
@@ -818,6 +831,249 @@ async def _run_conversation_turn(
     return final
 
 
+async def _run_conversation_turn_stream(
+    session: AgentSession,
+    user_message: str,
+):
+    run_id = f"run-{uuid.uuid4()}"
+    yield {
+        "type": "RUN_STARTED",
+        "timestamp": int(time.time() * 1000),
+        "thread_id": session.id,
+        "run_id": run_id,
+    }
+    session.status = "running"
+    session.chat_history.append(
+        ChatEntry(role="user", content=user_message, timestamp=time.time()))
+    await _emit_event(session.id, {
+        "type": "agent_status",
+        "status": "running",
+        "task": user_message[:200],
+    })
+    file_prompt = _build_file_prompt(session.services)
+    messages: list[dict] = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT + "\n\n" + file_prompt,
+        },
+    ]
+    for entry in session.chat_history:
+        messages.append({
+            "role": entry.role if entry.role != "agent" else "assistant",
+            "content": entry.content,
+        })
+    try:
+        step_num = 0
+        final_text = ""
+        max_iterations = 15
+        for _ in range(max_iterations):
+            step_num += 1
+            step_id = f"step-{step_num}"
+            yield {
+                "type": "STEP_STARTED",
+                "timestamp": int(time.time() * 1000),
+                "step_id": step_id,
+            }
+            client = _get_openai_client()
+            msg_id = f"msg-{uuid.uuid4()}"
+            yield {
+                "type": "TEXT_MESSAGE_START",
+                "timestamp": int(time.time() * 1000),
+                "message_id": str(msg_id),
+                "role": "assistant",
+            }
+            assistant_text = ""
+            stream = await client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=messages,
+                max_tokens=4096,
+                stream=True,
+            )
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    delta = chunk.choices[0].delta.content
+                    assistant_text += delta
+                    yield {
+                        "type": "TEXT_MESSAGE_CONTENT",
+                        "timestamp": int(time.time() * 1000),
+                        "message_id": str(msg_id),
+                        "delta": delta,
+                    }
+            exec_lines = [
+                line[5:].strip() for line in assistant_text.splitlines()
+                if line.strip().startswith("EXEC:")
+            ]
+            if not exec_lines:
+                yield {
+                    "type": "TEXT_MESSAGE_END",
+                    "timestamp": int(time.time() * 1000),
+                    "message_id": str(msg_id),
+                }
+                final_text = assistant_text
+                yield {
+                    "type": "STEP_FINISHED",
+                    "timestamp": int(time.time() * 1000),
+                    "step_id": step_id,
+                }
+                break
+            messages.append({"role": "assistant", "content": assistant_text})
+            command_outputs: list[str] = []
+            for cmd in exec_lines:
+                tc_id = f"tc-{uuid.uuid4()}"
+                yield {
+                    "type": "TOOL_CALL_START",
+                    "timestamp": int(time.time() * 1000),
+                    "tool_call_id": tc_id,
+                    "tool_name": "exec",
+                }
+                yield {
+                    "type": "TOOL_CALL_ARGS",
+                    "timestamp": int(time.time() * 1000),
+                    "tool_call_id": tc_id,
+                    "delta": cmd,
+                }
+                if session.workspace:
+                    output, exit_code, new_ops = (
+                        await _execute_in_workspace_detailed(
+                            session.workspace, cmd, session.id))
+                    for rec in new_ops:
+                        yield {
+                            "type": "CUSTOM",
+                            "timestamp": int(time.time() * 1000),
+                            "name": "vfs_op",
+                            "value": {
+                                "op": rec.op,
+                                "path": rec.path,
+                                "bytes": rec.bytes,
+                                "mount_prefix": rec.mount_prefix,
+                            },
+                        }
+                else:
+                    output = (
+                        "(workspace not available — run "
+                        "`uv run mirage-eval seed --scenario northhill_corp` "
+                        "to generate fixture data)")
+                    exit_code = 1
+                yield {
+                    "type": "TOOL_CALL_RESULT",
+                    "timestamp": int(time.time() * 1000),
+                    "tool_call_id": tc_id,
+                    "result": output,
+                    "exit_code": exit_code,
+                }
+                yield {
+                    "type": "TOOL_CALL_END",
+                    "timestamp": int(time.time() * 1000),
+                    "tool_call_id": tc_id,
+                }
+                command_outputs.append(f"$ {cmd}\n{output}")
+            combined_output = "\n\n".join(command_outputs)
+            messages.append({
+                "role": "user",
+                "content": f"Command output:\n```\n{combined_output}\n```",
+            })
+            yield {
+                "type": "STEP_FINISHED",
+                "timestamp": int(time.time() * 1000),
+                "step_id": step_id,
+            }
+        else:
+            final_text = (
+                "Reached maximum iterations. Here is what I found so far.")
+        session.chat_history.append(
+            ChatEntry(role="agent",
+                      content=final_text,
+                      timestamp=time.time()))
+        session.status = "ready"
+        await _emit_event(session.id, {
+            "type": "agent_status",
+            "status": "completed",
+        })
+    except Exception as exc:
+        error_msg = f"Error: {type(exc).__name__}: {exc}"
+        session.chat_history.append(
+            ChatEntry(role="agent",
+                      content=error_msg,
+                      timestamp=time.time()))
+        session.status = "ready"
+        await _emit_event(session.id, {
+            "type": "agent_status",
+            "status": "error",
+            "error": error_msg,
+        })
+        yield {
+            "type": "RUN_ERROR",
+            "timestamp": int(time.time() * 1000),
+            "thread_id": session.id,
+            "run_id": run_id,
+            "error": error_msg,
+        }
+        return
+    yield {
+        "type": "RUN_FINISHED",
+        "timestamp": int(time.time() * 1000),
+        "thread_id": session.id,
+        "run_id": run_id,
+    }
+
+
+async def _stream_agui_events(
+    session: AgentSession,
+    user_message: str,
+):
+    async for event in _run_conversation_turn_stream(session, user_message):
+        yield f"data: {json.dumps(event)}\n\n"
+
+
+async def _stream_no_key_response(
+    session: AgentSession,
+    user_message: str,
+):
+    ts = int(time.time() * 1000)
+    run_id = f"run-{uuid.uuid4()}"
+    msg_id = f"msg-{uuid.uuid4()}"
+    msg = (
+        "OPENAI_API_KEY is not set. Please set it in your environment "
+        "to enable the agent. You can still explore the data through "
+        "the Portal tab.")
+    session.chat_history.append(
+        ChatEntry(role="user", content=user_message, timestamp=time.time()))
+    session.chat_history.append(
+        ChatEntry(role="agent", content=msg, timestamp=time.time()))
+    for event in [
+        {
+            "type": "RUN_STARTED",
+            "timestamp": ts,
+            "thread_id": session.id,
+            "run_id": run_id,
+        },
+        {
+            "type": "TEXT_MESSAGE_START",
+            "timestamp": ts,
+            "message_id": str(msg_id),
+            "role": "assistant",
+        },
+        {
+            "type": "TEXT_MESSAGE_CONTENT",
+            "timestamp": ts,
+            "message_id": str(msg_id),
+            "delta": msg,
+        },
+        {
+            "type": "TEXT_MESSAGE_END",
+            "timestamp": ts,
+            "message_id": str(msg_id),
+        },
+        {
+            "type": "RUN_FINISHED",
+            "timestamp": ts,
+            "thread_id": session.id,
+            "run_id": run_id,
+        },
+    ]:
+        yield f"data: {json.dumps(event)}\n\n"
+
+
 @app.post("/api/sessions")
 async def create_session(request: Request) -> dict:
     body = await request.json()
@@ -866,6 +1122,39 @@ async def send_message(session_id: str, request: Request) -> dict:
     return {"reply": reply, "status": session.status}
 
 
+_SSE_HEADERS = {
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
+}
+
+
+@app.post("/api/sessions/{session_id}/message/stream")
+async def send_message_stream(session_id: str,
+                               request: Request) -> StreamingResponse:
+    session = _sessions.get(session_id)
+    if not session:
+        return JSONResponse({"error": "session not found"}, status_code=404)
+    if session.status == "running":
+        return JSONResponse({"error": "agent is still processing"},
+                            status_code=409)
+    body = await request.json()
+    user_message = body.get("message", "").strip()
+    if not user_message:
+        return JSONResponse({"error": "message required"}, status_code=400)
+    if not OPENAI_API_KEY:
+        return StreamingResponse(
+            _stream_no_key_response(session, user_message),
+            media_type="text/event-stream",
+            headers=_SSE_HEADERS,
+        )
+    return StreamingResponse(
+        _stream_agui_events(session, user_message),
+        media_type="text/event-stream",
+        headers=_SSE_HEADERS,
+    )
+
+
 @app.get("/api/sessions/{session_id}/history")
 async def session_history(session_id: str) -> list[dict]:
     session = _sessions.get(session_id)
@@ -910,6 +1199,53 @@ async def list_sessions() -> list[dict]:
         s.chat_history[-1].content[:100] if s.chat_history else "",
     } for s in sorted(
         _sessions.values(), key=lambda x: x.created_at, reverse=True)]
+
+
+def _parse_ls_output(output: str) -> list[dict]:
+    entries: list[dict] = []
+    for line in output.strip().splitlines():
+        if line.startswith("total ") or not line.strip():
+            continue
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        perms = parts[0]
+        name = parts[-1]
+        if name in (".", ".."):
+            continue
+        entry_type = "dir" if perms.startswith("d") else "file"
+        size = 0
+        if len(parts) >= 5 and parts[4].isdigit():
+            size = int(parts[4])
+        entries.append({"name": name, "type": entry_type, "size": size})
+    return entries
+
+
+@app.get("/api/sessions/{session_id}/vfs")
+async def vfs_list(session_id: str, path: str = "/") -> dict:
+    session = _sessions.get(session_id)
+    if not session:
+        return JSONResponse({"error": "session not found"}, status_code=404)
+    if not session.workspace:
+        return JSONResponse({"error": "workspace not available"},
+                            status_code=400)
+    output = await _execute_in_workspace(session.workspace,
+                                         f"ls -la {path}", session.id)
+    entries = _parse_ls_output(output)
+    return {"entries": entries}
+
+
+@app.get("/api/sessions/{session_id}/vfs/file")
+async def vfs_file(session_id: str, path: str = "/") -> dict:
+    session = _sessions.get(session_id)
+    if not session:
+        return JSONResponse({"error": "session not found"}, status_code=404)
+    if not session.workspace:
+        return JSONResponse({"error": "workspace not available"},
+                            status_code=400)
+    content = await _execute_in_workspace(session.workspace, f"cat {path}",
+                                          session.id)
+    return {"content": content, "size": len(content), "path": path}
 
 
 @app.get("/api/quick-actions")
