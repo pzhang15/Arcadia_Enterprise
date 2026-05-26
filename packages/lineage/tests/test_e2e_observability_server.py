@@ -2,12 +2,9 @@ import json
 import sqlite3
 
 import pytest
-
-from mirage import MountMode, RAMResource, Workspace
-
 from lineage_emitter.tracing.config import TraceConfig
-from lineage_emitter.tracing.span import SpanKind, SpanStatus, TraceLevel
 from lineage_emitter.workspace import TracingWorkspace
+from mirage import MountMode, RAMResource, Workspace
 
 
 @pytest.fixture()
@@ -45,7 +42,9 @@ def populated_db(tmp_path):
     yield db_path
 
 
-def _query_traces_list(db_path: str, limit: int = 50, offset: int = 0) -> list[dict]:
+def _query_traces_list(db_path: str,
+                       limit: int = 50,
+                       offset: int = 0) -> list[dict]:
     """Replicate the /api/traces endpoint logic."""
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -61,7 +60,7 @@ def _query_traces_list(db_path: str, limit: int = 50, offset: int = 0) -> list[d
         d = dict(row)
         child_count = conn.execute(
             "SELECT COUNT(*) FROM spans WHERE trace_id = ? AND parent_span_id IS NOT NULL",
-            (d["trace_id"],),
+            (d["trace_id"], ),
         ).fetchone()[0]
         d["child_count"] = child_count
         if d.get("attributes"):
@@ -79,7 +78,7 @@ def _query_trace_detail(db_path: str, trace_id: str) -> dict:
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         "SELECT * FROM spans WHERE trace_id = ? ORDER BY start_time_ms",
-        (trace_id,),
+        (trace_id, ),
     ).fetchall()
     spans = []
     for row in rows:
@@ -90,7 +89,7 @@ def _query_trace_detail(db_path: str, trace_id: str) -> dict:
             d["metrics"] = json.loads(d["metrics"])
         events = conn.execute(
             "SELECT * FROM span_events WHERE span_id = ? ORDER BY timestamp_ms",
-            (d["span_id"],),
+            (d["span_id"], ),
         ).fetchall()
         d["events"] = [dict(e) for e in events]
         for e in d["events"]:
@@ -107,15 +106,16 @@ def _query_stats(db_path: str) -> dict:
     conn.row_factory = sqlite3.Row
     total_spans = conn.execute("SELECT COUNT(*) FROM spans").fetchone()[0]
     total_traces = conn.execute(
-        "SELECT COUNT(DISTINCT trace_id) FROM spans"
-    ).fetchone()[0]
+        "SELECT COUNT(DISTINCT trace_id) FROM spans").fetchone()[0]
     by_level = {}
     for row in conn.execute(
-        "SELECT level, COUNT(*) as cnt FROM spans GROUP BY level"
+            "SELECT level, COUNT(*) as cnt FROM spans GROUP BY level"
     ).fetchall():
-        level_name = {0: "audit", 1: "trace", 2: "operational"}.get(
-            row["level"], str(row["level"])
-        )
+        level_name = {
+            0: "audit",
+            1: "trace",
+            2: "operational"
+        }.get(row["level"], str(row["level"]))
         by_level[level_name] = row["cnt"]
     conn.close()
     return {
@@ -126,6 +126,7 @@ def _query_stats(db_path: str) -> dict:
 
 
 class TestTraceListEndpoint:
+
     def test_returns_all_traces(self, populated_db):
         traces = _query_traces_list(populated_db)
         assert len(traces) == 7
@@ -146,8 +147,7 @@ class TestTraceListEndpoint:
         traces = _query_traces_list(populated_db)
         for t in traces:
             assert "command" in t["attributes"], (
-                f"Trace missing 'command' in attributes: {t['attributes']}"
-            )
+                f"Trace missing 'command' in attributes: {t['attributes']}")
 
     def test_trace_metrics_structure(self, populated_db):
         traces = _query_traces_list(populated_db)
@@ -175,6 +175,7 @@ class TestTraceListEndpoint:
 
 
 class TestTraceDetailEndpoint:
+
     def test_detail_returns_spans(self, populated_db):
         traces = _query_traces_list(populated_db)
         for t in traces[:3]:
@@ -191,7 +192,9 @@ class TestTraceDetailEndpoint:
 
         detail = _query_trace_detail(populated_db, write_traces[0]["trace_id"])
         roots = [s for s in detail["spans"] if s["parent_span_id"] is None]
-        children = [s for s in detail["spans"] if s["parent_span_id"] is not None]
+        children = [
+            s for s in detail["spans"] if s["parent_span_id"] is not None
+        ]
         assert len(roots) == 1
         assert len(children) >= 1
 
@@ -215,6 +218,7 @@ class TestTraceDetailEndpoint:
 
 
 class TestStatsEndpoint:
+
     def test_stats_totals(self, populated_db):
         stats = _query_stats(populated_db)
         assert stats["total_traces"] == 7
@@ -229,6 +233,7 @@ class TestStatsEndpoint:
 
 
 class TestReadOnlyAccess:
+
     def test_readonly_connection_works(self, populated_db):
         """query_only pragma should allow reads."""
         conn = sqlite3.connect(populated_db)

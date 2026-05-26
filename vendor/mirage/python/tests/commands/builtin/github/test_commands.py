@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import pytest
-
 from mirage.commands.builtin.github.cat import cat
 from mirage.commands.builtin.github.diff import diff
 from mirage.commands.builtin.github.du import du

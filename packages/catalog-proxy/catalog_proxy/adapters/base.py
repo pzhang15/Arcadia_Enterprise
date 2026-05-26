@@ -27,7 +27,9 @@ class BaseAdapter(abc.ABC):
         """
 
     @abc.abstractmethod
-    async def get_sample(self, table: str, limit: int = 10) -> list[dict[str, Any]]:
+    async def get_sample(self,
+                         table: str,
+                         limit: int = 10) -> list[dict[str, Any]]:
         """Return sample rows from a table.
 
         Args:

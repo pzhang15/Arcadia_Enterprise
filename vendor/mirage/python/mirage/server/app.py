@@ -21,7 +21,6 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-
 from mirage.server.auth import (AuthConfig, AuthMiddleware, AuthMode,
                                 resolve_auth_config)
 from mirage.server.host_validation import (HostHeaderMiddleware,

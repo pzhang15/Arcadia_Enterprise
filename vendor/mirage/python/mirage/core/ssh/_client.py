@@ -15,7 +15,6 @@
 from pathlib import Path
 
 import asyncssh
-
 from mirage.types import PathSpec
 
 

@@ -19,7 +19,6 @@ from deepagents.backends.protocol import (EditResult, ExecuteResponse,
                                           FileDownloadResponse, FileInfo,
                                           FileUploadResponse, GrepMatch,
                                           SandboxBackendProtocol, WriteResult)
-
 from mirage.agents.langchain._convert import (io_to_execute_response,
                                               io_to_file_infos,
                                               io_to_grep_matches)

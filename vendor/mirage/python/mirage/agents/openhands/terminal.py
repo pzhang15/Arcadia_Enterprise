@@ -15,14 +15,13 @@
 import functools
 from typing import TYPE_CHECKING, Any
 
+from mirage.agents.openhands.workspace import MirageWorkspace
 from openhands.sdk.llm import TextContent
 from openhands.sdk.tool import ToolExecutor, register_tool
 from openhands.tools.terminal import TerminalTool
 from openhands.tools.terminal.definition import (TerminalAction,
                                                  TerminalObservation)
 from openhands.tools.terminal.metadata import CmdOutputMetadata
-
-from mirage.agents.openhands.workspace import MirageWorkspace
 
 if TYPE_CHECKING:
     from openhands.sdk.conversation.impl.local_conversation import \

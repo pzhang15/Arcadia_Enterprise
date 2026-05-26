@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.basename import basename
 from mirage.commands.builtin.generic.dirname import dirname
 from mirage.commands.builtin.generic.mktemp import mktemp

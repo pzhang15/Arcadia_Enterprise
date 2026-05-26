@@ -15,7 +15,6 @@
 from collections.abc import AsyncIterator
 
 from bson.json_util import RELAXED_JSON_OPTIONS, dumps
-
 from mirage.accessor.mongodb import MongoDBAccessor
 from mirage.cache.index import IndexCacheStore
 from mirage.core.mongodb._client import iter_documents, iter_inserts

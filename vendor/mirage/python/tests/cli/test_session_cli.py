@@ -15,9 +15,8 @@
 import re
 from contextlib import contextmanager
 
-from typer.testing import CliRunner
-
 from mirage.cli import session as session_cli
+from typer.testing import CliRunner
 
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 

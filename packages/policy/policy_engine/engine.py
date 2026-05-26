@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from policy_engine.acl import AccessDecision, ColumnAcl
 
@@ -29,7 +28,8 @@ class PolicyEngine:
         """
         self._acls[f"{source}/{table}"] = acl
 
-    def evaluate(self, source: str, table: str, columns: list[str]) -> AccessDecision:
+    def evaluate(self, source: str, table: str,
+                 columns: list[str]) -> AccessDecision:
         """Evaluate access for specific columns.
 
         Args:

@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
-
 from mirage import Workspace
 from mirage.resource.registry import build_resource
 from mirage.server.clone import clone_workspace_with_override

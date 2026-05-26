@@ -15,10 +15,9 @@
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import BaseModel
-
 from mirage.server.io_serde import io_result_to_dict
 from mirage.server.jobs import JobEntry
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/v1/jobs")
 

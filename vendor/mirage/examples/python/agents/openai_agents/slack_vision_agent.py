@@ -19,11 +19,10 @@ from agents import Runner
 from agents.run import RunConfig
 from agents.sandbox import SandboxAgent, SandboxRunConfig
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
-
 from mirage import MountMode, Workspace
 from mirage.agents.openai_agents import MirageRunner, MirageSandboxClient
 from mirage.resource.slack import SlackConfig, SlackResource
+from openai import AsyncOpenAI
 
 load_dotenv(".env.development")
 

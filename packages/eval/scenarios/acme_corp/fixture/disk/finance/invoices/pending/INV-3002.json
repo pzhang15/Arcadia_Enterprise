@@ -1,9 +1,0 @@
-{
-  "invoice_id": "INV-3002",
-  "vendor": "CloudRack Inc.",
-  "amount": 28000.0,
-  "due_date": "2026-05-20",
-  "po_reference": "PO-0992",
-  "status": "pending",
-  "department": "IT"
-}

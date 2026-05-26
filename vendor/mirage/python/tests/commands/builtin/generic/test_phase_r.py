@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.cut import cut
 from mirage.commands.builtin.generic.file import file_cmd
 from mirage.commands.builtin.generic.stat import stat as generic_stat

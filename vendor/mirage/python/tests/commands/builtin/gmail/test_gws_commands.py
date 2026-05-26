@@ -16,7 +16,6 @@ import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.gmail import GmailAccessor
 from mirage.commands.builtin.gmail.gws_gmail_read import gws_gmail_read
 from mirage.commands.builtin.gmail.gws_gmail_send import gws_gmail_send

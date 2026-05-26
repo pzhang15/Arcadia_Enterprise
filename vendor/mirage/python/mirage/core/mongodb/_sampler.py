@@ -16,7 +16,6 @@ import datetime as dt
 from collections.abc import Iterable
 
 from bson import Binary, Decimal128, Int64, ObjectId, Regex, Timestamp
-
 from mirage.core.mongodb.types import PRIMARY_KEY, BsonTypeTag
 
 

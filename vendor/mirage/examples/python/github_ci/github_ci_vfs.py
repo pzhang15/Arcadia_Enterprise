@@ -18,7 +18,6 @@ import os
 import sys
 
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.resource.github_ci import GitHubCIConfig, GitHubCIResource
 

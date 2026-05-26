@@ -18,6 +18,7 @@ def northhill_root():
 
 
 class TestMockServerFinance:
+
     def test_expenses_loaded(self, northhill_root):
         expenses = []
         for status in ("pending", "approved", "rejected"):
@@ -25,7 +26,8 @@ class TestMockServerFinance:
             if d.exists():
                 for f in sorted(d.glob("*.json")):
                     expenses.append(json.loads(f.read_text()))
-        assert len(expenses) >= 3, f"Expected >=3 expenses, got {len(expenses)}"
+        assert len(
+            expenses) >= 3, f"Expected >=3 expenses, got {len(expenses)}"
         for exp in expenses:
             assert "expense_id" in exp
             assert "amount" in exp
@@ -58,10 +60,13 @@ class TestMockServerFinance:
 
 
 class TestMockServerCustomers:
+
     def test_accounts_loaded(self, northhill_root):
         accts_dir = northhill_root / "customers" / "accounts"
         assert accts_dir.exists()
-        accounts = [json.loads(f.read_text()) for f in sorted(accts_dir.glob("*.json"))]
+        accounts = [
+            json.loads(f.read_text()) for f in sorted(accts_dir.glob("*.json"))
+        ]
         assert len(accounts) >= 3
         for acct in accounts:
             assert "account_id" in acct
@@ -69,13 +74,16 @@ class TestMockServerCustomers:
     def test_escalations_loaded(self, northhill_root):
         esc_dir = northhill_root / "customers" / "escalations"
         assert esc_dir.exists()
-        escalations = [json.loads(f.read_text()) for f in sorted(esc_dir.glob("*.json"))]
+        escalations = [
+            json.loads(f.read_text()) for f in sorted(esc_dir.glob("*.json"))
+        ]
         assert len(escalations) >= 2
         for esc in escalations:
             assert "escalation_id" in esc
 
 
 class TestMockServerCompliance:
+
     def test_contracts_loaded(self, northhill_root):
         contracts = []
         for status in ("in_review", "active", "expired"):
@@ -88,7 +96,10 @@ class TestMockServerCompliance:
     def test_audits_loaded(self, northhill_root):
         audits_dir = northhill_root / "compliance" / "audits"
         assert audits_dir.exists()
-        audits = [json.loads(f.read_text()) for f in sorted(audits_dir.glob("*.json"))]
+        audits = [
+            json.loads(f.read_text())
+            for f in sorted(audits_dir.glob("*.json"))
+        ]
         assert len(audits) >= 1
         for audit in audits:
             assert "audit_id" in audit
@@ -96,11 +107,15 @@ class TestMockServerCompliance:
     def test_policies_loaded(self, northhill_root):
         policies_dir = northhill_root / "compliance" / "policies"
         assert policies_dir.exists()
-        policies = [json.loads(f.read_text()) for f in sorted(policies_dir.glob("*.json"))]
+        policies = [
+            json.loads(f.read_text())
+            for f in sorted(policies_dir.glob("*.json"))
+        ]
         assert len(policies) >= 1
 
 
 class TestMockServerDataIntegrity:
+
     def test_expense_status_values(self, northhill_root):
         """All expenses should have valid status values."""
         valid_statuses = {"pending", "approved", "rejected"}
@@ -110,8 +125,7 @@ class TestMockServerDataIntegrity:
                 for f in d.glob("*.json"):
                     data = json.loads(f.read_text())
                     assert data["status"] in valid_statuses, (
-                        f"{f.name} has invalid status: {data['status']}"
-                    )
+                        f"{f.name} has invalid status: {data['status']}")
                     assert data["status"] == status_dir, (
                         f"{f.name} status {data['status']} doesn't match dir {status_dir}"
                     )
@@ -123,8 +137,7 @@ class TestMockServerDataIntegrity:
             data = json.loads(f.read_text())
             score = data.get("health_score", 0)
             assert 0 <= score <= 100, (
-                f"{f.name} health_score {score} out of range"
-            )
+                f"{f.name} health_score {score} out of range")
 
     def test_escalation_references_valid_account(self, northhill_root):
         """Escalations should reference existing account IDs."""

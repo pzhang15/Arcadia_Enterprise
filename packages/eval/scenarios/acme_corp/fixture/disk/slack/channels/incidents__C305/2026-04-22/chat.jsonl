@@ -1,3 +1,0 @@
-{"type": "message", "user": "U103", "text": "incident: slack workspace auth provider (okta) is down - reports of users unable to sign in since 09:14 PT. opening bridge.", "ts": "1714000000.000100", "team": "T_ACME"}
-{"type": "message", "user": "U104", "text": "two new hires (apr-22 start dates) blocked on day-1 onboarding because they can't get into slack. provisioning tickets queued but un-actionable until SSO is back.", "ts": "1714003600.000100", "team": "T_ACME"}
-{"type": "message", "user": "U103", "text": "okta has restored. backfilling provisioning now. postmortem writeup tomorrow.", "ts": "1714010800.000100", "team": "T_ACME"}

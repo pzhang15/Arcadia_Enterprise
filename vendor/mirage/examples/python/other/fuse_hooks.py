@@ -17,7 +17,6 @@ import io
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-
 from mirage import MountMode, RAMResource, Workspace
 from mirage.fuse.filetype.data.local.excel import HOOKS as EXCEL_HOOKS
 from mirage.fuse.filetype.data.local.parquet import HOOKS as PARQUET_HOOKS

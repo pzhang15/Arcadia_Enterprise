@@ -1,11 +1,16 @@
 from pathlib import Path
 
 from mirage import MountMode, RAMResource, Workspace
-from mirage.resource.disk import DiskResource
-from mirage_eval.fixtures import (FakeDatadogResource, FakeGDocsResource,
+# yapf: disable
+from mirage_eval.fixtures import (FakeComplianceResource,
+                                  FakeCustomersResource, FakeDatadogResource,
+                                  FakeFinanceResource, FakeGDocsResource,
                                   FakeGitHubResource, FakeGSheetsResource,
-                                  FakePagerDutyResource, FakeSlackResource,
+                                  FakePagerDutyResource, FakePostgresResource,
+                                  FakeS3Resource, FakeSlackResource,
                                   FakeTicketingResource)
+
+# yapf: enable
 
 DEFAULT_DISK_ROOT = (Path(__file__).resolve().parent / "fixture" /
                      "disk").resolve()
@@ -46,11 +51,14 @@ def build_l1_workspace(
             "/datadog":
             (FakeDatadogResource(str(root / "datadog")), MountMode.READ),
             "/finance":
-            (DiskResource(root=str(root / "finance")), MountMode.READ),
+            (FakeFinanceResource(str(root / "finance")), MountMode.READ),
             "/customers":
-            (DiskResource(root=str(root / "customers")), MountMode.READ),
+            (FakeCustomersResource(str(root / "customers")), MountMode.READ),
             "/compliance":
-            (DiskResource(root=str(root / "compliance")), MountMode.READ),
+            (FakeComplianceResource(str(root / "compliance")), MountMode.READ),
+            "/database":
+            (FakePostgresResource(str(root / "database")), MountMode.READ),
+            "/s3": (FakeS3Resource(str(root / "s3")), MountMode.READ),
         },
         mode=MountMode.WRITE,
         agent_id=agent_id,

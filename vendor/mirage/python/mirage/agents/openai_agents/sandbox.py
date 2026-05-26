@@ -24,7 +24,6 @@ from agents.sandbox.session.sandbox_session import SandboxSession
 from agents.sandbox.session.sandbox_session_state import SandboxSessionState
 from agents.sandbox.snapshot import NoopSnapshot, SnapshotBase, SnapshotSpec
 from agents.sandbox.types import ExecResult, User
-
 from mirage.workspace.snapshot import apply_state_dict, read_tar
 from mirage.workspace.workspace import Workspace
 

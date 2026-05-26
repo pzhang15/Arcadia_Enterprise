@@ -16,7 +16,6 @@ import os
 
 import pytest
 import pytest_asyncio
-
 from mirage.cache.file.redis import RedisFileCacheStore
 
 REDIS_URL = os.environ.get("REDIS_URL", "")

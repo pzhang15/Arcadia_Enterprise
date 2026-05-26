@@ -12,8 +12,7 @@ PROMPT = (
     "  policies/POL-XXXX.json\n"
     "    Each file: policy_id, title, version, effective_date,\n"
     "    acknowledgments (list with user_id, acked_at)\n\n"
-    "Contract types: NDA, MSA, SOW. Frameworks: SOC2, GDPR, HIPAA."
-)
+    "Contract types: NDA, MSA, SOW. Frameworks: SOC2, GDPR, HIPAA.")
 
 WRITE_PROMPT = ""
 

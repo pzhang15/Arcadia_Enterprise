@@ -16,7 +16,6 @@ import asyncio
 from unittest.mock import patch
 
 import pytest
-
 from mirage.cache.file.ram import RAMFileCacheStore
 
 

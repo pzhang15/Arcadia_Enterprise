@@ -15,7 +15,6 @@
 import io as _io
 
 import pyarrow.orc as orc
-
 from mirage.accessor.ssh import SSHAccessor
 from mirage.cache.index import IndexCacheStore
 from mirage.commands.registry import command

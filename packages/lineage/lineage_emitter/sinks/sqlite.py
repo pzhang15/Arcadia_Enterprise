@@ -6,7 +6,7 @@ import sqlite3
 from dataclasses import asdict
 from pathlib import Path
 
-from lineage_emitter.tracing.span import Span, SpanEvent
+from lineage_emitter.tracing.span import Span
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class SQLiteSpanStore:
         """
         cursor = self._conn.execute(
             "SELECT * FROM spans WHERE trace_id = ? ORDER BY start_time_ms",
-            (trace_id,),
+            (trace_id, ),
         )
         columns = [desc[0] for desc in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -170,7 +170,7 @@ class SQLiteSpanStore:
         """
         cursor = self._conn.execute(
             "SELECT * FROM span_events WHERE span_id = ? ORDER BY timestamp_ms",
-            (span_id,),
+            (span_id, ),
         )
         columns = [desc[0] for desc in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -186,8 +186,7 @@ class SQLiteSpanStore:
         """
         if level is not None:
             cursor = self._conn.execute(
-                "SELECT COUNT(*) FROM spans WHERE level = ?", (level,)
-            )
+                "SELECT COUNT(*) FROM spans WHERE level = ?", (level, ))
         else:
             cursor = self._conn.execute("SELECT COUNT(*) FROM spans")
         return cursor.fetchone()[0]

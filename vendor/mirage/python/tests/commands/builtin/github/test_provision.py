@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import pytest
-
 from mirage.commands.builtin.github.cat import cat_provision
 from mirage.commands.builtin.github.find import find_provision
 from mirage.commands.builtin.github.grep.grep import grep_provision

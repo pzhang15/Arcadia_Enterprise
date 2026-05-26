@@ -17,7 +17,6 @@ import json
 import os
 
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.resource.r2 import R2Config, R2Resource
 

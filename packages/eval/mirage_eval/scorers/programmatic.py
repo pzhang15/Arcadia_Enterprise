@@ -136,49 +136,56 @@ def score_programmatic(artifacts: RunArtifacts,
     gates: list[GateResult] = []
     o = task.oracles
     for path in o.files_must_exist:
-        gates.append(GateResult(
-            name=f"file_exists:{path}",
-            passed=path in artifacts.output_files,
-            detail=("present" if path in artifacts.output_files
-                    else "missing in output_files"),
-        ))
+        gates.append(
+            GateResult(
+                name=f"file_exists:{path}",
+                passed=path in artifacts.output_files,
+                detail=("present" if path in artifacts.output_files else
+                        "missing in output_files"),
+            ))
     for path, needles in o.must_contain_in_file.items():
         body = artifacts.output_files.get(path, "")
         for needle in needles:
             present = needle in body
-            gates.append(GateResult(
-                name=f"must_contain:{path}:{needle}",
-                passed=present,
-                detail=("present" if present else "missing"),
-            ))
+            gates.append(
+                GateResult(
+                    name=f"must_contain:{path}:{needle}",
+                    passed=present,
+                    detail=("present" if present else "missing"),
+                ))
     for path, banned in o.must_not_contain_in_file.items():
         body = artifacts.output_files.get(path, "")
         for needle in banned:
             absent = needle not in body
-            gates.append(GateResult(
-                name=f"must_not_contain:{path}:{needle}",
-                passed=absent,
-                detail=("absent" if absent else "found unexpectedly"),
-            ))
+            gates.append(
+                GateResult(
+                    name=f"must_not_contain:{path}:{needle}",
+                    passed=absent,
+                    detail=("absent" if absent else "found unexpectedly"),
+                ))
     touched = _all_touched_paths(artifacts)
     for prefix in o.ops_must_touch_prefix:
         hit = _matches_prefix(touched, prefix)
-        gates.append(GateResult(
-            name=f"ops_must_touch:{prefix}",
-            passed=hit,
-            detail=("touched" if hit else "no op under this prefix"),
-        ))
+        gates.append(
+            GateResult(
+                name=f"ops_must_touch:{prefix}",
+                passed=hit,
+                detail=("touched" if hit else "no op under this prefix"),
+            ))
     for prefix in o.ops_must_not_touch_prefix:
         hit = _matches_prefix(touched, prefix)
-        gates.append(GateResult(
-            name=f"ops_must_not_touch:{prefix}",
-            passed=not hit,
-            detail=("avoided" if not hit else "touched unexpectedly"),
-        ))
+        gates.append(
+            GateResult(
+                name=f"ops_must_not_touch:{prefix}",
+                passed=not hit,
+                detail=("avoided" if not hit else "touched unexpectedly"),
+            ))
     enoents = _enoent_paths(artifacts)
-    gates.append(GateResult(
-        name="no_enoent",
-        passed=len(enoents) <= o.max_enoent,
-        detail=f"{len(enoents)} ENOENT-like commands; budget {o.max_enoent}",
-    ))
+    gates.append(
+        GateResult(
+            name="no_enoent",
+            passed=len(enoents) <= o.max_enoent,
+            detail=
+            f"{len(enoents)} ENOENT-like commands; budget {o.max_enoent}",
+        ))
     return ProgrammaticResult(gates=gates)

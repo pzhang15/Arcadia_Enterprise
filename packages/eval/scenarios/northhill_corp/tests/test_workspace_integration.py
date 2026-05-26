@@ -8,9 +8,9 @@ async def test_workspace_ls_root(l1_workspace):
     result = await l1_workspace.execute("ls /")
     assert result.exit_code == 0
     stdout = result.stdout.decode()
-    for expected_dir in ("slack", "sheets", "gdocs", "tickets",
-                         "github", "pagerduty", "datadog",
-                         "finance", "customers", "compliance"):
+    for expected_dir in ("slack", "sheets", "gdocs", "tickets", "github",
+                         "pagerduty", "datadog", "finance", "customers",
+                         "compliance"):
         assert expected_dir in stdout, f"Missing mount: {expected_dir}"
 
 
@@ -25,8 +25,7 @@ async def test_workspace_read_slack_users(l1_workspace):
 @pytest.mark.asyncio
 async def test_workspace_read_ticket(l1_workspace):
     result = await l1_workspace.execute(
-        "find /tickets/queues/it-helpdesk -name '*.json' -type f"
-    )
+        "find /tickets/queues/it-helpdesk -name '*.json' -type f")
     assert result.exit_code == 0
     stdout = result.stdout.decode().strip()
     assert len(stdout) > 0, "No ticket files found"
@@ -85,8 +84,7 @@ async def test_workspace_write_and_read(l1_workspace):
 @pytest.mark.asyncio
 async def test_workspace_cat_ticket_has_priority(l1_workspace):
     result = await l1_workspace.execute(
-        "find /tickets/queues/it-helpdesk/open -name '*.json' -type f"
-    )
+        "find /tickets/queues/it-helpdesk/open -name '*.json' -type f")
     assert result.exit_code == 0
     files = result.stdout.decode().strip().splitlines()
     assert len(files) >= 1, "No open IT tickets found"

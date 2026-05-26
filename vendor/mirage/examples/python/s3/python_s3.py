@@ -16,7 +16,6 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.resource.ram import RAMResource
 from mirage.resource.s3 import S3Config, S3Resource

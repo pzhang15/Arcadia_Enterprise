@@ -17,7 +17,6 @@ import tempfile
 from pathlib import Path
 
 from camel.toolkits import FileToolkit
-
 from mirage.agents.camel._async import AsyncRunner
 from mirage.workspace.workspace import Workspace
 

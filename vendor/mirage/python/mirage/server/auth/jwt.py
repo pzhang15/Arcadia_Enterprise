@@ -16,7 +16,6 @@ import logging
 from typing import Any
 
 import jwt as pyjwt
-
 from mirage.server.auth.config import JWTConfig
 
 logger = logging.getLogger(__name__)

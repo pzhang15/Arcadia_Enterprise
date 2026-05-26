@@ -3,10 +3,9 @@ import json
 import os
 from dataclasses import asdict, dataclass, field
 
-from openai import AsyncOpenAI
-
 from mirage_eval.config import JudgeConfig
 from mirage_eval.runner.common import RunArtifacts
+from openai import AsyncOpenAI
 
 _SYSTEM_INSTRUCTIONS = (
     "You are a strict but fair grader for an AI agent's task output. "

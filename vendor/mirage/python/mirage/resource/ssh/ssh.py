@@ -14,8 +14,6 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
-
 from mirage.accessor.ssh import SSHAccessor
 from mirage.commands.builtin.ssh import COMMANDS as SSH_COMMANDS
 from mirage.core.ssh.append import append_bytes
@@ -40,6 +38,7 @@ from mirage.ops.ssh import OPS as SSH_OPS
 from mirage.resource.base import BaseResource
 from mirage.resource.ssh.prompt import PROMPT
 from mirage.types import ResourceName
+from pydantic import BaseModel, ConfigDict
 
 _SSH_OPS = {
     "read_bytes": read_bytes,

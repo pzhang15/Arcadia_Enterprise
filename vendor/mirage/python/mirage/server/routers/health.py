@@ -16,9 +16,8 @@ import os
 import time
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel
-
 from mirage.server.schemas import HealthResponse
+from pydantic import BaseModel
 
 router = APIRouter()
 

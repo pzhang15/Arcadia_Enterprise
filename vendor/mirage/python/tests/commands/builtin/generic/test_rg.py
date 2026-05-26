@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.rg import rg
 from mirage.types import FileStat, FileType, PathSpec
 

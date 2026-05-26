@@ -16,7 +16,6 @@ import fnmatch
 from collections.abc import Callable
 
 import tree_sitter
-
 from mirage.io import IOResult
 from mirage.io.async_line_iterator import AsyncLineIterator
 from mirage.io.stream import async_chain

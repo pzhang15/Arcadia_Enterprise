@@ -32,7 +32,6 @@ import tempfile
 
 import anyio
 from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
-
 from mirage.fuse.fs import MirageFS
 from mirage.fuse.mount import mount_background
 from mirage.resource.ram import RAMResource

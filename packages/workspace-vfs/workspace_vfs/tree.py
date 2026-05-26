@@ -18,7 +18,8 @@ class WorkspaceTree:
     def __init__(self) -> None:
         self._sources: dict[str, dict[str, Any]] = {}
 
-    def register_source(self, mount_path: str, source_meta: dict[str, Any]) -> None:
+    def register_source(self, mount_path: str, source_meta: dict[str,
+                                                                 Any]) -> None:
         """Register a data source at a mount path.
 
         Args:

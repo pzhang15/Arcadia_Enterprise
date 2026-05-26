@@ -15,13 +15,12 @@
 import os
 
 from dotenv import load_dotenv
-from openhands.sdk import LLM, Agent, Conversation, Tool
-
 from mirage import MountMode, Workspace
 from mirage.agents.openhands import MirageWorkspace, register_mirage_terminal
 from mirage.resource.ram import RAMResource
 from mirage.resource.s3 import S3Config, S3Resource
 from mirage.resource.slack import SlackConfig, SlackResource
+from openhands.sdk import LLM, Agent, Conversation, Tool
 
 load_dotenv(".env.development")
 

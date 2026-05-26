@@ -73,7 +73,8 @@ async def test_helpdesk_ticket_comment_add_writes_comment(l1_workspace):
     ws = l1_workspace
     add = await ws.execute(
         "helpdesk-ticket-comment-add --ticket INC-1004 "
-        "--author U104 --body 'GitHub invite sent to alex.rivera@northhill.com'")
+        "--author U104 --body 'GitHub invite sent to alex.rivera@northhill.com'"
+    )
     assert add.exit_code == 0, (add.stderr or b"").decode()
     check = await ws.execute(
         "cat /tickets/queues/it-helpdesk/open/INC-1004*.json | "

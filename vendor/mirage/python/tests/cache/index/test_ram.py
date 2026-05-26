@@ -15,7 +15,6 @@
 from datetime import datetime
 
 import pytest
-
 from mirage.cache.index import IndexConfig, IndexEntry, RAMIndexCacheStore
 
 

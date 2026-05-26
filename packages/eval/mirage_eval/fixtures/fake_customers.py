@@ -10,8 +10,7 @@ PROMPT = (
     "    Each file: escalation_id, account_id, severity, description,\n"
     "    linked_ticket, created_at, status, owner\n\n"
     "Health scores: 0-100 (>80 healthy, 60-80 needs attention, <60 at risk).\n"
-    "Tiers: enterprise, pro, starter."
-)
+    "Tiers: enterprise, pro, starter.")
 
 WRITE_PROMPT = ""
 

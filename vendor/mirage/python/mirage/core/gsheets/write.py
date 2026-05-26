@@ -15,7 +15,6 @@
 import json
 
 import aiohttp
-
 from mirage.core.gsheets._client import (SHEETS_API_BASE, TokenManager,
                                          google_headers)
 

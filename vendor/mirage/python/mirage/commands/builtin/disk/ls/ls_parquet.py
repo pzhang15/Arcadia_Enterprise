@@ -15,7 +15,6 @@
 import io as _io
 
 import pyarrow.parquet as pq
-
 from mirage.accessor.disk import DiskAccessor
 from mirage.cache.index import IndexCacheStore
 from mirage.commands.registry import command

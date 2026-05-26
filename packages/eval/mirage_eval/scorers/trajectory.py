@@ -7,15 +7,42 @@ from mirage_eval.runner.common import RunArtifacts
 # Approximate USD per 1M tokens. Tunable; keep conservative defaults so
 # cost reporting is never silently zero.
 _PRICE_TABLE_USD_PER_MTOK = {
-    "gpt-5":         {"in": 1.25, "out": 10.00},
-    "gpt-5-mini":    {"in": 0.25, "out": 2.00},
-    "gpt-5-nano":    {"in": 0.05, "out": 0.40},
-    "gpt-4.1":       {"in": 2.00, "out": 8.00},
-    "gpt-4.1-mini":  {"in": 0.40, "out": 1.60},
-    "gpt-4.1-nano":  {"in": 0.10, "out": 0.40},
-    "gpt-4o":        {"in": 2.50, "out": 10.00},
-    "gpt-4o-mini":   {"in": 0.15, "out": 0.60},
-    "o4-mini":       {"in": 1.10, "out": 4.40},
+    "gpt-5": {
+        "in": 1.25,
+        "out": 10.00
+    },
+    "gpt-5-mini": {
+        "in": 0.25,
+        "out": 2.00
+    },
+    "gpt-5-nano": {
+        "in": 0.05,
+        "out": 0.40
+    },
+    "gpt-4.1": {
+        "in": 2.00,
+        "out": 8.00
+    },
+    "gpt-4.1-mini": {
+        "in": 0.40,
+        "out": 1.60
+    },
+    "gpt-4.1-nano": {
+        "in": 0.10,
+        "out": 0.40
+    },
+    "gpt-4o": {
+        "in": 2.50,
+        "out": 10.00
+    },
+    "gpt-4o-mini": {
+        "in": 0.15,
+        "out": 0.60
+    },
+    "o4-mini": {
+        "in": 1.10,
+        "out": 4.40
+    },
 }
 
 
@@ -74,18 +101,17 @@ def score_trajectory(artifacts: RunArtifacts,
     """
     n_ops = len(artifacts.op_records)
     paths = {r.path for r in artifacts.op_records if r.path}
-    bytes_read = sum(
-        r.bytes for r in artifacts.op_records if r.op in {"read", "read_bytes"})
-    bytes_written = sum(
-        r.bytes for r in artifacts.op_records
-        if r.op in {"write", "write_bytes", "append"})
+    bytes_read = sum(r.bytes for r in artifacts.op_records
+                     if r.op in {"read", "read_bytes"})
+    bytes_written = sum(r.bytes for r in artifacts.op_records
+                        if r.op in {"write", "write_bytes", "append"})
     cache_hits = sum(1 for r in artifacts.op_records if r.is_cache)
     cache_hit_rate = (cache_hits / n_ops) if n_ops else 0.0
     n_commands = _count_commands_in_journal(artifacts.sessions_jsonl)
     n_turns = artifacts.raw_responses_count
     pricing = _price_for(artifacts.model)
-    cost = ((artifacts.usage.input_tokens / 1_000_000) * pricing["in"]
-            + (artifacts.usage.output_tokens / 1_000_000) * pricing["out"])
+    cost = ((artifacts.usage.input_tokens / 1_000_000) * pricing["in"] +
+            (artifacts.usage.output_tokens / 1_000_000) * pricing["out"])
     breaches: list[str] = []
     if n_turns > budget.max_turns:
         breaches.append(f"max_turns {n_turns}>{budget.max_turns}")
@@ -93,9 +119,10 @@ def score_trajectory(artifacts: RunArtifacts,
         breaches.append(f"max_commands {n_commands}>{budget.max_commands}")
     if artifacts.wallclock_s > budget.max_wallclock_s:
         breaches.append(
-            f"max_wallclock_s {artifacts.wallclock_s:.1f}>{budget.max_wallclock_s}")
-    if (artifacts.usage.input_tokens
-            + artifacts.usage.output_tokens) > budget.max_tokens:
+            f"max_wallclock_s {artifacts.wallclock_s:.1f}>{budget.max_wallclock_s}"
+        )
+    if (artifacts.usage.input_tokens +
+            artifacts.usage.output_tokens) > budget.max_tokens:
         breaches.append(
             f"max_tokens {artifacts.usage.input_tokens + artifacts.usage.output_tokens}"
             f">{budget.max_tokens}")

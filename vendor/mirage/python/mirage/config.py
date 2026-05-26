@@ -18,12 +18,11 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 from mirage.cache.file.config import CacheConfig, RedisCacheConfig
 from mirage.cache.index.config import IndexConfig, RedisIndexConfig
 from mirage.resource.registry import build_resource
 from mirage.types import ConsistencyPolicy, MountMode
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def _coerce_mount_mode(value):

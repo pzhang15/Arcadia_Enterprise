@@ -24,7 +24,9 @@ class IcebergAdapter(BaseAdapter):
     async def get_schema(self, table: str) -> dict[str, Any]:
         raise NotImplementedError
 
-    async def get_sample(self, table: str, limit: int = 10) -> list[dict[str, Any]]:
+    async def get_sample(self,
+                         table: str,
+                         limit: int = 10) -> list[dict[str, Any]]:
         raise NotImplementedError
 
     async def execute(self, table: str, query: dict[str, Any]) -> Any:

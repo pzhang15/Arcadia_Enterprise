@@ -18,7 +18,6 @@ from typing import Any
 
 import typer
 import yaml
-
 from mirage.cli.client import make_client
 from mirage.cli.output import (emit, fail, format_age, format_table,
                                handle_response)

@@ -19,7 +19,6 @@ from pathlib import Path
 
 import httpx
 import typer
-
 from mirage.cli.client import make_client
 from mirage.cli.output import emit, fail, format_age
 

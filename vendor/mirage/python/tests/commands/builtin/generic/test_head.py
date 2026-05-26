@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.head import head
 
 

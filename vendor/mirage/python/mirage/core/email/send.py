@@ -15,7 +15,6 @@
 from email.message import EmailMessage
 
 import aiosmtplib
-
 from mirage.resource.email.config import EmailConfig
 from mirage.resource.secrets import reveal_secret
 

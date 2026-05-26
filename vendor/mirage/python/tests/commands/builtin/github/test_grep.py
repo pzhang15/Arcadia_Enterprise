@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import pytest
-
 from mirage.commands.builtin.github.grep.grep import grep
 from mirage.io.stream import materialize
 from mirage.types import PathSpec

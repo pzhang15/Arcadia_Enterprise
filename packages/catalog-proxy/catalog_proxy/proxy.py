@@ -27,7 +27,8 @@ class CatalogProxy:
         """
         raise NotImplementedError
 
-    async def execute_query(self, source: str, table: str, query: dict[str, Any]) -> Any:
+    async def execute_query(self, source: str, table: str,
+                            query: dict[str, Any]) -> Any:
         """Execute a query.json spec against a source table.
 
         Args:

@@ -16,7 +16,6 @@ import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.discord import DiscordAccessor
 from mirage.commands.builtin.discord.discord_add_reaction import \
     discord_add_reaction

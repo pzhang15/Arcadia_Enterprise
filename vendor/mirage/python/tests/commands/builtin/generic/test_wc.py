@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.wc import (WCCounts, format_wc, wc,
                                                 wc_lines)
 

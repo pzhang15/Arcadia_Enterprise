@@ -96,8 +96,8 @@ def _utc_date_folder() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
-_RAM_MOUNT_EXCLUDES = (
-    "/slack", "/sheets", "/gdocs", "/tickets", "/.sessions", "/dev")
+_RAM_MOUNT_EXCLUDES = ("/slack", "/sheets", "/gdocs", "/tickets", "/.sessions",
+                       "/dev")
 
 
 async def _capture_output_files(ws: Workspace,
@@ -110,8 +110,7 @@ async def _capture_output_files(ws: Workspace,
         session_id (str): Session id to execute the listing under (must
             already exist in the workspace's session manager).
     """
-    prune_clauses = " -o ".join(
-        f"-path {p}" for p in _RAM_MOUNT_EXCLUDES)
+    prune_clauses = " -o ".join(f"-path {p}" for p in _RAM_MOUNT_EXCLUDES)
     find_cmd = (f"find / \\( {prune_clauses} \\) -prune -o -type f -print")
     listing = await ws.execute(find_cmd, session_id=session_id)
     raw = (listing.stdout or b"")
@@ -120,10 +119,9 @@ async def _capture_output_files(ws: Workspace,
     else:
         text = str(raw)
     paths = [
-        line.strip() for line in text.splitlines()
-        if line.strip() and not any(line.strip().startswith(p)
-                                    for p in _RAM_MOUNT_EXCLUDES)
-        and line.strip() != "/"
+        line.strip() for line in text.splitlines() if line.strip() and not any(
+            line.strip().startswith(p)
+            for p in _RAM_MOUNT_EXCLUDES) and line.strip() != "/"
     ]
     out: dict[str, str] = {}
     for p in paths:
@@ -167,8 +165,8 @@ async def _capture_sessions_jsonl(ws: Workspace, session_id: str) -> str:
         listing = await ws.ops.readdir(date_dir)
         chunks: list[str] = []
         for entry in listing:
-            name = (entry["name"] if isinstance(entry, dict)
-                    else getattr(entry, "name", str(entry)))
+            name = (entry["name"] if isinstance(entry, dict) else getattr(
+                entry, "name", str(entry)))
             if not name.endswith(".jsonl"):
                 continue
             try:
@@ -223,7 +221,6 @@ async def run_one_task(
     from agents import Runner
     from agents.run import RunConfig
     from agents.sandbox import SandboxAgent, SandboxRunConfig
-
     from mirage.agents.openai_agents import MirageSandboxClient
 
     session_id = f"{scenario.id}__{sweep_id}__{task.id}__seed{seed}"
@@ -252,8 +249,7 @@ async def run_one_task(
         result = await Runner.run(
             agent,
             task.prompt,
-            run_config=RunConfig(
-                sandbox=SandboxRunConfig(client=client)),
+            run_config=RunConfig(sandbox=SandboxRunConfig(client=client)),
             max_turns=task.trajectory_budget.max_turns,
         )
         final_output = str(result.final_output or "")

@@ -19,12 +19,11 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from mirage.workspace.workspace import Workspace as MirageBackingWorkspace
 from openhands.sdk.git.models import GitChange, GitDiff
 from openhands.sdk.workspace.local import LocalWorkspace
 from openhands.sdk.workspace.models import CommandResult, FileOperationResult
 from pydantic import Field, PrivateAttr
-
-from mirage.workspace.workspace import Workspace as MirageBackingWorkspace
 
 logger = logging.getLogger(__name__)
 

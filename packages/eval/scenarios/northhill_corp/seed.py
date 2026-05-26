@@ -1,7 +1,17 @@
 import argparse
+import csv
+import io
 import json
+import random
 import shutil
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from faker import Faker as FakerClass
+from scenarios.northhill_corp.generators import (generate_ambient_messages,
+                                                 generate_customers,
+                                                 generate_employees,
+                                                 generate_support_tickets)
 
 DEFAULT_ROOT = str(
     (Path(__file__).resolve().parent / "fixture" / "disk").resolve())
@@ -441,21 +451,39 @@ def _slack_msg(uid: str, ts: str, text: str) -> dict:
     }
 
 
-def write_slack(root: Path) -> None:
+def write_slack(
+    root: Path,
+    extra_users: list[dict] | None = None,
+    ambient_messages: dict[str, list[tuple[str, str, str, str]]] | None = None,
+) -> None:
     """Materialize Slack channels, DMs, and user profiles on disk.
 
     Args:
         root (Path): Root directory for the synthetic workspace.
+        extra_users (list[dict] | None): Generated employees
+            to write profiles for.
+        ambient_messages (dict | None): Channel ID to list
+            of ambient noise tuples.
     """
+    all_users = USERS + (extra_users or [])
     slack_root = root / "slack"
     if slack_root.exists():
         shutil.rmtree(slack_root)
+
+    merged_messages: dict[str, list[tuple[str, str, str, str]]] = {}
+    for ch_id, msgs in CHANNEL_MESSAGES.items():
+        merged_messages[ch_id] = list(msgs)
+    if ambient_messages:
+        for ch_id, msgs in ambient_messages.items():
+            merged_messages.setdefault(ch_id, []).extend(msgs)
+
     for ch in CHANNELS:
         ch_dir = slack_root / "channels" / f"{ch['name']}__{ch['id']}"
         days: dict[str, list[dict]] = {}
-        for date, uid, ts, text in CHANNEL_MESSAGES.get(ch["id"], []):
+        for date, uid, ts, text in merged_messages.get(ch["id"], []):
             days.setdefault(date, []).append(_slack_msg(uid, ts, text))
-        for date, msgs in days.items():
+        for date, msgs in sorted(days.items()):
+            msgs.sort(key=lambda m: m["ts"])
             day_dir = ch_dir / date
             day_dir.mkdir(parents=True, exist_ok=True)
             (day_dir / "files").mkdir(exist_ok=True)
@@ -477,7 +505,7 @@ def write_slack(root: Path) -> None:
                 json.dumps(m, ensure_ascii=False) for m in msgs) + "\n")
     users_dir = slack_root / "users"
     users_dir.mkdir(parents=True, exist_ok=True)
-    for u in USERS:
+    for u in all_users:
         profile = {
             "id": u["id"],
             "name": u["handle"],
@@ -869,7 +897,8 @@ def write_docs(root: Path) -> None:
         "# NorthHill Onboarding Playbook",
         "Owner: Diana Park (HR). Last updated: 2026-05-10.",
         "## Day 1",
-        "- Pick up laptop from IT desk (or arrange loaner if not yet shipped).",
+        "- Pick up laptop from IT desk "
+        "(or arrange loaner if not yet shipped).",
         "- Sign into Okta (SSO triggers auto-provisioning of dependent apps).",
         "- File any missing-access tickets via /tickets/queues/it-helpdesk/.",
         "- Read team welcome doc (manager shares).",
@@ -1099,11 +1128,16 @@ def _write_tickets_to_dir(queue_dir: Path, status: str,
          fname).write_text(json.dumps(t, indent=2, ensure_ascii=False) + "\n")
 
 
-def write_tickets(root: Path) -> None:
-    """Materialize ticket queues on disk (IT helpdesk, customer support, legal).
+def write_tickets(
+    root: Path,
+    extra_cs_tickets: list[dict] | None = None,
+) -> None:
+    """Materialize ticket queues on disk.
 
     Args:
         root (Path): Root directory for the synthetic workspace.
+        extra_cs_tickets (list[dict] | None): Generated
+            customer support tickets.
     """
     tickets_root = root / "tickets"
     if tickets_root.exists():
@@ -1435,6 +1469,39 @@ def write_tickets(root: Path) -> None:
     _write_tickets_to_dir(cs_q, "open", cs_open)
     _write_tickets_to_dir(cs_q, "in_progress", cs_in_progress)
     _write_tickets_to_dir(cs_q, "resolved", cs_resolved)
+
+    if extra_cs_tickets:
+        gen_employees = generate_employees(seed=42)
+        all_u = USERS + gen_employees
+        for gen_t in extra_cs_tickets:
+            assignee_handle = gen_t.pop("assignee_handle", None)
+            gen_t.pop("account_id", None)
+            assignee = None
+            if assignee_handle:
+                match = next(
+                    (u for u in all_u if u["handle"] == assignee_handle), None)
+                if match:
+                    assignee = {
+                        "id": match["id"],
+                        "name": match["name"],
+                        "email": match["email"]
+                    }
+            t = _ticket(
+                gen_t["ticket_id"],
+                gen_t["subject"],
+                gen_t["body"],
+                gen_t["requester"],
+                gen_t["queue"],
+                gen_t["status"],
+                gen_t["priority"],
+                gen_t["created_at"],
+                gen_t["updated_at"],
+                assignee=assignee,
+                tags=gen_t.get("tags", []),
+                related_tickets=gen_t.get("related_tickets", []),
+                comments=gen_t.get("comments", []),
+            )
+            _write_tickets_to_dir(cs_q, t["status"], [t])
 
     legal_q = tickets_root / "queues" / "legal"
     for s in ("open", "in_progress", "resolved"):
@@ -2372,11 +2439,18 @@ def write_finance(root: Path) -> None:
      "Q2_2026.json").write_text(json.dumps(q2_budget, indent=2) + "\n")
 
 
-def write_customers(root: Path) -> None:
+def write_customers(
+    root: Path,
+    extra_customers: list[dict] | None = None,
+) -> list[dict]:
     """Materialize customer accounts and escalations on disk.
 
     Args:
         root (Path): Root directory for the synthetic workspace.
+        extra_customers (list[dict] | None): Generated customers to append.
+
+    Returns:
+        list[dict]: All customer accounts (hand-crafted + generated).
     """
     cust_root = root / "customers"
     if cust_root.exists():
@@ -2545,6 +2619,28 @@ def write_customers(root: Path) -> None:
             "products": ["platform-api", "auth-service"],
         },
     ]
+    if extra_customers:
+        gen_employees = generate_employees(seed=42)
+        all_u = USERS + gen_employees
+        for gen_cust in extra_customers:
+            csm_handle = gen_cust.get("csm")
+            if isinstance(csm_handle, str):
+                match = next((u for u in all_u if u["handle"] == csm_handle),
+                             None)
+                if match:
+                    gen_cust["csm"] = {
+                        "id": match["id"],
+                        "name": match["name"],
+                        "email": match["email"],
+                    }
+                else:
+                    gen_cust["csm"] = {
+                        "id": "U000",
+                        "name": csm_handle,
+                        "email": f"{csm_handle}@northhill.com",
+                    }
+        accounts.extend(extra_customers)
+
     for acct in accounts:
         (cust_root / "accounts" / f"{acct['account_id']}.json"
          ).write_text(json.dumps(acct, indent=2) + "\n")
@@ -2608,6 +2704,8 @@ def write_customers(root: Path) -> None:
     for esc in escalations:
         (cust_root / "escalations" / f"{esc['escalation_id']}.json"
          ).write_text(json.dumps(esc, indent=2) + "\n")
+
+    return accounts
 
 
 def write_compliance(root: Path) -> None:
@@ -3553,6 +3651,634 @@ def write_engineering(root: Path) -> None:
         json.dumps(error_rate, indent=2))
 
 
+def write_database(root: Path, all_accounts: list[dict]) -> None:
+    """Materialize Postgres-like database tables on disk.
+
+    Args:
+        root (Path): Root directory for the synthetic workspace.
+        all_accounts (list[dict]): All customer accounts for FK references.
+    """
+    fake = FakerClass()
+    FakerClass.seed(42 + 500)
+    rng = random.Random(42 + 500)
+
+    db_root = root / "database" / "tables"
+    if (root / "database").exists():
+        shutil.rmtree(root / "database")
+
+    account_ids = [a["account_id"] for a in all_accounts]
+    account_tiers = {a["account_id"]: a["tier"] for a in all_accounts}
+
+    _write_users_table(db_root, fake, rng, account_ids)
+    _write_events_table(db_root, rng)
+    _write_subscriptions_table(db_root, rng, all_accounts)
+    _write_invoices_table(db_root, rng, account_ids, account_tiers)
+
+
+def _write_users_table(
+    db_root: Path,
+    fake: FakerClass,
+    rng: random.Random,
+    account_ids: list[str],
+) -> None:
+    table_dir = db_root / "users"
+    table_dir.mkdir(parents=True, exist_ok=True)
+
+    schema = {
+        "table":
+        "users",
+        "columns": [
+            {
+                "name": "user_id",
+                "type": "varchar(36)",
+                "nullable": False,
+                "primary_key": True
+            },
+            {
+                "name": "account_id",
+                "type": "varchar(16)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "email",
+                "type": "varchar(255)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "created_at",
+                "type": "timestamptz",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "last_login",
+                "type": "timestamptz",
+                "nullable": True,
+                "primary_key": False
+            },
+            {
+                "name": "plan",
+                "type": "varchar(32)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "status",
+                "type": "varchar(16)",
+                "nullable": False,
+                "primary_key": False
+            },
+        ],
+        "foreign_keys": [
+            {
+                "column": "account_id",
+                "references": "subscriptions.account_id"
+            },
+        ],
+    }
+    (table_dir / "schema.json").write_text(json.dumps(schema, indent=2))
+
+    lines = []
+    for i in range(500):
+        acct = rng.choice(account_ids)
+        created = datetime(2024, 1, 1, tzinfo=timezone.utc) + timedelta(
+            days=rng.randint(0, 850))
+        last_login = created + timedelta(days=rng.randint(1, 365),
+                                         hours=rng.randint(0, 23))
+        if last_login > datetime(2026, 5, 15, tzinfo=timezone.utc):
+            last_login = datetime(2026, 5, 15, 10, 0, tzinfo=timezone.utc)
+        row = {
+            "user_id":
+            f"usr_{i:05d}",
+            "account_id":
+            acct,
+            "email":
+            fake.email(),
+            "created_at":
+            created.isoformat(),
+            "last_login":
+            last_login.isoformat(),
+            "plan":
+            rng.choice(["free", "pro", "enterprise"]),
+            "status":
+            rng.choices(["active", "inactive", "suspended"],
+                        weights=[0.8, 0.15, 0.05],
+                        k=1)[0],
+        }
+        lines.append(json.dumps(row, ensure_ascii=False))
+    (table_dir / "data.jsonl").write_text("\n".join(lines) + "\n")
+
+    stats = {
+        "table": "users",
+        "row_count": 500,
+        "size_bytes": len("\n".join(lines)),
+        "last_updated": "2026-05-15T12:00:00Z",
+    }
+    (table_dir / "stats.json").write_text(json.dumps(stats, indent=2))
+
+
+def _write_events_table(db_root: Path, rng: random.Random) -> None:
+    table_dir = db_root / "events"
+    table_dir.mkdir(parents=True, exist_ok=True)
+
+    schema = {
+        "table":
+        "events",
+        "columns": [
+            {
+                "name": "event_id",
+                "type": "varchar(36)",
+                "nullable": False,
+                "primary_key": True
+            },
+            {
+                "name": "user_id",
+                "type": "varchar(36)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "event_type",
+                "type": "varchar(32)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "timestamp",
+                "type": "timestamptz",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "metadata_json",
+                "type": "jsonb",
+                "nullable": True,
+                "primary_key": False
+            },
+        ],
+        "foreign_keys": [
+            {
+                "column": "user_id",
+                "references": "users.user_id"
+            },
+        ],
+    }
+    (table_dir / "schema.json").write_text(json.dumps(schema, indent=2))
+
+    event_types = [
+        "login", "api_call", "export", "error", "page_view", "settings_change",
+        "webhook_trigger"
+    ]
+    event_weights = [0.25, 0.30, 0.05, 0.10, 0.15, 0.05, 0.10]
+    lines = []
+    for i in range(5000):
+        uid = f"usr_{rng.randint(0, 499):05d}"
+        etype = rng.choices(event_types, weights=event_weights, k=1)[0]
+        ts = datetime(2026, 5, 1, tzinfo=timezone.utc) + timedelta(
+            days=rng.randint(0, 14),
+            hours=rng.randint(0, 23),
+            minutes=rng.randint(0, 59),
+            seconds=rng.randint(0, 59))
+        meta = {}
+        if etype == "api_call":
+            meta = {
+                "endpoint":
+                rng.choice([
+                    "/v1/users", "/v1/payments/charge", "/v1/webhooks",
+                    "/v1/auth/token", "/v1/analytics/query"
+                ])
+            }
+        elif etype == "error":
+            meta = {
+                "error_code":
+                rng.choice([
+                    "connection_pool_exhausted", "timeout", "rate_limited",
+                    "auth_failed", "invalid_payload"
+                ])
+            }
+        row = {
+            "event_id": f"evt_{i:07d}",
+            "user_id": uid,
+            "event_type": etype,
+            "timestamp": ts.isoformat(),
+            "metadata_json": meta,
+        }
+        lines.append(json.dumps(row, ensure_ascii=False))
+    (table_dir / "data.jsonl").write_text("\n".join(lines) + "\n")
+
+    stats = {
+        "table": "events",
+        "row_count": 5000,
+        "size_bytes": len("\n".join(lines)),
+        "last_updated": "2026-05-15T14:30:00Z",
+    }
+    (table_dir / "stats.json").write_text(json.dumps(stats, indent=2))
+
+
+def _write_subscriptions_table(
+    db_root: Path,
+    rng: random.Random,
+    all_accounts: list[dict],
+) -> None:
+    table_dir = db_root / "subscriptions"
+    table_dir.mkdir(parents=True, exist_ok=True)
+
+    schema = {
+        "table":
+        "subscriptions",
+        "columns": [
+            {
+                "name": "subscription_id",
+                "type": "varchar(36)",
+                "nullable": False,
+                "primary_key": True
+            },
+            {
+                "name": "account_id",
+                "type": "varchar(16)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "plan",
+                "type": "varchar(32)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "mrr",
+                "type": "numeric(12,2)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "start_date",
+                "type": "date",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "renewal_date",
+                "type": "date",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "status",
+                "type": "varchar(16)",
+                "nullable": False,
+                "primary_key": False
+            },
+        ],
+        "foreign_keys": [
+            {
+                "column": "account_id",
+                "references": "customers.account_id"
+            },
+        ],
+    }
+    (table_dir / "schema.json").write_text(json.dumps(schema, indent=2))
+
+    lines = []
+    for i, acct in enumerate(all_accounts):
+        plan_map = {
+            "enterprise": "enterprise",
+            "business": "business",
+            "pro": "business",
+            "starter": "starter"
+        }
+        plan = plan_map.get(acct["tier"], "starter")
+        mrr = round(acct["arr"] / 12, 2)
+        start = datetime(2024, 1, 1, tzinfo=timezone.utc) + timedelta(
+            days=rng.randint(0, 500))
+        status = rng.choices(["active", "churned", "trial"],
+                             weights=[0.85, 0.10, 0.05],
+                             k=1)[0]
+        row = {
+            "subscription_id": f"sub_{i:05d}",
+            "account_id": acct["account_id"],
+            "plan": plan,
+            "mrr": mrr,
+            "start_date": start.strftime("%Y-%m-%d"),
+            "renewal_date": acct["renewal_date"],
+            "status": status,
+        }
+        lines.append(json.dumps(row, ensure_ascii=False))
+    (table_dir / "data.jsonl").write_text("\n".join(lines) + "\n")
+
+    stats = {
+        "table": "subscriptions",
+        "row_count": len(all_accounts),
+        "size_bytes": len("\n".join(lines)),
+        "last_updated": "2026-05-15T12:00:00Z",
+    }
+    (table_dir / "stats.json").write_text(json.dumps(stats, indent=2))
+
+
+def _write_invoices_table(
+    db_root: Path,
+    rng: random.Random,
+    account_ids: list[str],
+    account_tiers: dict[str, str],
+) -> None:
+    table_dir = db_root / "invoices"
+    table_dir.mkdir(parents=True, exist_ok=True)
+
+    schema = {
+        "table":
+        "invoices",
+        "columns": [
+            {
+                "name": "invoice_id",
+                "type": "varchar(36)",
+                "nullable": False,
+                "primary_key": True
+            },
+            {
+                "name": "account_id",
+                "type": "varchar(16)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "amount",
+                "type": "numeric(12,2)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "status",
+                "type": "varchar(16)",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "due_date",
+                "type": "date",
+                "nullable": False,
+                "primary_key": False
+            },
+            {
+                "name": "paid_date",
+                "type": "date",
+                "nullable": True,
+                "primary_key": False
+            },
+        ],
+        "foreign_keys": [
+            {
+                "column": "account_id",
+                "references": "subscriptions.account_id"
+            },
+        ],
+    }
+    (table_dir / "schema.json").write_text(json.dumps(schema, indent=2))
+
+    lines = []
+    for i in range(200):
+        acct = rng.choice(account_ids)
+        tier = account_tiers.get(acct, "starter")
+        amount_range = {
+            "enterprise": (5000, 45000),
+            "business": (2000, 18000),
+            "pro": (2000, 18000),
+            "starter": (500, 5000)
+        }
+        lo, hi = amount_range.get(tier, (500, 5000))
+        amount = round(rng.uniform(lo, hi), 2)
+        due = datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(
+            days=rng.randint(0, 200))
+        status = rng.choices(["paid", "pending", "overdue"],
+                             weights=[0.65, 0.25, 0.10],
+                             k=1)[0]
+        paid_date = None
+        if status == "paid":
+            paid_date = (
+                due - timedelta(days=rng.randint(0, 10))).strftime("%Y-%m-%d")
+        row = {
+            "invoice_id": f"db_inv_{i:05d}",
+            "account_id": acct,
+            "amount": amount,
+            "status": status,
+            "due_date": due.strftime("%Y-%m-%d"),
+            "paid_date": paid_date,
+        }
+        lines.append(json.dumps(row, ensure_ascii=False))
+    (table_dir / "data.jsonl").write_text("\n".join(lines) + "\n")
+
+    stats = {
+        "table": "invoices",
+        "row_count": 200,
+        "size_bytes": len("\n".join(lines)),
+        "last_updated": "2026-05-15T12:00:00Z",
+    }
+    (table_dir / "stats.json").write_text(json.dumps(stats, indent=2))
+
+
+def write_s3(root: Path) -> None:
+    """Materialize S3-like file storage on disk.
+
+    Args:
+        root (Path): Root directory for the synthetic workspace.
+    """
+    rng = random.Random(42 + 600)
+    s3_root = root / "s3" / "northhill-data"
+    if (root / "s3").exists():
+        shutil.rmtree(root / "s3")
+
+    _write_s3_logs(s3_root, rng)
+    _write_s3_exports(s3_root)
+    _write_s3_artifacts(s3_root)
+    _write_s3_backups(s3_root)
+    _write_s3_reports(s3_root)
+
+
+def _write_s3_logs(s3_root: Path, rng: random.Random) -> None:
+    log_services = ["platform-api"]
+    normal_messages = [
+        "Request processed successfully",
+        "Cache hit for user session",
+        "Webhook delivered to endpoint",
+        "Authentication token refreshed",
+        "Database query completed in {ms}ms",
+        "Rate limit check passed",
+        "Health check responded 200",
+        "Background job completed",
+        "API response served from cache",
+        "Connection established to upstream service",
+    ]
+    warn_messages = [
+        "Slow query detected: {ms}ms exceeds threshold",
+        "Connection pool utilization at 85%",
+        "Retry attempt 2/3 for webhook delivery",
+        "Memory usage approaching soft limit",
+        "Deprecated API version v1.2 called",
+    ]
+    error_messages = [
+        "Connection pool exhausted — all connections in use",
+        "Request timeout after 30000ms",
+        "Authentication failed for service account",
+        "Database connection refused",
+        "Internal server error in payment processing",
+    ]
+
+    for svc in log_services:
+        for day in range(10, 16):
+            log_dir = s3_root / "logs" / svc / "2026" / "05" / f"{day:02d}"
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+            lines = []
+            is_incident_day = (day == 15)
+            n_lines = rng.randint(80, 120)
+            for li in range(n_lines):
+                hour = rng.randint(6, 22)
+                minute = rng.randint(0, 59)
+                second = rng.randint(0, 59)
+                ts = f"2026-05-{day:02d}T{hour:02d}:{minute:02d}:{second:02d}Z"
+
+                if is_incident_day and 14 <= hour <= 15:
+                    level = rng.choices(["ERROR", "WARN", "INFO"],
+                                        weights=[0.5, 0.3, 0.2],
+                                        k=1)[0]
+                else:
+                    level = rng.choices(["INFO", "WARN", "ERROR"],
+                                        weights=[0.80, 0.12, 0.08],
+                                        k=1)[0]
+
+                if level == "INFO":
+                    msg = rng.choice(normal_messages).format(
+                        ms=rng.randint(5, 200))
+                elif level == "WARN":
+                    msg = rng.choice(warn_messages).format(
+                        ms=rng.randint(500, 3000))
+                else:
+                    msg = rng.choice(error_messages)
+
+                lines.append(f"{ts} {level} [{svc}] {msg}")
+
+            lines.sort()
+            (log_dir / "app.log").write_text("\n".join(lines) + "\n")
+
+
+def _write_s3_exports(s3_root: Path) -> None:
+    exports_dir = s3_root / "exports" / "monthly"
+    exports_dir.mkdir(parents=True, exist_ok=True)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        "account_id", "company_name", "tier", "arr", "health_score",
+        "renewal_date"
+    ])
+    sample_customers = [
+        ("ACCT-1001", "GlobalTech", "enterprise", 480000, 45, "2026-08-15"),
+        ("ACCT-1002", "PayRight", "pro", 96000, 72, "2026-11-01"),
+        ("ACCT-1003", "TechFlow", "enterprise", 360000, 88, "2026-09-30"),
+        ("ACCT-1004", "NovaCorp", "starter", 12000, 95, "2027-01-15"),
+        ("ACCT-1005", "DataVault", "pro", 72000, 60, "2026-12-01"),
+        ("ACCT-1006", "CloudBase", "enterprise", 240000, 82, "2026-10-15"),
+    ]
+    for row in sample_customers:
+        writer.writerow(row)
+    (exports_dir / "2026-04-customers.csv").write_text(buf.getvalue())
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["month", "product", "revenue", "customers", "mrr"])
+    revenue_data = [
+        ("2026-04", "platform-api", 892000, 45, 74333),
+        ("2026-04", "auth-service", 312000, 18, 26000),
+        ("2026-04", "analytics", 196000, 12, 16333),
+    ]
+    for row in revenue_data:
+        writer.writerow(row)
+    (exports_dir / "2026-04-revenue.csv").write_text(buf.getvalue())
+
+
+def _write_s3_artifacts(s3_root: Path) -> None:
+    deploy_dir = s3_root / "artifacts" / "deployments" / "v3.18.7"
+    deploy_dir.mkdir(parents=True, exist_ok=True)
+
+    build_log_lines = [
+        "[2026-05-15T13:45:00Z] BUILD START platform-api v3.18.7",
+        "[2026-05-15T13:45:01Z] Triggered by: frank.osei",
+        "[2026-05-15T13:45:01Z] Commit: f3a1b2c8",
+        "[2026-05-15T13:45:01Z]   tune connection pool settings",
+        "[2026-05-15T13:45:02Z] Branch: main (PR #1847)",
+        "[2026-05-15T13:45:10Z] Step 1/6: Checkout ... OK",
+        "[2026-05-15T13:45:25Z] Step 2/6: Dependencies OK (15s)",
+        "[2026-05-15T13:45:55Z] Step 3/6: Tests OK (847 passed)",
+        "[2026-05-15T13:46:10Z] Step 4/6: Build image OK (15s)",
+        "[2026-05-15T13:46:15Z] Step 5/6: Push registry OK",
+        "[2026-05-15T13:46:20Z] Step 6/6: Deploy to prod OK",
+        "[2026-05-15T13:46:20Z] Deployment ID: d4e5f6",
+        "[2026-05-15T13:46:20Z] Config changes detected:",
+        "[2026-05-15T13:46:20Z]   connectionPoolSize: 50 -> 10",
+        "[2026-05-15T13:46:20Z]   connectionTimeout: 30s (unchanged)",
+        "[2026-05-15T13:46:25Z] Health check: PASSING (3/3)",
+        "[2026-05-15T13:46:30Z] BUILD COMPLETE",
+        "[2026-05-15T14:00:30Z] ALERT: Error rate spike 4.2%",
+        "[2026-05-15T14:00:31Z] ALERT: P99 latency 2147ms",
+    ]
+    build_log = "\n".join(build_log_lines) + "\n"
+    (deploy_dir / "build.log").write_text(build_log)
+
+
+def _write_s3_backups(s3_root: Path) -> None:
+    backup_dir = s3_root / "backups" / "db"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    meta = {
+        "backup_id": "bkp-2026-05-14-001",
+        "database": "platform_production",
+        "timestamp": "2026-05-14T02:00:00Z",
+        "size_bytes": 4_831_029_248,
+        "format": "pg_dump_custom",
+        "compression": "gzip",
+        "tables": 47,
+        "rows_total": 12_847_392,
+        "checksum_sha256": "a3b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+        "retention_days": 30,
+        "status": "completed",
+    }
+    (backup_dir / "2026-05-14-platform-db.sql.meta").write_text(
+        json.dumps(meta, indent=2))
+
+
+def _write_s3_reports(s3_root: Path) -> None:
+    reports_dir = s3_root / "reports" / "quarterly"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    meta = {
+        "report_id":
+        "Q1-2026-board",
+        "title":
+        "Q1 2026 Board Deck",
+        "format":
+        "pdf",
+        "pages":
+        42,
+        "created_by":
+        "robert.singh@northhill.com",
+        "created_at":
+        "2026-04-05T10:00:00Z",
+        "size_bytes":
+        8_421_376,
+        "sections": [
+            "Executive Summary",
+            "Revenue & ARR",
+            "Customer Health",
+            "Engineering Velocity",
+            "Headcount & Hiring",
+            "Q2 Outlook",
+        ],
+    }
+    (reports_dir / "Q1-2026-board-deck.meta").write_text(
+        json.dumps(meta, indent=2))
+
+
 def main(root: str | Path = DEFAULT_ROOT, *, clean: bool = True) -> Path:
     """Seed the NorthHill Corp full enterprise corpus on disk.
 
@@ -3564,14 +4290,35 @@ def main(root: str | Path = DEFAULT_ROOT, *, clean: bool = True) -> Path:
     if clean and target.exists():
         shutil.rmtree(target)
     target.mkdir(parents=True, exist_ok=True)
-    write_slack(target)
+
+    gen_employees = generate_employees(seed=42)
+    support_handles = [
+        u["handle"] for u in USERS
+        if u["title"] in ("Support Lead", "Support Agent",
+                          "Customer Success Manager")
+    ]
+    support_handles += [
+        e["handle"] for e in gen_employees
+        if e.get("team") == "Customer Support"
+    ]
+    gen_customers = generate_customers(support_handles, seed=42)
+    gen_tickets = generate_support_tickets(gen_customers,
+                                           support_handles,
+                                           seed=42)
+    ambient = generate_ambient_messages(USERS + gen_employees,
+                                        CHANNELS,
+                                        seed=42)
+
+    write_slack(target, extra_users=gen_employees, ambient_messages=ambient)
     write_sheets(target)
     write_docs(target)
-    write_tickets(target)
+    write_tickets(target, extra_cs_tickets=gen_tickets)
     write_finance(target)
-    write_customers(target)
+    all_accounts = write_customers(target, extra_customers=gen_customers)
     write_compliance(target)
     write_engineering(target)
+    write_database(target, all_accounts)
+    write_s3(target)
     return target
 
 

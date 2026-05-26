@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import orjson
-
 from mirage.accessor.postgres import PostgresAccessor
 from mirage.core.postgres import _client
 
