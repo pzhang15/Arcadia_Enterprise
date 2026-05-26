@@ -125,17 +125,35 @@ Results: `results/<scenario>/<sweep_id>/SUMMARY.md`
 ## 7. Run tests
 
 ```bash
-# Backend (Python) — all eval + scenario tests
-uv run pytest
+# Backend (Python) — all eval + scenario tests (128 tests)
+cd packages/eval && uv run pytest
 
-# NorthHill Corp tests only (seed, workspace, portal data, platform server)
-uv run pytest packages/eval/scenarios/northhill_corp/tests/ -v
+# Framework tests only (fixture resources, workspace integration, seed, ticketing)
+cd packages/eval && uv run pytest tests/ -v
+
+# NorthHill Corp scenario tests only (seed, workspace, portal data, platform server)
+cd packages/eval && uv run pytest scenarios/northhill_corp/tests/ -v
 
 # Frontend (TypeScript) — from repo root
 cd frontends/platform && npm run test:run
 ```
 
 ### Test coverage
+
+**Framework tests** (`tests/`):
+
+| Suite                              | Tests | What it covers                                                                               |
+| ---------------------------------- | ----- | -------------------------------------------------------------------------------------------- |
+| `test_northhill_scenario.py`       | 11    | Manifest loading, task listing, rubric weights, oracle coverage, builder/seeder resolution    |
+| `test_fixture_resources.py`        | 40    | All 13 Fake*Resources: instantiation, schema validation, data completeness per mount         |
+| `test_workspace_integration.py`    | 23    | Full workspace: ls/cat/jq across all 13 mounts, cross-mount data referencing, RAM writes     |
+| `test_seed_generation.py`          | 27    | Seed completeness, volume checks, cross-reference integrity, deterministic output            |
+| `test_ticketing_commands.py`       | 14    | Helpdesk write commands: create, comment, transition, assign, priority, full lifecycle       |
+| `test_scorers_units.py`            | 9     | Programmatic gates, trajectory budget, composite scoring, failure mode tagging               |
+| `test_runner_smoke.py`             | 1     | Runner captures artifacts even when agent fails (no LLM)                                     |
+| `test_scenario_manifest.py`        | 3     | onboarding_it manifest loading, task listing, YAML validation                                |
+
+**Scenario tests** (`scenarios/northhill_corp/tests/`):
 
 | Suite                                 | Tests | What it covers                                                                               |
 | ------------------------------------- | ----- | -------------------------------------------------------------------------------------------- |
@@ -146,7 +164,12 @@ cd frontends/platform && npm run test:run
 | `test_platform_server_integration.py` | 32    | FastAPI server: health, sessions, workspace execution, all portal endpoints, disk fallback   |
 | `test_workspace_integration.py`       | 11    | Full Mirage workspace: ls, cat, find across all 13 mounts                                    |
 | `test_mock_server_data.py`            | 12    | Mock server data loading, status values, cross-reference integrity                           |
-| Frontend (Vitest)                     | 106   | API client, SSE hook, all 16 React components, App integration                               |
+
+**Frontend tests** (`frontends/platform/`):
+
+| Suite             | Tests | What it covers                                             |
+| ----------------- | ----- | ---------------------------------------------------------- |
+| Frontend (Vitest) | 106   | API client, SSE hook, all 16 React components, App integration |
 
 ## Scenarios
 
