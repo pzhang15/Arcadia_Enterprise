@@ -15,7 +15,6 @@
 import logging
 
 import asyncssh
-
 from mirage.accessor.ssh import SSHAccessor
 from mirage.cache.index import IndexCacheStore, IndexEntry
 from mirage.core.ssh._client import _abs

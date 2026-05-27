@@ -3,7 +3,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from scenarios.onboarding_it import seed
 from scenarios.onboarding_it.mounts import build_l1_workspace
 

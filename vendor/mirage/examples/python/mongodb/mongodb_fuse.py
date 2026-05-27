@@ -18,7 +18,6 @@ import sys
 import time
 
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.resource.mongodb import MongoDBConfig, MongoDBResource
 

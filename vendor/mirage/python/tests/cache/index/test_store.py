@@ -15,7 +15,6 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-
 from mirage.cache.index import IndexEntry, LookupStatus, RAMIndexCacheStore
 
 

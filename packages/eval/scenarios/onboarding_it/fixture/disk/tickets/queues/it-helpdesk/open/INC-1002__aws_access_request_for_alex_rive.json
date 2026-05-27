@@ -1,11 +1,11 @@
 {
   "ticket_id": "INC-1002",
   "subject": "AWS access request for Alex Rivera (Platform)",
-  "body": "New hire on Platform team needs IAM role for acme-platform-prod (per Access Matrix sheet SH103, role 'Software Engineer / Platform'). Gates on Okta SSO (see INC-1003).",
+  "body": "New hire on Platform team needs IAM role for northhill-platform-prod (per Access Matrix sheet SH103, role 'Software Engineer / Platform'). Gates on Okta SSO (see INC-1003).",
   "requester": {
     "id": "U101",
     "name": "Alex Rivera",
-    "email": "alex.rivera@acme.com"
+    "email": "alex.rivera@northhill.com"
   },
   "assignee": null,
   "queue": "it-helpdesk",

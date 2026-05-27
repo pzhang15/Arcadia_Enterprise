@@ -15,10 +15,9 @@
 import base64
 
 from agents import Runner
-from openai import AsyncOpenAI
-
 from mirage.types import FileType
 from mirage.workspace.workspace import Workspace
+from openai import AsyncOpenAI
 
 _VISION_TYPES = {
     FileType.IMAGE_PNG,

@@ -16,7 +16,6 @@ import os
 
 import pytest
 import pytest_asyncio
-
 from mirage.cache.index.config import IndexEntry
 from mirage.cache.index.redis import RedisIndexCacheStore
 

@@ -1,0 +1,56 @@
+id: customer_revenue_analysis
+description: Cross-reference database tables with CRM accounts to identify revenue risk.
+prompt: |
+  Analyze customer revenue health by cross-referencing structured data:
+
+  (1) Read /database/tables/subscriptions/data.jsonl and identify all
+      enterprise-tier accounts with renewal dates in the next 90 days
+      (from today, 2026-05-15).
+
+  (2) Cross-reference with /customers/accounts/ to get health scores.
+      Flag any enterprise renewal with health_score < 60.
+
+  (3) Check /database/tables/invoices/data.jsonl for any overdue invoices
+      for these at-risk accounts.
+
+  (4) Check /customers/escalations/ for any open escalations on these accounts.
+
+  (5) Write a risk report to /customer_risk_report.md with a table:
+      Account | ARR | Health Score | Renewal Date | Overdue Invoices | Open Escalations
+
+oracles:
+  files_must_exist:
+    - /customer_risk_report.md
+  must_contain_in_file:
+    /customer_risk_report.md:
+      - GlobalTech
+      - ACCT-1001
+  ops_must_touch_prefix:
+    - /database/tables/subscriptions/
+    - /customers/accounts/
+    - /database/tables/invoices/
+    - /customers/escalations/
+
+trajectory_budget:
+  max_turns: 30
+  max_commands: 80
+  max_wallclock_s: 240
+  max_tokens: 200000
+
+judge:
+  model: gpt-5
+  rubric:
+    completeness:
+      weight: 0.30
+      criteria: All enterprise renewals within 90 days are identified.
+    cross_referencing:
+      weight: 0.35
+      criteria: |
+        Health scores, invoices, and escalations are correctly linked
+        to the right accounts.
+    accuracy:
+      weight: 0.20
+      criteria: All ARR amounts, health scores, and dates match source data.
+    actionability:
+      weight: 0.15
+      criteria: Clear prioritized list of accounts needing immediate attention.

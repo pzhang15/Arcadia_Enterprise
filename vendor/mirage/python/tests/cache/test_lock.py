@@ -15,7 +15,6 @@
 import asyncio
 
 import pytest
-
 from mirage.cache.lock import KeyLockMixin
 
 

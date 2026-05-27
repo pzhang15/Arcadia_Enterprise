@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import typer
-
 from mirage.cli import daemon as daemon_module
 from mirage.cli import execute as execute_module
 from mirage.cli import job as job_module

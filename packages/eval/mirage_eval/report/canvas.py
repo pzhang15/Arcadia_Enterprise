@@ -7,8 +7,7 @@ from mirage_eval.scenario import ENTERPRISE_ROOT, REPO_ROOT
 
 
 def _workspace_slug(repo_root: Path) -> str:
-    return repo_root.as_posix().lstrip("/").replace("/", "-").replace(
-        "_", "-")
+    return repo_root.as_posix().lstrip("/").replace("/", "-").replace("_", "-")
 
 
 def resolve_canvas_dir(fallback_in_repo: Path | None = None) -> Path:
@@ -22,8 +21,8 @@ def resolve_canvas_dir(fallback_in_repo: Path | None = None) -> Path:
     """
     repo_root = REPO_ROOT
     slug = _workspace_slug(repo_root)
-    managed = (Path(os.path.expanduser("~"))
-               / ".cursor" / "projects" / slug / "canvases")
+    managed = (Path(os.path.expanduser("~")) / ".cursor" / "projects" / slug /
+               "canvases")
     if managed.parent.exists():
         managed.mkdir(parents=True, exist_ok=True)
         return managed
@@ -242,22 +241,24 @@ def _stub_payload(scenario_id: str) -> str:
     Args:
         scenario_id (str): Scenario id to display in the empty state.
     """
-    return json.dumps({
-        "sweep_id": "(none)",
-        "scenario_id": scenario_id,
-        "surface": "l1",
-        "models": [],
-        "seeds": [],
-        "tasks": [],
-        "n_runs": 0,
-        "n_succeeded": 0,
-        "composite_mean": 0.0,
-        "composite_by_task": {},
-        "composite_by_model": {},
-        "cell_by_model_task": {},
-        "failure_modes": {},
-        "runs": [],
-    }, indent=2)
+    return json.dumps(
+        {
+            "sweep_id": "(none)",
+            "scenario_id": scenario_id,
+            "surface": "l1",
+            "models": [],
+            "seeds": [],
+            "tasks": [],
+            "n_runs": 0,
+            "n_succeeded": 0,
+            "composite_mean": 0.0,
+            "composite_by_task": {},
+            "composite_by_model": {},
+            "cell_by_model_task": {},
+            "failure_modes": {},
+            "runs": [],
+        },
+        indent=2)
 
 
 def write_canvas(report: AggregateReport, target: Path) -> Path:
@@ -291,8 +292,8 @@ def write_stub_canvas(scenario_id: str) -> Path:
     canvas_dir = resolve_canvas_dir(fallback_in_repo=fallback)
     filename = f"{scenario_id}-dashboard.canvas.tsx"
     out = canvas_dir / filename
-    out.write_text(_HEADER.replace("__REPORT_JSON__",
-                                   _stub_payload(scenario_id)))
+    out.write_text(
+        _HEADER.replace("__REPORT_JSON__", _stub_payload(scenario_id)))
     return out
 
 
@@ -413,24 +414,29 @@ def write_compare_canvas(l1: AggregateReport, l2: AggregateReport) -> Path:
             "surface": rep.surface,
             "composite_mean": rep.composite_mean,
             "cell_by_model_task": {
-                m: {t: {
-                    "composite_mean": c.composite_mean,
-                    "judge_mean": c.judge_mean,
-                    "cost_usd_total": c.cost_usd_total,
-                    "wallclock_s_p95": c.wallclock_s_p95,
-                    "n_runs": c.n_runs,
-                    "n_passed_gates": c.n_passed_gates,
-                } for t, c in inner.items()}
+                m: {
+                    t: {
+                        "composite_mean": c.composite_mean,
+                        "judge_mean": c.judge_mean,
+                        "cost_usd_total": c.cost_usd_total,
+                        "wallclock_s_p95": c.wallclock_s_p95,
+                        "n_runs": c.n_runs,
+                        "n_passed_gates": c.n_passed_gates,
+                    }
+                    for t, c in inner.items()
+                }
                 for m, inner in rep.cell_by_model_task.items()
             },
         }
 
-    payload = json.dumps({
-        "scenario_id": l1.scenario_id,
-        "l1": _side(l1),
-        "l2": _side(l2),
-        "models": sorted(set(l1.models) | set(l2.models)),
-        "tasks": sorted(set(l1.tasks) | set(l2.tasks)),
-    }, indent=2)
+    payload = json.dumps(
+        {
+            "scenario_id": l1.scenario_id,
+            "l1": _side(l1),
+            "l2": _side(l2),
+            "models": sorted(set(l1.models) | set(l2.models)),
+            "tasks": sorted(set(l1.tasks) | set(l2.tasks)),
+        },
+        indent=2)
     out.write_text(_COMPARE_HEADER.replace("__COMPARE_JSON__", payload))
     return out

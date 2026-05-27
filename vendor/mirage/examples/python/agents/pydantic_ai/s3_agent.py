@@ -16,12 +16,11 @@ import os
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
-from pydantic_ai import Agent
-from pydantic_ai_backends import create_console_toolset
-
 from mirage import MountMode, Workspace
 from mirage.agents.pydantic_ai import PydanticAIWorkspace, build_system_prompt
 from mirage.resource.s3 import S3Config, S3Resource
+from pydantic_ai import Agent
+from pydantic_ai_backends import create_console_toolset
 
 load_dotenv(".env.development")
 

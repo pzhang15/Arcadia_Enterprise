@@ -12,10 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "packages" / "eval"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent.parent / "packages" / "eval"))
 
-from scenarios.meridian_labs.seed import (CHANNEL_MESSAGES, CHANNELS, USERS,
-                                          _slack_msg)
+from scenarios.northhill_corp.seed import (CHANNEL_MESSAGES, CHANNELS, USERS,
+                                           _slack_msg)
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ app.add_middleware(
 
 _posted_messages: list[dict] = []
 _ticket_comments: dict[str, list[dict]] = {}
-_relay_url = os.environ.get("RELAY_URL", "http://localhost:8082")
+_relay_url = os.environ.get("RELAY_URL", "http://localhost:8080")
 _relay_client: httpx.AsyncClient | None = None
 
 
@@ -83,7 +84,7 @@ app.add_middleware(RequestLoggingMiddleware)
 def _seed_tickets():
     import tempfile
 
-    from scenarios.meridian_labs.seed import main as seed_main
+    from scenarios.northhill_corp.seed import main as seed_main
     td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
     seed_main(td, clean=True)
     tickets: dict[str, dict] = {}
@@ -103,10 +104,10 @@ def _seed_tickets():
 def _seed_github():
     import tempfile
 
-    from scenarios.meridian_labs.seed import main as seed_main
+    from scenarios.northhill_corp.seed import main as seed_main
     td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
     seed_main(td, clean=True)
-    gh = td / "github" / "repos" / "meridian-labs" / "payments-api"
+    gh = td / "github" / "repos" / "northhill" / "platform-api"
     deployments = [
         json.loads(f.read_text())
         for f in sorted((gh / "deployments").glob("*.json"))
@@ -125,7 +126,7 @@ def _seed_github():
 def _seed_pagerduty():
     import tempfile
 
-    from scenarios.meridian_labs.seed import main as seed_main
+    from scenarios.northhill_corp.seed import main as seed_main
     td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
     seed_main(td, clean=True)
     pd = td / "pagerduty"
@@ -145,7 +146,7 @@ def _seed_pagerduty():
 def _seed_datadog():
     import tempfile
 
-    from scenarios.meridian_labs.seed import main as seed_main
+    from scenarios.northhill_corp.seed import main as seed_main
     td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
     seed_main(td, clean=True)
     dd = td / "datadog"
@@ -163,7 +164,7 @@ def _seed_datadog():
 def _seed_finance():
     import tempfile
 
-    from scenarios.acme_corp.seed import main as seed_main
+    from scenarios.northhill_corp.seed import main as seed_main
     td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
     seed_main(td, clean=True)
     fin = td / "finance"
@@ -195,7 +196,7 @@ def _seed_finance():
 def _seed_customers():
     import tempfile
 
-    from scenarios.acme_corp.seed import main as seed_main
+    from scenarios.northhill_corp.seed import main as seed_main
     td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
     seed_main(td, clean=True)
     cust = td / "customers"
@@ -215,7 +216,7 @@ def _seed_customers():
 def _seed_compliance():
     import tempfile
 
-    from scenarios.acme_corp.seed import main as seed_main
+    from scenarios.northhill_corp.seed import main as seed_main
     td = Path(tempfile.mkdtemp(prefix="mock-seed-"))
     seed_main(td, clean=True)
     comp = td / "compliance"
@@ -547,10 +548,17 @@ async def compliance_policies():
 @app.get("/health")
 async def health():
     return {
-        "status": "ok",
+        "status":
+        "ok",
         "services": [
-            "slack", "github", "jira", "pagerduty", "datadog",
-            "finance", "customers", "compliance",
+            "slack",
+            "github",
+            "jira",
+            "pagerduty",
+            "datadog",
+            "finance",
+            "customers",
+            "compliance",
         ],
     }
 

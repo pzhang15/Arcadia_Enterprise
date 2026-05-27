@@ -19,7 +19,6 @@ from camel.messages import BaseMessage
 from camel.models import ModelFactory
 from camel.types import ModelPlatformType, ModelType
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.agents.camel import MirageFileToolkit, MirageTerminalToolkit
 from mirage.resource.ram import RAMResource

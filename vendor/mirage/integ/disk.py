@@ -21,7 +21,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from cases import run_cases  # noqa: E402
-
 from mirage import MountMode, Workspace  # noqa: E402
 from mirage.resource.disk import DiskResource  # noqa: E402
 

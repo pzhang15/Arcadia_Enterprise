@@ -38,7 +38,7 @@ class SourceRegistry:
 
     def list_sources(self) -> list[dict[str, Any]]:
         """Return metadata for all registered sources."""
-        return [
-            {"id": sid, "type": adapter.source_type}
-            for sid, adapter in self._adapters.items()
-        ]
+        return [{
+            "id": sid,
+            "type": adapter.source_type
+        } for sid, adapter in self._adapters.items()]

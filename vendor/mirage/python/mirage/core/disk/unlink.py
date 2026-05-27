@@ -15,7 +15,6 @@
 from pathlib import Path
 
 import aiofiles.os
-
 from mirage.accessor.disk import DiskAccessor
 from mirage.types import PathSpec
 

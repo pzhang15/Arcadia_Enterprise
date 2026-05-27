@@ -16,7 +16,6 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.discord import DiscordAccessor
 from mirage.cache.index import IndexEntry
 from mirage.cache.index.ram import RAMIndexCacheStore

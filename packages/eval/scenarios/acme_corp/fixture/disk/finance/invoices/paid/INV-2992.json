@@ -1,9 +1,0 @@
-{
-  "invoice_id": "INV-2992",
-  "vendor": "DataFlow Systems",
-  "amount": 15000.0,
-  "due_date": "2026-04-20",
-  "po_reference": "PO-0982",
-  "status": "paid",
-  "department": "Engineering/SRE"
-}

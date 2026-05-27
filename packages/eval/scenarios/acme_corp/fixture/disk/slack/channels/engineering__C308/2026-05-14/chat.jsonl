@@ -1,1 +1,0 @@
-{"type": "message", "user": "U214", "text": "Deployment pipeline update: migrated to GitHub Actions v4. All services now deploy via the unified pipeline. Rollback time reduced from 8min to 3min.", "ts": "1715680000.000200", "team": "T_ACME"}

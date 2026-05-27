@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any
 
 import aiohttp
-
 from mirage.accessor.base import Accessor
 from mirage.resource.paperclip.config import PaperclipConfig
 

@@ -15,7 +15,6 @@
 import asyncio
 
 import tree_sitter
-
 from mirage.io import IOResult
 from mirage.io.types import ByteSource, materialize
 from mirage.shell.helpers import get_text

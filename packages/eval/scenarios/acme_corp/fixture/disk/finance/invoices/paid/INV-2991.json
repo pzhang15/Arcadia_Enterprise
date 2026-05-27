@@ -1,9 +1,0 @@
-{
-  "invoice_id": "INV-2991",
-  "vendor": "CloudRack Inc.",
-  "amount": 7000.0,
-  "due_date": "2026-04-15",
-  "po_reference": "PO-0981",
-  "status": "paid",
-  "department": "IT"
-}

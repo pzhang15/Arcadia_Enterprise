@@ -16,7 +16,6 @@ import time
 from pathlib import Path
 
 import aiofiles
-
 from mirage.accessor.disk import DiskAccessor
 from mirage.cache.index import IndexCacheStore
 from mirage.observe.context import record

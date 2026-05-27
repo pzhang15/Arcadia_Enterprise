@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import aiohttp
-
 from mirage.resource.linear.config import LinearConfig
 from mirage.resource.secrets import reveal_secret
 

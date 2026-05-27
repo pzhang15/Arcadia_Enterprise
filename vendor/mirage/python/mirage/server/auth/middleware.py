@@ -16,11 +16,10 @@ import hmac
 import logging
 import re
 
-from starlette.responses import PlainTextResponse
-from starlette.types import ASGIApp, Receive, Scope, Send
-
 from mirage.server.auth.config import AuthConfig, AuthMode
 from mirage.server.auth.jwt import JWTVerificationError, verify_jwt
+from starlette.responses import PlainTextResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 logger = logging.getLogger(__name__)
 

@@ -15,7 +15,6 @@
 from collections.abc import AsyncIterator
 
 import orjson
-
 from mirage.accessor.postgres import PostgresAccessor
 from mirage.cache.index import IndexCacheStore
 from mirage.commands.builtin.postgres._provision import file_read_provision

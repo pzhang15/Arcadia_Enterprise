@@ -15,7 +15,6 @@
 from collections.abc import AsyncIterator
 
 import orjson
-
 from mirage.core.jq.format import JQ_EMPTY
 from mirage.io.async_line_iterator import AsyncLineIterator
 

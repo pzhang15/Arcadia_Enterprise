@@ -15,7 +15,6 @@
 import asyncio
 
 import aiohttp
-
 from mirage.resource.secrets import reveal_secret
 from mirage.resource.telegram.config import TelegramConfig
 

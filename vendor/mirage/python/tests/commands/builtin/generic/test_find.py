@@ -2,7 +2,6 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 
 import pytest
-
 from mirage.commands.builtin.generic.find import (FindArgs, apply_mount_prefix,
                                                   apply_mtime_filter,
                                                   parse_find_args)

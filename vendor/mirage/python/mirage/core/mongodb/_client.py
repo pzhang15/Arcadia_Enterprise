@@ -14,10 +14,9 @@
 
 from collections.abc import AsyncIterator
 
-from motor.motor_asyncio import AsyncIOMotorClient
-
 from mirage.core.mongodb.types import EntityKind
 from mirage.resource.mongodb.config import MongoDBConfig
+from motor.motor_asyncio import AsyncIOMotorClient
 
 
 async def list_databases(client: AsyncIOMotorClient,

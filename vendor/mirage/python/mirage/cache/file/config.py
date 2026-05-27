@@ -12,9 +12,8 @@
 # limitations under the License.
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
-from pydantic import BaseModel
-
 from mirage.types import CacheType
+from pydantic import BaseModel
 
 
 class CacheConfig(BaseModel):

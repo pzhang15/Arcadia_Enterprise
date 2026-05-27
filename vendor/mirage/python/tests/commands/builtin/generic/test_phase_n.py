@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.base64_cmd import base64_cmd
 from mirage.commands.builtin.generic.column import column
 from mirage.commands.builtin.generic.comm import comm

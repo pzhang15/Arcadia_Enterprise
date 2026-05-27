@@ -16,7 +16,6 @@ import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.gdocs import GDocsAccessor
 from mirage.cache.index import IndexEntry
 from mirage.cache.index.ram import RAMIndexCacheStore

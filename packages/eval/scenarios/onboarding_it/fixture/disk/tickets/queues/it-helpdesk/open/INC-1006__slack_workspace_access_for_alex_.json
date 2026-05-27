@@ -1,11 +1,11 @@
 {
   "ticket_id": "INC-1006",
   "subject": "Slack workspace access for Alex Rivera",
-  "body": "Need access to the ACME slack workspace. (Note: this is automatic via Okta SSO once INC-1003 lands - this ticket is likely a near-duplicate of INC-1002 / can be closed once SSO completes.)",
+  "body": "Need access to the NorthHill slack workspace. (Note: this is automatic via Okta SSO once INC-1003 lands - this ticket is likely a near-duplicate of INC-1002 / can be closed once SSO completes.)",
   "requester": {
     "id": "U101",
     "name": "Alex Rivera",
-    "email": "alex.rivera@acme.com"
+    "email": "alex.rivera@northhill.com"
   },
   "assignee": null,
   "queue": "it-helpdesk",

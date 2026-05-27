@@ -18,7 +18,6 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
-
 from mirage.cache.index import IndexEntry, LookupStatus, RedisIndexConfig
 from mirage.cache.index.redis import RedisIndexCacheStore
 

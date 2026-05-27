@@ -15,7 +15,6 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from mirage.accessor.gdrive import GDriveAccessor
 from mirage.cache.index.config import IndexEntry
 from mirage.cache.index.ram import RAMIndexCacheStore

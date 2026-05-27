@@ -16,7 +16,6 @@ import json
 import sys
 
 import typer
-
 from mirage.cli.client import make_client
 from mirage.cli.output import emit, exit_code_from_response, handle_response
 

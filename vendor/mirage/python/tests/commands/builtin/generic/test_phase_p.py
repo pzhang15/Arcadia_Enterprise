@@ -1,7 +1,6 @@
 import gzip as gziplib
 
 import pytest
-
 from mirage.commands.builtin.generic.gunzip import gunzip
 from mirage.commands.builtin.generic.gzip import gzip
 from mirage.commands.builtin.generic.zcat import zcat

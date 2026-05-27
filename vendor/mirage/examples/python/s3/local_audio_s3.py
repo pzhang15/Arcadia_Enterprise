@@ -17,7 +17,6 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-
 from mirage import MountMode, Workspace
 from mirage.commands.local_audio.s3 import COMMANDS as S3_AUDIO_COMMANDS
 from mirage.commands.local_audio.utils import configure

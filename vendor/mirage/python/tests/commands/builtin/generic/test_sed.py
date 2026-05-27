@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.sed import sed
 from mirage.types import PathSpec
 

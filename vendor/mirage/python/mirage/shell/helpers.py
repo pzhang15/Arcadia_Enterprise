@@ -15,7 +15,6 @@
 from enum import StrEnum
 
 import tree_sitter
-
 from mirage.shell.types import NodeType as NT
 from mirage.shell.types import Redirect, RedirectKind
 

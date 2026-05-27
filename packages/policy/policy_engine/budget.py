@@ -12,7 +12,9 @@ class BudgetTracker:
     cost ceilings to prevent runaway agent data access.
     """
 
-    def __init__(self, max_rows: int = 1_000_000, max_queries: int = 100) -> None:
+    def __init__(self,
+                 max_rows: int = 1_000_000,
+                 max_queries: int = 100) -> None:
         self._max_rows = max_rows
         self._max_queries = max_queries
         self._sessions: dict[str, _SessionBudget] = {}
@@ -26,7 +28,8 @@ class BudgetTracker:
         """
         budget = self._sessions.setdefault(
             session_id,
-            _SessionBudget(max_rows=self._max_rows, max_queries=self._max_queries),
+            _SessionBudget(max_rows=self._max_rows,
+                           max_queries=self._max_queries),
         )
         return budget.can_execute(estimated_rows)
 
@@ -43,6 +46,7 @@ class BudgetTracker:
 
 
 class _SessionBudget:
+
     def __init__(self, max_rows: int, max_queries: int) -> None:
         self.max_rows = max_rows
         self.max_queries = max_queries

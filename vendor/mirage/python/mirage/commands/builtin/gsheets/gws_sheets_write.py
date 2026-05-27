@@ -15,7 +15,6 @@
 import json
 
 import aiohttp
-
 from mirage.accessor.gsheets import GSheetsAccessor
 from mirage.commands.registry import command
 from mirage.commands.spec.types import CommandSpec, OperandKind, Option

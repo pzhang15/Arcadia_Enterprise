@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.du import _depth, du
 from mirage.types import PathSpec
 

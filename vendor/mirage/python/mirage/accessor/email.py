@@ -13,7 +13,6 @@
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
 import aioimaplib
-
 from mirage.accessor.base import Accessor
 from mirage.resource.email.config import EmailConfig
 from mirage.resource.secrets import reveal_secret

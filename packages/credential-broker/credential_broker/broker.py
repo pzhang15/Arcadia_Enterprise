@@ -20,7 +20,10 @@ class CredentialBroker:
     def __init__(self, store: CredentialStore) -> None:
         self._store = store
 
-    async def issue_token(self, source_id: str, scopes: list[str], ttl_seconds: int = 300) -> dict[str, Any]:
+    async def issue_token(self,
+                          source_id: str,
+                          scopes: list[str],
+                          ttl_seconds: int = 300) -> dict[str, Any]:
         """Issue a short-lived, scoped token for a data source.
 
         Args:

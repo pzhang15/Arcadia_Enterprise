@@ -15,7 +15,6 @@
 import json
 
 import pytest
-
 from mirage import MountMode, Workspace
 from mirage.agents.camel import MirageFileToolkit
 from mirage.resource.ram import RAMResource

@@ -1,4 +1,4 @@
-"""Idempotent push of the synthetic ACME corpus into real Slack +
+"""Idempotent push of the synthetic NorthHill corpus into real Slack +
 Google services.
 
 L2 setup:
@@ -25,13 +25,11 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from scenarios.onboarding_it import seed
 from scenarios.onboarding_it.mounts import DEFAULT_DISK_ROOT
 
 PREFIX = "mirage-eval__"
-MAPPING_PATH = (
-    Path(__file__).resolve().parent / "l2_mapping.yaml")
+MAPPING_PATH = (Path(__file__).resolve().parent / "l2_mapping.yaml")
 
 
 def _load_mapping() -> dict[str, dict[str, str]]:
@@ -64,8 +62,10 @@ def push_slack(disk_root: Path, mapping: dict) -> dict:
     channels_dir = disk_root / "slack" / "channels"
     if not channels_dir.exists():
         return mapping
-    headers = {"Authorization": f"Bearer {token}",
-               "Content-Type": "application/json; charset=utf-8"}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json; charset=utf-8"
+    }
     with httpx.Client(timeout=30.0) as client:
         for ch_dir in sorted(channels_dir.iterdir()):
             if not ch_dir.is_dir():
@@ -79,7 +79,10 @@ def push_slack(disk_root: Path, mapping: dict) -> dict:
                 resp = client.post(
                     "https://slack.com/api/conversations.create",
                     headers=headers,
-                    json={"name": real_name, "is_private": False},
+                    json={
+                        "name": real_name,
+                        "is_private": False
+                    },
                 )
                 data = resp.json()
                 if data.get("ok"):
@@ -108,13 +111,15 @@ def push_slack(disk_root: Path, mapping: dict) -> dict:
                     if not line.strip():
                         continue
                     msg = json.loads(line)
-                    text = (
-                        f"[{day_dir.name} · u={msg.get('user', '?')}] "
-                        f"{msg.get('text', '')}")
+                    text = (f"[{day_dir.name} · u={msg.get('user', '?')}] "
+                            f"{msg.get('text', '')}")
                     client.post(
                         "https://slack.com/api/chat.postMessage",
                         headers=headers,
-                        json={"channel": channel_id, "text": text},
+                        json={
+                            "channel": channel_id,
+                            "text": text
+                        },
                     )
     return mapping
 
@@ -136,9 +141,10 @@ def push_google(disk_root: Path, mapping: dict) -> dict:
         disk_root (Path): Synthetic corpus root.
         mapping (dict): The ``l2_mapping.yaml`` dict, mutated in place.
     """
-    if not all(os.environ.get(k) for k in
-               ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
-                "GOOGLE_REFRESH_TOKEN")):
+    if not all(
+            os.environ.get(k)
+            for k in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+                      "GOOGLE_REFRESH_TOKEN")):
         print("Google OAuth env vars not set; skipping Google push.")
         return mapping
     try:
@@ -156,10 +162,11 @@ def push_google(disk_root: Path, mapping: dict) -> dict:
         client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
         token_uri="https://oauth2.googleapis.com/token",
     )
-    sheets_svc = build("sheets", "v4", credentials=creds,
+    sheets_svc = build("sheets",
+                       "v4",
+                       credentials=creds,
                        cache_discovery=False)
-    docs_svc = build("docs", "v1", credentials=creds,
-                     cache_discovery=False)
+    docs_svc = build("docs", "v1", credentials=creds, cache_discovery=False)
     google = mapping.setdefault("google", {})
     sheets_root = disk_root / "sheets" / "owned"
     if sheets_root.exists():
@@ -171,8 +178,12 @@ def push_google(disk_root: Path, mapping: dict) -> dict:
                 continue
             spec = json.loads(src.read_text())
             create_resp = sheets_svc.spreadsheets().create(
-                body={"properties": {"title": real_title},
-                      "sheets": spec.get("sheets", [])},
+                body={
+                    "properties": {
+                        "title": real_title
+                    },
+                    "sheets": spec.get("sheets", [])
+                },
                 fields="spreadsheetId").execute()
             google[local_id] = create_resp["spreadsheetId"]
     gdocs_root = disk_root / "gdocs" / "owned"
@@ -183,8 +194,9 @@ def push_google(disk_root: Path, mapping: dict) -> dict:
             existing = google.get(local_id)
             if existing:
                 continue
-            create_resp = docs_svc.documents().create(
-                body={"title": real_title}).execute()
+            create_resp = docs_svc.documents().create(body={
+                "title": real_title
+            }).execute()
             doc_id = create_resp["documentId"]
             google[local_id] = doc_id
             spec = json.loads(src.read_text())
@@ -199,15 +211,22 @@ def push_google(disk_root: Path, mapping: dict) -> dict:
             if paragraphs:
                 docs_svc.documents().batchUpdate(
                     documentId=doc_id,
-                    body={"requests": [
-                        {"insertText": {"location": {"index": 1},
-                                        "text": "".join(paragraphs)}},
-                    ]}).execute()
+                    body={
+                        "requests": [
+                            {
+                                "insertText": {
+                                    "location": {
+                                        "index": 1
+                                    },
+                                    "text": "".join(paragraphs)
+                                }
+                            },
+                        ]
+                    }).execute()
     return mapping
 
 
-def main(disk_root: str | Path | None = None,
-         clean: bool = False) -> Path:
+def main(disk_root: str | Path | None = None, clean: bool = False) -> Path:
     """Push the synthetic corpus into real Slack + Google.
 
     Args:

@@ -17,7 +17,6 @@ import time
 from collections.abc import AsyncIterator
 
 import aiohttp
-
 from mirage.core.google.config import GoogleConfig
 from mirage.resource.secrets import reveal_secret
 

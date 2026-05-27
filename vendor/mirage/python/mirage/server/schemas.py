@@ -14,9 +14,8 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from mirage.config import WorkspaceConfig
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MountSummary(BaseModel):

@@ -19,7 +19,6 @@ import time
 from pathlib import Path
 
 import httpx
-
 from mirage.cli.env import ENV_AUTH_MODE, ENV_AUTH_TOKEN
 from mirage.cli.settings import DaemonSettings, load_daemon_settings
 from mirage.server.auth import AuthMode

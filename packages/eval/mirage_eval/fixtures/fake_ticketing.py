@@ -178,8 +178,7 @@ async def helpdesk_ticket_create(
     body = str(extra.get("body") or "")
     requester = str(extra.get("requester") or "")
     if not queue or not subject or not requester:
-        raise ValueError(
-            "--queue, --subject, and --requester are required")
+        raise ValueError("--queue, --subject, and --requester are required")
     priority = str(extra.get("priority") or "P3").upper()
     if priority not in {"P1", "P2", "P3", "P4"}:
         raise ValueError(f"--priority must be P1..P4, got {priority!r}")
@@ -193,8 +192,15 @@ async def helpdesk_ticket_create(
         "ticket_id": ticket_id,
         "subject": subject,
         "body": body,
-        "requester": {"id": requester, "name": "", "email": ""},
-        "assignee": ({"id": str(assignee), "name": ""} if assignee else None),
+        "requester": {
+            "id": requester,
+            "name": "",
+            "email": ""
+        },
+        "assignee": ({
+            "id": str(assignee),
+            "name": ""
+        } if assignee else None),
         "queue": queue,
         "status": "open",
         "priority": priority,
@@ -270,8 +276,7 @@ async def helpdesk_ticket_transition(
     if not ticket_id:
         raise ValueError("--ticket is required")
     if new_status not in {"open", "in_progress", "resolved"}:
-        raise ValueError(
-            "--status must be open, in_progress, or resolved")
+        raise ValueError("--status must be open, in_progress, or resolved")
     src = _find_ticket_path(accessor.root, ticket_id)
     if src is None:
         raise FileNotFoundError(f"ticket {ticket_id!r} not found")

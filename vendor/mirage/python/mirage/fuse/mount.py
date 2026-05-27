@@ -19,7 +19,6 @@ import threading
 import time
 
 import mfusepy as fuse
-
 from mirage.fuse.fs import MirageFS
 from mirage.workspace import Workspace
 

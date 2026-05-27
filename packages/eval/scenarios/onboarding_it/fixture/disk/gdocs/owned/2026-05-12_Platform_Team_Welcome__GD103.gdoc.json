@@ -47,7 +47,7 @@
           "elements": [
             {
               "textRun": {
-                "content": "Platform owns the multi-tenant data plane that ACME ships to customers. We're a team of 9 engineers + 1 EM + 1 PM.\n",
+                "content": "Platform owns the multi-tenant data plane that NorthHill ships to customers. We're a team of 9 engineers + 1 EM + 1 PM.\n",
                 "textStyle": {}
               }
             }

@@ -2,7 +2,7 @@ import json
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from statistics import mean, median
+from statistics import mean
 
 
 @dataclass
@@ -48,7 +48,10 @@ class AggregateReport:
             "composite_by_task": self.composite_by_task,
             "composite_by_model": self.composite_by_model,
             "cell_by_model_task": {
-                m: {t: asdict(c) for t, c in inner.items()}
+                m: {
+                    t: asdict(c)
+                    for t, c in inner.items()
+                }
                 for m, inner in self.cell_by_model_task.items()
             },
             "failure_modes": self.failure_modes,
@@ -90,8 +93,8 @@ def aggregate_sweep(sweep_dir: Path) -> AggregateReport:
     meta_path = sweep_dir / "sweep_metadata.json"
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     sweep_id = meta.get("sweep_id", sweep_dir.name)
-    scenario_id = meta.get("scenario", (cards[0].get("scenario_id")
-                                        if cards else ""))
+    scenario_id = meta.get("scenario",
+                           (cards[0].get("scenario_id") if cards else ""))
     surface = meta.get("surface", (cards[0].get("surface") if cards else "l1"))
     models = sorted({c["model"] for c in cards})
     seeds = sorted({c["seed"] for c in cards})
@@ -100,8 +103,8 @@ def aggregate_sweep(sweep_dir: Path) -> AggregateReport:
     composite_mean = round(mean(composites), 4) if composites else 0.0
     by_task: dict[str, list[float]] = defaultdict(list)
     by_model: dict[str, list[float]] = defaultdict(list)
-    cell: dict[str, dict[str, list[dict]]] = defaultdict(
-        lambda: defaultdict(list))
+    cell: dict[str, dict[str,
+                         list[dict]]] = defaultdict(lambda: defaultdict(list))
     failure_modes: dict[str, int] = defaultdict(int)
     for c in cards:
         by_task[c["task_id"]].append(c["composite"])

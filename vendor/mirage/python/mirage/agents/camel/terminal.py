@@ -15,7 +15,6 @@
 import shlex
 
 from camel.toolkits import BaseToolkit, FunctionTool
-
 from mirage.agents.camel._async import AsyncRunner
 from mirage.io.types import IOResult
 from mirage.workspace.workspace import Workspace

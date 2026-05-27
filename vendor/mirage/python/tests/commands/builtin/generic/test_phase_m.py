@@ -1,5 +1,4 @@
 import pytest
-
 from mirage.commands.builtin.generic.nl import nl
 from mirage.commands.builtin.generic.rev import rev
 from mirage.commands.builtin.generic.sort import sort

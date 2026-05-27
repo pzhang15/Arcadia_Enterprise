@@ -12,9 +12,8 @@
 # limitations under the License.
 # ========= Copyright 2026 @ Strukto.AI All Rights Reserved. =========
 
-from pydantic_ai_backends.types import ExecuteResponse, FileInfo, GrepMatch
-
 from mirage.io.types import IOResult
+from pydantic_ai_backends.types import ExecuteResponse, FileInfo, GrepMatch
 
 
 def _decode(value: bytes | None) -> str:

@@ -5,12 +5,12 @@
   "requester": {
     "id": "U107",
     "name": "Bob Lee",
-    "email": "bob.lee@acme.com"
+    "email": "bob.lee@northhill.com"
   },
   "assignee": {
     "id": "U104",
     "name": "Priya Patel",
-    "email": "priya.patel@acme.com"
+    "email": "priya.patel@northhill.com"
   },
   "queue": "it-helpdesk",
   "status": "resolved",

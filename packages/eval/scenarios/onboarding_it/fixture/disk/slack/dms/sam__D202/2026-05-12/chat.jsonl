@@ -1,4 +1,4 @@
-{"type": "message", "user": "U101", "text": "Hi Sam - filed INC-1002 (AWS) and INC-1004 (GitHub). INC-1003 (Okta) was already in flight. Status update on those would help me sequence the rest of day 1.", "ts": "1715543000.000100", "team": "T_ACME"}
-{"type": "message", "user": "U103", "text": "INC-1003 should resolve within the hour - that unblocks AWS + GitHub since both gate on SSO. Priya is picking up INC-1002 after lunch.", "ts": "1715543900.000100", "team": "T_ACME"}
-{"type": "message", "user": "U101", "text": "Got it. I noticed INC-1006 looks like a near-duplicate of INC-1002 - should I close it?", "ts": "1715544800.000100", "team": "T_ACME"}
-{"type": "message", "user": "U103", "text": "Yes - closing INC-1006 is correct. Priya will fold any context into INC-1002. Good catch.", "ts": "1715545500.000100", "team": "T_ACME"}
+{"type": "message", "user": "U101", "text": "Hi Sam - filed INC-1002 (AWS) and INC-1004 (GitHub). INC-1003 (Okta) was already in flight. Status update on those would help me sequence the rest of day 1.", "ts": "1715543000.000100", "team": "T_NORTHHILL"}
+{"type": "message", "user": "U103", "text": "INC-1003 should resolve within the hour - that unblocks AWS + GitHub since both gate on SSO. Priya is picking up INC-1002 after lunch.", "ts": "1715543900.000100", "team": "T_NORTHHILL"}
+{"type": "message", "user": "U101", "text": "Got it. I noticed INC-1006 looks like a near-duplicate of INC-1002 - should I close it?", "ts": "1715544800.000100", "team": "T_NORTHHILL"}
+{"type": "message", "user": "U103", "text": "Yes - closing INC-1006 is correct. Priya will fold any context into INC-1002. Good catch.", "ts": "1715545500.000100", "team": "T_NORTHHILL"}
