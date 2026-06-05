@@ -1,0 +1,29 @@
+[project]
+name = "arcadia-store"
+version = "0.1.0"
+description = "Durable persistence and hydration for Arcadia sessions, the AG-UI event log, the live event relay, investigations, console workspaces, and scorecards."
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [
+    { name = "Pat Zhang" },
+]
+
+dependencies = [
+    "sqlalchemy>=2.0.30",
+    "aiosqlite>=0.20",
+    "asyncpg>=0.29",
+    "greenlet>=3.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["arcadia_store*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+]

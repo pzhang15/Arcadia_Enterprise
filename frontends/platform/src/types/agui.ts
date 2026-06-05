@@ -7,6 +7,9 @@ export enum AGUIEventType {
   TEXT_MESSAGE_START = "TEXT_MESSAGE_START",
   TEXT_MESSAGE_CONTENT = "TEXT_MESSAGE_CONTENT",
   TEXT_MESSAGE_END = "TEXT_MESSAGE_END",
+  THINKING_START = "THINKING_START",
+  THINKING_CONTENT = "THINKING_CONTENT",
+  THINKING_END = "THINKING_END",
   TOOL_CALL_START = "TOOL_CALL_START",
   TOOL_CALL_ARGS = "TOOL_CALL_ARGS",
   TOOL_CALL_END = "TOOL_CALL_END",
@@ -66,10 +69,28 @@ export interface TextMessageEndEvent extends AGUIBaseEvent {
   message_id: string;
 }
 
+export interface ThinkingStartEvent extends AGUIBaseEvent {
+  type: AGUIEventType.THINKING_START;
+  thinking_id: string;
+  step_id?: string;
+}
+
+export interface ThinkingContentEvent extends AGUIBaseEvent {
+  type: AGUIEventType.THINKING_CONTENT;
+  thinking_id: string;
+  delta: string;
+}
+
+export interface ThinkingEndEvent extends AGUIBaseEvent {
+  type: AGUIEventType.THINKING_END;
+  thinking_id: string;
+}
+
 export interface ToolCallStartEvent extends AGUIBaseEvent {
   type: AGUIEventType.TOOL_CALL_START;
   tool_call_id: string;
   tool_name: string;
+  step_id?: string;
 }
 
 export interface ToolCallArgsEvent extends AGUIBaseEvent {
@@ -105,6 +126,9 @@ export type AGUIEvent =
   | TextMessageStartEvent
   | TextMessageContentEvent
   | TextMessageEndEvent
+  | ThinkingStartEvent
+  | ThinkingContentEvent
+  | ThinkingEndEvent
   | ToolCallStartEvent
   | ToolCallArgsEvent
   | ToolCallEndEvent
@@ -118,6 +142,9 @@ export interface ToolCallState {
   result?: string;
   exit_code?: number;
   status: "running" | "completed" | "error";
+  started_at: number;
+  ended_at?: number;
+  step_id?: string;
 }
 
 export interface MessageBlock {
@@ -127,6 +154,7 @@ export interface MessageBlock {
   timestamp: number;
   toolCalls?: ToolCallState[];
   isStreaming?: boolean;
+  stepId?: string;
 }
 
 export interface VfsOp {
@@ -137,4 +165,27 @@ export interface VfsOp {
   mount_prefix?: string;
   duration_ms: number;
   timestamp: number;
+}
+
+export interface RunStep {
+  id: string;
+  run_id: string;
+  name: string;
+  status: "running" | "completed" | "error";
+  started_at: number;
+  ended_at?: number;
+  reasoning: string;
+  reasoning_streaming: boolean;
+  tool_call_ids: string[];
+  message_id?: string;
+}
+
+export interface AgentRun {
+  id: string;
+  thread_id: string;
+  status: "running" | "completed" | "error";
+  started_at: number;
+  ended_at?: number;
+  step_ids: string[];
+  error?: string;
 }

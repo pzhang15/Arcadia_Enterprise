@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mirage Console v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:oklch(0.145 0.012 264);--s0:oklch(0.145 0.012 264);--s1:oklch(0.175 0.014 264);
+  --s2:oklch(0.205 0.015 264);--s3:oklch(0.245 0.016 264);--s4:oklch(0.285 0.017 264);
+  --tp:oklch(0.965 0.005 264);--ts:oklch(0.755 0.018 264);--tm:oklch(0.555 0.020 264);--tf:oklch(0.415 0.020 264);
+  --bd:oklch(0.255 0.014 264);--bds:oklch(0.315 0.016 264);--bdh:oklch(0.345 0.018 264);
+  --ac:oklch(0.68 0.19 280);--acs:oklch(0.72 0.21 280);--ac-soft:oklch(0.68 0.19 280/0.16);--ac-ring:oklch(0.68 0.19 280/0.45);
+  --su:oklch(0.76 0.18 155);--su-soft:oklch(0.76 0.18 155/0.14);
+  --wa:oklch(0.82 0.17 80);--wa-soft:oklch(0.82 0.17 80/0.14);
+  --da:oklch(0.68 0.22 25);--da-soft:oklch(0.68 0.22 25/0.14);
+  --in:oklch(0.73 0.15 230);--in-soft:oklch(0.73 0.15 230/0.14);
+  --cap:oklch(0.81 0.12 195);--cap-soft:oklch(0.81 0.12 195/0.15);
+  --sim:oklch(0.81 0.16 72);--sim-soft:oklch(0.81 0.16 72/0.16);
+  --live:oklch(0.62 0.25 20);
+  --m-tickets:oklch(0.73 0.15 230);--m-slack:oklch(0.70 0.20 305);--m-github:oklch(0.85 0.02 264);
+  --m-pagerduty:oklch(0.76 0.18 155);--m-finance:oklch(0.82 0.17 80);--m-datadog:oklch(0.75 0.16 50);
+  --m-compliance:oklch(0.72 0.16 250);--m-customers:oklch(0.74 0.16 195);--m-s3:oklch(0.73 0.15 230);--m-db:oklch(0.78 0.13 300);
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#0a0a0f;font-family:var(--sans);color:var(--tp);-webkit-font-smoothing:antialiased;font-feature-settings:"cv02","cv03","cv11","ss01"}
+.frame{position:relative;width:1440px;height:900px;margin:0 auto;overflow:hidden;border-bottom:1px solid #000;
+  background:radial-gradient(1200px 600px at 0% -10%,oklch(0.68 0.19 280/0.06),transparent 60%),radial-gradient(900px 500px at 100% 0%,oklch(0.73 0.15 230/0.05),transparent 55%),var(--bg);}
+.figtag{position:absolute;left:16px;bottom:11px;z-index:90;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--tm);background:oklch(0.205 0.015 264/0.88);border:1px solid var(--bd);padding:4px 9px;border-radius:6px;backdrop-filter:blur(8px)}
+.figtag b{color:var(--tp)}
+.mono{font-family:var(--mono)}.muted{color:var(--tm)}.faint{color:var(--tf)}.sec{color:var(--ts)}
+.up{text-transform:uppercase;letter-spacing:.09em}
+.dot{display:inline-block;width:7px;height:7px;border-radius:99px;flex:none}
+.dotu{border-bottom:1px dotted var(--tf)}
+
+/* shell */
+.app{display:flex;flex-direction:column;height:100%;width:100%}
+.ctx{height:44px;flex:none;display:flex;align-items:center;gap:9px;padding:0 12px;border-bottom:1px solid var(--bd);background:oklch(0.175 0.014 264/0.9);backdrop-filter:blur(12px)}
+.logo{width:23px;height:23px;border-radius:7px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--ac),var(--in));flex:none}
+.wsw{display:flex;align-items:center;gap:7px;height:27px;padding:0 10px;border:1px solid var(--bd);border-radius:7px;background:var(--s2);font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;border-radius:5px;font-size:10px;font-family:var(--mono);border:1px solid var(--bd);background:var(--s2);color:var(--ts)}
+.crumb{font-family:var(--mono);font-size:11px;color:var(--tm)}.crumb b{color:var(--ts)}
+.cmdk{margin-left:auto;display:flex;align-items:center;gap:7px;height:27px;padding:0 10px;border:1px solid var(--bd);border-radius:7px;background:var(--s2);color:var(--tm);font-size:11px}
+.cmdk kbd{font-family:var(--mono);font-size:10px;background:var(--s3);border:1px solid var(--bds);border-radius:4px;padding:1px 5px;color:var(--ts)}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:7px;overflow:hidden;background:var(--s1)}
+.seg button{height:26px;padding:0 11px;font-size:11px;background:transparent;border:none;color:var(--tm);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
+.seg button.on{background:var(--ac-soft);color:var(--acs)}
+.body{flex:1;display:flex;min-height:0}
+.rail{width:300px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--bd);background:var(--s0);min-height:0}
+.center{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--s1)}
+.transport{height:36px;flex:none;display:flex;align-items:center;gap:11px;padding:0 12px;border-top:1px solid var(--bd);background:var(--s1)}
+
+/* rail trees */
+.tree-h{display:flex;align-items:center;gap:7px;padding:8px 11px 6px;font-size:9.5px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--s0)}
+.rrow{display:flex;align-items:center;gap:8px;padding:5px 11px;font-size:11.5px;cursor:pointer;border-left:2px solid transparent}
+.rrow:hover{background:var(--s1)}
+.rrow.on{background:var(--ac-soft);border-left-color:var(--ac)}
+.rrow .pth{font-family:var(--mono);font-size:10.5px;color:var(--tp)}
+
+/* badges / pills */
+.badge{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:5px;border:1px solid var(--bd);color:var(--ts);background:var(--s2)}
+.b-ok{color:var(--su);border-color:oklch(0.76 0.18 155/0.4);background:var(--su-soft)}
+.b-err{color:var(--da);border-color:oklch(0.68 0.22 25/0.4);background:var(--da-soft)}
+.b-mut{color:var(--tm);border-color:var(--bd);background:var(--s2)}
+.b-warn{color:var(--wa);border-color:oklch(0.82 0.17 80/0.45);background:var(--wa-soft)}
+.b-cap{color:var(--cap);border-color:oklch(0.81 0.12 195/0.4);background:var(--cap-soft)}
+.e-scratch{background:var(--tf)}.e-durable{background:var(--in)}.e-sor{background:var(--wa)}.e-ext{background:var(--da)}
+
+/* run grid (home) */
+.gridhead{display:flex;align-items:center;gap:10px;padding:11px 16px 8px;border-bottom:1px solid var(--bd)}
+.h1{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.filt{display:flex;gap:6px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.fchip{font-size:10.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--bd);color:var(--tm);background:var(--s1);cursor:pointer}
+.fchip.on{border-color:var(--ac-ring);color:var(--acs);background:var(--ac-soft)}
+table{border-collapse:collapse;width:100%}
+.rg{font-size:11.5px}
+.rg thead th{text-align:left;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--tm);padding:8px 10px;border-bottom:1px solid var(--bd);font-weight:600}
+.rg td{padding:8px 10px;border-bottom:1px solid oklch(0.255 0.014 264/0.5);vertical-align:middle}
+.rg tr:hover td{background:var(--s2)}
+.rg .rid{font-family:var(--mono);color:var(--tp)}
+.rg .intent{color:var(--tm);max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mchip{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:2px;vertical-align:-1px}
+
+/* intent+command card */
+.iccard{border:1px solid var(--bd);border-radius:9px;background:var(--s0);margin:8px 10px;overflow:hidden}
+.iccard.sel{border-color:var(--ac-ring);box-shadow:0 0 0 1px var(--ac-ring)}
+.ic-head{display:flex;align-items:center;gap:8px;padding:7px 11px;background:var(--s1);border-bottom:1px solid var(--bd);font-size:11px}
+.ic-intent{padding:8px 11px;font-size:12px;color:var(--ts);line-height:1.5}
+.ic-intent .lbl{font-size:9px;font-family:var(--mono);color:var(--tm);display:inline-flex;gap:5px;align-items:center;margin-right:6px}
+.ic-cmd{border-top:1px solid var(--bd);padding:7px 11px;font-family:var(--mono);font-size:11px}
+.ic-cmd .cmdline{display:flex;align-items:center;gap:7px;color:var(--tp)}
+.ic-eff{margin:5px 0 0 16px;padding:6px 9px;border-left:2px solid var(--cap);background:oklch(0.81 0.12 195/0.06);border-radius:0 5px 5px 0;color:var(--ts);font-size:10.5px}
+.ic-flag{margin:6px 0 0 16px;display:flex;align-items:center;gap:7px;padding:5px 9px;border:1px solid oklch(0.82 0.17 80/0.45);background:var(--wa-soft);border-radius:6px;color:var(--wa);font-size:10.5px}
+
+/* cards / inspector */
+.card{border:1px solid var(--bd);border-radius:9px;background:var(--s0);overflow:hidden;margin:10px}
+.ch{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--bd);font-size:11px;background:var(--s1)}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:5px 10px;font-size:11px;padding:10px 12px}
+.kv dt{color:var(--tm);font-family:var(--mono);font-size:10px}.kv dd{color:var(--tp);font-family:var(--mono);font-size:10.5px;word-break:break-all}
+.note{font-size:10px;color:var(--tm);display:flex;gap:6px;line-height:1.5;padding:0 2px}
+.note.warn{color:var(--sim)}.note.res{color:var(--tf)}
+.hunk{font-family:var(--mono);font-size:11px;border:1px solid var(--bd);border-radius:7px;overflow:hidden;margin:0 11px 11px}
+.hunk .hl{display:flex;gap:9px;padding:3px 11px}.hunk .add{background:oklch(0.76 0.18 155/0.10);color:var(--su)}.hunk .ctx{color:var(--tm)}.hunk .gut{color:var(--tf);width:14px;text-align:right;flex:none}
+
+/* lens strip + transport */
+.lens{flex:none;display:flex;align-items:center;gap:2px;height:36px;padding:0 10px;border-bottom:1px solid var(--bd);background:var(--s1)}
+.lt{height:36px;display:flex;align-items:center;gap:6px;padding:0 11px;font-size:11.5px;color:var(--tm);border-bottom:2px solid transparent;cursor:pointer;font-weight:500}
+.lt.on{color:var(--tp);border-bottom-color:var(--ac)}
+.tbtn{width:23px;height:22px;border-radius:5px;border:1px solid var(--bd);background:var(--s2);color:var(--ts);display:grid;place-items:center;cursor:pointer;font-size:10px}
+.tbtn.play{background:var(--ac-soft);border-color:var(--ac-ring);color:var(--acs)}
+.minimap{flex:1;height:18px;border-radius:5px;background:var(--s0);border:1px solid var(--bd);position:relative;display:flex;align-items:flex-end;gap:1px;padding:0 2px;overflow:hidden}
+.minimap i{flex:1;background:var(--bds);border-radius:1px 1px 0 0}
+.playhead{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ac);box-shadow:0 0 8px var(--ac-ring)}
+.curbadge{font-family:var(--mono);font-size:10px;color:var(--ts)}
+.spd{display:flex;border:1px solid var(--bd);border-radius:5px;overflow:hidden}.spd b{font-size:9.5px;padding:3px 6px;color:var(--tm);font-family:var(--mono);cursor:pointer}.spd b.on{background:var(--ac-soft);color:var(--acs)}
+
+/* operator tree / bars */
+.optree{font-family:var(--mono);font-size:11px;padding:8px 0}
+.oprow{display:flex;align-items:center;gap:8px;padding:4px 12px;cursor:pointer;border-left:2px solid transparent}
+.oprow:hover{background:var(--s2)}.oprow.ring{background:var(--ac-soft);border-left-color:var(--ac)}
+.bar{height:6px;border-radius:9px;background:var(--in);flex:none}
+.rankrow{display:flex;align-items:center;gap:9px;padding:6px 11px;border-bottom:1px solid oklch(0.255 0.014 264/.5);font-family:var(--mono);font-size:10.5px;cursor:pointer}
+.rankrow:hover{background:var(--s2)}
+
+/* data grid */
+.dg{font-family:var(--mono);font-size:11px}
+.dg th{text-align:left;padding:6px 11px;border-bottom:1px solid var(--bd);color:var(--ts);font-weight:600;vertical-align:top}
+.dg th .prof{margin-top:4px;display:flex;align-items:center;gap:5px;font-size:8.5px;color:var(--tm)}
+.dg td{padding:5px 11px;border-bottom:1px solid oklch(0.255 0.014 264/.45);color:var(--tm)}
+.spark{display:inline-flex;align-items:flex-end;gap:1px;height:13px}.spark i{width:3px;background:var(--in);border-radius:1px}
+.nullbar{width:30px;height:4px;border-radius:9px;background:var(--s3);overflow:hidden;display:inline-block;vertical-align:middle}.nullbar i{display:block;height:100%;background:var(--da)}
+
+/* cover */
+.cover{padding:42px 54px;height:100%;display:flex;flex-direction:column;gap:18px}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--ac);text-transform:uppercase}
+.h0{font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.tag{font-size:15px;color:var(--ts);max-width:1000px;line-height:1.5}
+.cgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+.ccard{border:1px solid var(--bd);border-radius:12px;background:oklch(0.175 0.014 264/0.6);padding:15px 16px}
+.ccard h3{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ac);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.ccard p{font-size:12px;color:var(--ts);line-height:1.5}
+.ccard code{font-family:var(--mono);font-size:10.5px;color:var(--tp);background:var(--s2);padding:1px 5px;border-radius:4px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;color:var(--tm);align-items:center}
+.legbox{width:20px;height:10px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:6px}
+svg{display:block}
+</style>
+</head>
+<body>
+
+<!-- ===================== FRAME 0 — COVER ===================== -->
+<section class="frame">
+  <div class="cover">
+    <div>
+      <div class="kick">Arcadia · Mirage Console · v3</div>
+      <div style="display:flex;align-items:flex-end;gap:16px;margin-top:9px">
+        <div class="logo" style="width:44px;height:44px;border-radius:12px"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+        <h1 class="h0">Mirage&nbsp;Console</h1>
+        <span class="chip" style="margin-bottom:7px">Snowsight for agent data access</span>
+      </div>
+      <p class="tag" style="margin-top:13px"><b style="color:var(--tp)">Open a run, scrub the bytes, answer "model mistake or data mistake?" in one glance.</b> A workspace-scoped, read-first console: one persistent shell, the center swaps exactly one object — a <b style="color:var(--tp)">Run</b> or a <b style="color:var(--tp)">Data</b> object — and a shared selection keeps both worlds cross-lit. Borrowed deliberately: Snowflake's profile + auto-profiling, Databricks' lineage, Redux's time-travel.</p>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccard"><h3><span class="dot" style="background:var(--ac)"></span>Snowflake → Profile + Data view</h3><p>Run history as first-class objects · a <b style="color:var(--tp)">query-profile</b> over the real VfsOp spine (most-expensive ops) · a <b style="color:var(--tp)">Snowsight data grid</b> with per-column profiling.</p></div>
+      <div class="ccard"><h3><span class="dot" style="background:var(--in)"></span>Databricks → Lineage</h3><p>"Touched by N runs" on any data path — the <b style="color:var(--tp)">data ↔ trace bridge</b>, both directions, from the real <code>mount_prefix+path</code> join.</p></div>
+      <div class="ccard"><h3><span class="dot" style="background:var(--cap)"></span>Redux → Time-Travel</h3><p>The action stream as a recording: scrub a cursor, <code>stateAt(idx)</code> fold, exact per-action diff, skip-what-if, export a replayable session.</p></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:16px;flex:1;min-height:0">
+      <div class="ccard" style="display:flex;flex-direction:column;gap:9px">
+        <h3 style="margin:0"><span class="dot" style="background:var(--sim)"></span>The new grain — intent + command + effect</h3>
+        <div style="border:1px solid var(--bd);border-radius:8px;background:var(--s0);overflow:hidden">
+          <div class="ic-head"><span class="dot e-durable"></span><b style="font-size:11px">Step 3 · correlate-the-deploy</b><span class="muted mono" style="font-size:9px">· 2 cmds</span></div>
+          <div class="ic-intent"><span class="lbl">ⓘ self-reported</span><span class="dotu">"read the <b style="color:var(--tp)">live</b> checkout dashboard to correlate the deploy"</span></div>
+          <div class="ic-cmd"><div class="cmdline"><span class="faint">▾</span><span style="color:var(--su)">$</span> cat /s3/dashboards/checkout.json <span class="muted" style="margin-left:auto">exit 0 · 6ms</span></div>
+            <div class="ic-eff">└ <b style="color:var(--ts)">read</b> /s3/dashboards/<b style="color:var(--wa)">checkout_2023.json</b> · s3 · 4.2 KB · rev R3 · etag a91f · <span class="badge b-mut" style="padding:0 4px">cache</span></div>
+            <div class="ic-flag">⚑ INTENT≠EFFECT — "live" intent vs cached read of a 2023 path</div>
+          </div>
+        </div>
+        <div class="legend" style="margin-top:auto;padding-top:8px;border-top:1px solid var(--bd)">
+          <span><span class="legbox" style="background:var(--cap)"></span>solid = observed byte</span>
+          <span><span class="legbox" style="background:var(--sim)"></span>muted = derived / self-reported</span>
+          <span><span class="legbox" style="background:var(--s3)"></span>dimmed = not yet emitted</span>
+        </div>
+      </div>
+      <div class="ccard" style="display:flex;flex-direction:column;gap:11px">
+        <h3 style="margin:0"><span class="dot" style="background:var(--in)"></span>One shell · object model · what's built</h3>
+        <div class="mono" style="font-size:11px;line-height:1.85;color:var(--ts)">
+          Workspace <span class="faint">· context bar (branch · TEST/LIVE)</span><br/>
+          &nbsp;└ Run/Trace <span class="faint">· THE noun — listable · permalinkable · replayable</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;└ <span style="color:var(--cap)">VfsOp</span> <span class="faint">· the observed byte (ground-truth leaf)</span>
+        </div>
+        <div class="note"><span>▸</span><span>Three lenses fold onto a Run: <b class="sec">Profile</b> · <b class="sec">Time-Travel</b> · <b class="sec">Lineage</b> — over one shared cursor.</span></div>
+        <div style="margin-top:auto;font-size:11px;line-height:1.6;color:var(--tm);border-top:1px solid var(--bd);padding-top:9px">
+          <b style="color:var(--su)">Built &amp; verified:</b> <code style="font-family:var(--mono);font-size:10px">/api/sessions/:id/replay</code> (actions + stateAt fold) · stamped VfsOp leaf · touched-by join · persisted store.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 00</b> &nbsp;·&nbsp; v3 overview — Snowflake + Databricks + Redux, on one read-first shell</div>
+</section>
+
+<!-- ===================== FRAME 1 — HOME / RUN HISTORY ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip"><span class="dot" style="background:var(--in);width:6px;height:6px"></span>branch TEST</span>
+      <span class="crumb">/ <b>Runs</b></span>
+      <div class="cmdk">Search &amp; jump <kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <!-- rail: run history + data catalog -->
+      <div class="rail">
+        <div class="tree-h"><span class="up muted">▾ Run history</span><span class="faint mono" style="margin-left:auto">37</span></div>
+        <div style="overflow:hidden">
+          <div class="rrow on"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);color:var(--tp)">correlate the deploy…</span><span class="faint mono" style="margin-left:auto;font-size:9px">⚑</span></div>
+          <div class="rrow"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);color:var(--ts)">patch the user roster…</span></div>
+          <div class="rrow"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);color:var(--ts)">reconcile invoices…</span></div>
+          <div class="rrow"><span class="dot" style="background:var(--sim)"></span><span class="pth" style="font-family:var(--sans);color:var(--ts)">audit overdue invoices</span><span class="badge" style="margin-left:auto;padding:0 4px;border-color:var(--da)">LIVE</span></div>
+          <div class="rrow"><span class="dot" style="background:var(--da)"></span><span class="pth" style="font-family:var(--sans);color:var(--ts)">export Q1 revenue</span><span class="faint mono" style="margin-left:auto;font-size:9px">⚑</span></div>
+        </div>
+        <div class="tree-h" style="margin-top:6px"><span class="up muted">▸ Data catalog</span><span class="faint mono" style="margin-left:auto">13</span></div>
+        <div style="overflow:hidden">
+          <div class="rrow"><span class="dot e-durable"></span><span class="pth">/database</span><span class="badge b-mut" style="margin-left:auto;padding:0 4px">table</span></div>
+          <div class="rrow"><span class="dot e-durable"></span><span class="pth">/s3</span></div>
+          <div class="rrow"><span class="dot e-ext"></span><span class="pth">/slack</span></div>
+          <div class="rrow"><span class="dot e-sor"></span><span class="pth">/finance</span></div>
+        </div>
+      </div>
+      <!-- center: run grid -->
+      <div class="center">
+        <div class="gridhead"><span class="h1">Runs</span><span class="muted" style="font-size:12px">37 runs · northhill_corp · branch TEST</span>
+          <span style="margin-left:auto;display:flex;gap:7px"><span class="badge b-mut">+ New run</span><div class="seg" style="height:24px"><button class="on">▢ List</button><button>▦ Matrix</button></div></span></div>
+        <div class="filt"><span class="fchip on">Branch · All</span><span class="fchip">Status · ok</span><span class="fchip">☑ Wrote-anything</span><span class="fchip">Touched-mount ▾</span><span class="fchip on">⚑ Flagged</span><span class="muted" style="font-size:10.5px;margin-left:auto">free-text…</span></div>
+        <table class="rg">
+          <thead><tr><th></th><th>Run</th><th>Intent preview</th><th>Br</th><th>Steps</th><th>Ops</th><th>Bytes</th><th>Wrote</th><th>⚑</th><th>Started</th><th>Dur</th></tr></thead>
+          <tbody>
+            <tr style="background:var(--ac-soft)"><td><span class="dot" style="background:var(--su)"></span></td><td class="rid">run_a1f8c2</td><td class="intent">correlate the deploy with the live checkout dashboard</td><td><span class="badge b-mut" style="padding:0 4px">TEST</span></td><td>7</td><td>23</td><td>1.2 MB</td><td><span class="mchip" style="background:var(--m-s3)"></span><span class="mchip" style="background:var(--m-tickets)"></span></td><td><span style="color:var(--wa)">⚑</span></td><td class="muted">12m ago</td><td class="mono">8.4s</td></tr>
+            <tr><td><span class="dot" style="background:var(--su)"></span></td><td class="rid">run_b27c91</td><td class="intent">patch the user roster for ACCT-2039</td><td><span class="badge b-mut" style="padding:0 4px">TEST</span></td><td>4</td><td>11</td><td>384 KB</td><td><span class="mchip" style="background:var(--m-db)"></span></td><td class="faint">—</td><td class="muted">41m ago</td><td class="mono">3.1s</td></tr>
+            <tr><td><span class="dot" style="background:var(--su)"></span></td><td class="rid">run_4e0d77</td><td class="intent">reconcile invoices against subscriptions</td><td><span class="badge b-mut" style="padding:0 4px">TEST</span></td><td>9</td><td>31</td><td>2.0 MB</td><td class="faint">—</td><td class="faint">—</td><td class="muted">1h ago</td><td class="mono">11.7s</td></tr>
+            <tr><td><span class="dot" style="background:var(--sim)"></span></td><td class="rid">run_9ac3f0</td><td class="intent">audit overdue invoices</td><td><span class="badge" style="padding:0 4px;border-color:var(--da);color:var(--da)">LIVE</span></td><td>6</td><td>18</td><td>612 KB</td><td><span class="mchip" style="background:var(--m-finance)"></span></td><td class="faint">—</td><td class="muted">3h ago</td><td class="mono">6.2s</td></tr>
+            <tr><td><span class="dot" style="background:var(--tf)"></span></td><td class="rid">run_77b210</td><td class="intent faint">(no stated intent for first step)</td><td><span class="badge b-mut" style="padding:0 4px">TEST</span></td><td>3</td><td>7</td><td>88 KB</td><td class="faint">—</td><td class="faint">—</td><td class="muted">5h ago</td><td class="mono">2.0s</td></tr>
+            <tr><td><span style="color:var(--da)">✕</span></td><td class="rid">run_d5512a</td><td class="intent">export Q1 revenue from /s3</td><td><span class="badge b-mut" style="padding:0 4px">TEST</span></td><td>5</td><td>9</td><td>4.2 MB</td><td class="faint">—</td><td><span style="color:var(--wa)">⚑</span></td><td class="muted">6h ago</td><td><span class="b-err badge">exit 2</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- mini catalog peek -->
+      <div class="rail" style="width:280px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="tree-h"><span class="up muted">Data catalog →</span></div>
+        <div style="padding:4px 0">
+          <div class="rrow"><span class="dot e-durable"></span><span class="pth">/database</span><span class="faint mono" style="margin-left:auto;font-size:9px">4 runs</span></div>
+          <div class="rrow"><span class="dot e-durable"></span><span class="pth">/s3</span><span class="faint mono" style="margin-left:auto;font-size:9px">6 runs</span></div>
+          <div class="rrow"><span class="dot e-ext"></span><span class="pth">/slack</span><span class="faint mono" style="margin-left:auto;font-size:9px">2 runs</span></div>
+          <div class="rrow"><span class="dot e-durable"></span><span class="pth">/tickets</span><span class="faint mono" style="margin-left:auto;font-size:9px">3 runs</span></div>
+          <div class="rrow"><span class="dot e-sor"></span><span class="pth">/finance</span><span class="faint mono" style="margin-left:auto;font-size:9px">1 run</span></div>
+        </div>
+        <div class="note res" style="margin:auto 12px 12px;font-size:9.5px"><span>ⓘ</span>Counts are over runs loaded in this workspace, not an all-history index.</div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 01</b> &nbsp;·&nbsp; Home — Run History (Snowsight query-history): the run is the noun · ⚑ flags triage before you open</div>
+</section>
+
+<!-- ===================== FRAME 2 — RUN · TIME-TRAVEL (HERO) ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip"><span class="dot" style="background:var(--in);width:6px;height:6px"></span>TEST</span>
+      <span class="crumb">Runs / <b>run_a1f8c2</b> / TIME-TRAVEL @ idx 14</span>
+      <div class="seg" style="margin-left:auto"><button>Profile</button><button class="on">Time-Travel</button><button>Lineage</button></div>
+      <div class="cmdk" style="margin-left:9px"><kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <!-- rail: compact run history -->
+      <div class="rail" style="width:240px">
+        <div class="tree-h"><span class="up muted">▾ Run history</span></div>
+        <div class="rrow on"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);font-size:11px">correlate the deploy…</span></div>
+        <div class="rrow"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);font-size:11px;color:var(--ts)">patch the user roster…</span></div>
+        <div class="rrow"><span class="dot" style="background:var(--da)"></span><span class="pth" style="font-family:var(--sans);font-size:11px;color:var(--ts)">export Q1 revenue</span></div>
+        <div class="tree-h" style="margin-top:6px"><span class="up muted">▸ Data catalog</span></div>
+        <div class="rrow"><span class="dot e-durable"></span><span class="pth">/database · /s3 · /slack…</span></div>
+      </div>
+      <!-- spine: intent+command cards -->
+      <div style="width:372px;flex:none;border-right:1px solid var(--bd);background:var(--s0);overflow:hidden;display:flex;flex-direction:column">
+        <div class="lens" style="height:32px"><div class="seg" style="height:22px"><button class="on">By-Step</button><button>Flat</button></div><span class="badge b-mut" style="margin-left:auto">7 steps · 23 ops</span></div>
+        <div style="overflow:hidden">
+          <div class="iccard" style="opacity:.55"><div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 1 · list dashboards</b><span class="muted mono" style="font-size:9px;margin-left:auto">1 cmd · 2 ops</span></div></div>
+          <div class="iccard" style="opacity:.55"><div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 2 · fetch deploy log</b><span class="muted mono" style="font-size:9px;margin-left:auto">1 cmd · 1 op</span></div></div>
+          <div class="iccard sel">
+            <div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 3 · correlate the deploy</b><span class="muted mono" style="font-size:9px;margin-left:auto">2 cmds · 3 ops · ⚑</span></div>
+            <div class="ic-intent"><span class="lbl">ⓘ self-reported</span><span class="dotu">"read the <b style="color:var(--tp)">live</b> checkout dashboard to correlate the deploy"</span> <span class="faint" style="font-size:9px;cursor:pointer">▸ verbatim</span></div>
+            <div class="ic-cmd"><div class="cmdline"><span class="faint">▾</span><span style="color:var(--su)">$</span> cat /s3/dashboards/checkout.json<span class="muted" style="margin-left:auto">exit 0 · 6ms</span></div>
+              <div class="ic-eff">└ <b style="color:var(--ts)">read</b> /s3/dashboards/<b style="color:var(--wa)">checkout_2023.json</b> · s3 · 4.2 KB · rev R3 · etag a91f · <span class="badge b-mut" style="padding:0 4px">cache</span></div>
+              <div class="ic-flag">⚑ INTENT≠EFFECT — "live" vs cached read of a 2023 path</div>
+              <div class="cmdline" style="margin-top:7px"><span class="faint">▸</span><span style="color:var(--su)">$</span> jq '.errors' …<span class="muted" style="margin-left:auto">exit 0 · 2ms</span></div>
+            </div>
+          </div>
+          <div class="iccard" style="opacity:.55"><div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 4 · summarize</b><span class="muted mono" style="font-size:9px;margin-left:auto">1 cmd · 0 ops</span></div></div>
+        </div>
+      </div>
+      <!-- lens stage -->
+      <div class="center">
+        <div class="lens"><span class="lt">Action</span><span class="lt">State</span><span class="lt on">Diff</span><span style="margin-left:auto" class="badge b-cap">EXACT · /replay actions[14]</span></div>
+        <div style="flex:1;overflow:hidden;padding-top:4px">
+          <div class="card">
+            <div class="ch"><span class="badge" style="border-color:var(--in-soft);color:var(--in)">READ</span><b>idx 14 · /s3/dashboards/checkout_2023.json</b><span class="muted mono" style="font-size:10px;margin-left:auto">12:04:07.214</span></div>
+            <dl class="kv"><dt>op · source</dt><dd>read · s3</dd><dt>bytes · dur</dt><dd>4,232 B · 6 ms</dd><dt>cache</dt><dd><span class="badge b-mut" style="padding:0 5px">derived · is_cache</span></dd><dt>fingerprint</dt><dd>etag a91f3c… <span class="b-cap badge" style="padding:0 4px">solid</span></dd><dt>revision</dt><dd>R3 <span class="b-cap badge" style="padding:0 4px">solid</span></dd></dl>
+          </div>
+          <div class="card">
+            <div class="ch"><span class="dot" style="background:var(--wa)"></span><b style="color:var(--wa)">INTENT ≠ EFFECT — possible mismatch</b><span class="badge b-mut" style="margin-left:auto">heuristic, not a verdict</span></div>
+            <div style="padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:11px">
+              <div><div class="up faint" style="font-size:9px">stated intent <span class="muted">(self-reported)</span></div><div class="sec" style="margin-top:3px">read the <b>live</b> dashboard</div></div>
+              <div><div class="up faint" style="font-size:9px">observed effect</div><div class="mono" style="margin-top:3px;color:var(--wa)">cached read · checkout_<b>2023</b>.json</div></div>
+            </div>
+            <div class="note" style="padding:0 12px 10px"><span>▸</span>Intent matches a stale path &amp; a cache hit → suspect a <b class="sec">data mistake</b>. <span class="sec" style="cursor:pointer">[open in Data ↗]</span> to inspect fingerprint/revision.</div>
+          </div>
+        </div>
+        <div class="transport">
+          <div class="tbtn play">▶</div><div class="tbtn">⏮</div><div class="tbtn">◀</div><div class="tbtn">▶</div><div class="tbtn">⏭</div>
+          <div class="minimap"><i style="height:30%"></i><i style="height:45%"></i><i style="height:35%"></i><i style="height:55%"></i><i style="height:40%"></i><i style="height:60%"></i><i style="height:38%"></i><i style="height:50%"></i><i style="height:100%;background:var(--in)"></i><i style="height:42%"></i><i style="height:48%"></i><i style="height:36%"></i><i style="height:52%"></i><i style="height:44%"></i><span class="playhead" style="left:58%"></span><span style="flex:3;display:flex;gap:1px;align-items:flex-end;opacity:.4"><i style="height:40%"></i><i style="height:55%"></i><i style="height:33%"></i><i style="height:48%"></i></span></div>
+          <div class="spd"><b class="on">1×</b><b>2×</b><b>4×</b></div>
+          <div class="curbadge">#15 of 27 · idx 14 · 12:04:07.214</div>
+        </div>
+      </div>
+      <!-- inspector -->
+      <div class="rail" style="width:340px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="lens" style="height:36px"><b style="font-size:11.5px">Inspector</b><span class="badge" style="margin-left:auto;padding:0 5px">⚓ idx 14</span></div>
+        <div class="note" style="padding:9px 12px"><span class="mono sec" style="font-size:10px">VfsOp ← ToolCall tc-3c ← Step 3 ← run_a1f8c2</span></div>
+        <div class="card" style="margin:0 10px 10px">
+          <div class="ch"><b style="font-size:11px">Touched-by · this path</b><span class="badge b-cap" style="margin-left:auto;padding:0 4px">join</span></div>
+          <div style="padding:8px 11px;font-family:var(--mono);font-size:10px;color:var(--tm)">3 runs · 5 ops · <span style="color:var(--in)">4 read</span> / <span style="color:var(--cap)">1 write</span><br/><span class="faint">click → jump to that run @ op</span></div>
+        </div>
+        <div class="note res" style="padding:0 12px;font-size:9.5px"><span>ⓘ</span>Inspection binds to /replay + getSessionTrace (the stamped chain) — never the live reducer.</div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 02</b> &nbsp;·&nbsp; Run · Time-Travel (hero) — intent+command cards · the INTENT≠EFFECT flag · scrub the stateAt(idx) fold</div>
+</section>
+
+<!-- ===================== FRAME 3 — RUN · PROFILE ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp</div><span class="chip"><span class="dot" style="background:var(--in);width:6px;height:6px"></span>TEST</span>
+      <span class="crumb">Runs / <b>run_a1f8c2</b> / PROFILE @ idx 9</span>
+      <div class="seg" style="margin-left:auto"><button class="on">Profile</button><button>Time-Travel</button><button>Lineage</button></div>
+      <div class="cmdk" style="margin-left:9px"><kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <div class="rail" style="width:240px">
+        <div class="tree-h"><span class="up muted">▾ Run history</span></div>
+        <div class="rrow on"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);font-size:11px">correlate the deploy…</span></div>
+        <div class="rrow"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);font-size:11px;color:var(--ts)">reconcile invoices…</span></div>
+        <div class="tree-h" style="margin-top:6px"><span class="up muted">▸ Data catalog</span></div>
+        <div class="rrow"><span class="dot e-durable"></span><span class="pth">/database · /s3 · /slack…</span></div>
+      </div>
+      <!-- operator tree -->
+      <div style="width:392px;flex:none;border-right:1px solid var(--bd);background:var(--s0);overflow:hidden">
+        <div class="lens" style="height:32px"><span class="up muted" style="font-size:9.5px">Operator tree · % of run</span><span class="badge b-mut" style="margin-left:auto">derived</span></div>
+        <div class="optree">
+          <div class="oprow"><span class="faint">▾</span><span style="color:var(--in)">Step 1</span> list dashboards<span class="bar" style="width:18px;margin-left:auto"></span></div>
+          <div class="oprow" style="padding-left:30px"><span class="muted">readdir</span> /s3/dashboards<span class="bar" style="width:12px;margin-left:auto;background:var(--tf)"></span></div>
+          <div class="oprow"><span class="faint">▾</span><span style="color:var(--in)">Step 3</span> correlate the deploy<span class="bar" style="width:64px;margin-left:auto"></span></div>
+          <div class="oprow" style="padding-left:30px"><span class="muted">read</span> …/checkout_2023.json<span class="muted" style="margin-left:auto">4.2KB</span></div>
+          <div class="oprow ring" style="padding-left:30px"><span style="color:var(--in)">read</span> …/app.log<span class="bar" style="width:120px;margin-left:auto;background:var(--in)"></span></div>
+          <div class="oprow"><span class="faint">▾</span><span style="color:var(--in)">Step 5</span> read events<span class="bar" style="width:86px;margin-left:auto"></span></div>
+          <div class="oprow" style="padding-left:30px"><span class="muted">read</span> /database/…/events<span class="muted" style="margin-left:auto">762KB</span></div>
+        </div>
+      </div>
+      <!-- stage: most-expensive ops -->
+      <div class="center">
+        <div class="lens"><span class="up muted" style="font-size:9.5px">Most-expensive ops</span><div class="seg" style="height:22px;margin-left:8px"><button class="on">bytes</button><button>duration</button></div></div>
+        <div style="flex:1;overflow:hidden">
+          <div class="rankrow ring" style="background:var(--ac-soft)"><span class="badge" style="padding:0 5px">1</span>read /s3/…/2026/05/15/app.log<span style="margin-left:auto;color:var(--tp)">512 KB</span><span class="muted">· s3 · 41ms</span></div>
+          <div class="rankrow"><span class="badge" style="padding:0 5px">2</span>read /database/tables/events/data.jsonl<span style="margin-left:auto;color:var(--tp)">762 KB</span><span class="muted">· disk · 28ms</span></div>
+          <div class="rankrow"><span class="badge" style="padding:0 5px">3</span>read /s3/…/2026/05/14/app.log<span style="margin-left:auto;color:var(--tp)">318 KB</span><span class="muted">· s3 · 33ms</span></div>
+          <div class="rankrow"><span class="badge" style="padding:0 5px">4</span>read /database/tables/users/data.jsonl<span style="margin-left:auto;color:var(--tp)">103 KB</span><span class="muted">· disk · 12ms</span></div>
+          <div class="note" style="padding:11px 13px"><span>▸</span>Read the top 3 rows to triage 23 ops — Snowsight's "find the expensive node" on a real byte spine. Click → cursor flies there + rings the tree node.</div>
+        </div>
+        <div class="transport">
+          <div class="tbtn">◀</div><div class="tbtn">▶</div>
+          <div class="minimap"><i style="height:30%"></i><i style="height:45%"></i><i style="height:100%;background:var(--in)"></i><i style="height:40%"></i><i style="height:85%;background:var(--in)"></i><i style="height:38%"></i><i style="height:50%"></i><span class="playhead" style="left:18%"></span></div>
+          <div class="curbadge">idx 9 · app.log 512 KB</div>
+        </div>
+      </div>
+      <!-- inspector: IO attribution -->
+      <div class="rail" style="width:340px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="lens" style="height:36px"><b style="font-size:11.5px">IO attribution</b></div>
+        <div class="card" style="margin:8px 10px">
+          <div class="ch"><b style="font-size:11px">Bytes by source</b><span class="b-cap badge" style="margin-left:auto;padding:0 4px">solid</span></div>
+          <div style="padding:9px 12px;font-family:var(--mono);font-size:10.5px;display:flex;flex-direction:column;gap:6px">
+            <div>s3 <span class="bar" style="display:inline-block;width:120px;background:var(--m-s3);vertical-align:middle;margin:0 7px"></span><span class="sec">1.0 MB</span></div>
+            <div>disk <span class="bar" style="display:inline-block;width:26px;background:var(--in);vertical-align:middle;margin:0 7px"></span><span class="sec">205 KB</span></div>
+            <div>ram <span class="bar" style="display:inline-block;width:3px;background:var(--tf);vertical-align:middle;margin:0 7px"></span><span class="muted">4.2 KB</span></div>
+          </div>
+        </div>
+        <div class="card" style="margin:0 10px 8px"><div class="ch"><b style="font-size:11px">Cache ratio</b><span class="badge b-mut" style="margin-left:auto;padding:0 4px">derived</span></div><div style="padding:9px 12px;font-family:var(--mono);font-size:10.5px;color:var(--tm)">is_cache 3 of 18 reads</div></div>
+        <div class="card" style="margin:0 10px;border-style:dashed;opacity:.6"><div class="ch" style="background:transparent"><b style="font-size:11px;color:var(--tf)">Latency phases</b><span class="badge b-mut" style="margin-left:auto;padding:0 4px">not emitted</span></div><div class="note res" style="padding:9px 12px;font-size:9.5px"><span>⊘</span>model / cache / fetch split — Span tree is a demo. Reserved.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 03</b> &nbsp;·&nbsp; Run · Profile (Snowflake query-profile) — operator tree + most-expensive ops + IO attribution, on the real byte spine</div>
+</section>
+
+<!-- ===================== FRAME 4 — RUN · LINEAGE ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp</div><span class="chip"><span class="dot" style="background:var(--in);width:6px;height:6px"></span>TEST</span>
+      <span class="crumb">Runs / <b>run_a1f8c2</b> / LINEAGE @ idx 14</span>
+      <div class="seg" style="margin-left:auto"><button>Profile</button><button>Time-Travel</button><button class="on">Lineage</button></div>
+      <div class="cmdk" style="margin-left:9px"><kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <div class="rail" style="width:240px">
+        <div class="tree-h"><span class="up muted">▾ Run history</span></div>
+        <div class="rrow on"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);font-size:11px">correlate the deploy…</span></div>
+        <div class="rrow"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);font-size:11px;color:var(--ts)">patch the user roster…</span></div>
+        <div class="tree-h" style="margin-top:6px"><span class="up muted">▸ Data catalog</span></div>
+        <div class="rrow"><span class="dot e-durable"></span><span class="pth">/database · /s3…</span></div>
+      </div>
+      <div class="center">
+        <div class="lens"><b style="font-size:12px">Touched-by</b><span class="crumb" style="margin-left:10px">/database/tables/users/data.jsonl</span><span class="sec" style="margin-left:auto;cursor:pointer;font-size:11px">↗ open in Data</span></div>
+        <div style="flex:1;overflow:hidden;padding:12px 14px">
+          <div style="display:flex;gap:9px;align-items:center;font-family:var(--mono);font-size:11px;margin-bottom:11px">
+            <span class="dot e-durable"></span><span class="sec">database · durable-internal · ro</span>
+            <span class="badge" style="margin-left:8px">Touched by 3 runs · 5 ops</span><span class="badge" style="border-color:var(--in-soft);color:var(--in)">● read 4</span><span class="badge b-cap">● write 1</span><span class="badge b-mut">src: disk</span>
+          </div>
+          <div class="card" style="margin:0">
+            <div style="padding:9px 12px;border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:11px"><span class="faint">▸</span> <b style="color:var(--tp)">run_a1f8c2</b> <span class="muted">"join users to subscriptions"</span> <span class="badge" style="margin-left:6px;padding:0 4px">2 ops</span> <span style="color:var(--in)">◀read ◀read</span>
+              <div style="margin:5px 0 0 16px;color:var(--tm)">└ tc-3c… cat …/users/data.jsonl · read · disk · 103 KB</div></div>
+            <div style="padding:9px 12px;font-family:var(--mono);font-size:11px"><span class="faint">▸</span> <b style="color:var(--tp)">run_b27c91</b> <span class="muted">"patch the user roster"</span> <span class="badge" style="margin-left:6px;padding:0 4px">1 op</span> <span style="color:var(--cap)">▶write</span>
+              <div style="margin:5px 0 0 16px;color:var(--tm)">└ tc-9e… write …/users/data.jsonl · write · +840 B <span class="faint">· fingerprint/rev — (disk)</span></div></div>
+          </div>
+          <div class="note" style="margin-top:11px"><span>↳</span>Co-touched (hop-2): <span class="mono sec">/database/tables/subscriptions/data.jsonl</span> · <span class="mono sec">/s3/…/2026-04-customers.csv</span></div>
+          <div style="margin-top:11px;border:1px dashed var(--bds);border-radius:8px;opacity:.55;padding:14px;text-align:center;font-size:10.5px;color:var(--tf)">[ graph ⤢ ] op-level lineage preview · not a provenance graph</div>
+          <div class="note res" style="margin-top:11px;font-size:9.5px"><span>ⓘ</span>Op-level lineage from observed VfsOps in THIS workspace's loaded runs. Not a transitive provenance graph. &nbsp;<span class="sec">[load more runs to widen]</span></div>
+        </div>
+        <div class="transport"><div class="tbtn">◀</div><div class="tbtn">▶</div><div class="minimap"><i style="height:40%"></i><i style="height:55%"></i><i style="height:100%;background:var(--in)"></i><i style="height:42%"></i><span class="playhead" style="left:58%"></span></div><div class="curbadge">idx 14 · users/data.jsonl</div></div>
+      </div>
+      <div class="rail" style="width:330px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="lens" style="height:36px"><b style="font-size:11.5px">Selected VfsOp</b></div>
+        <dl class="kv"><dt>op · source</dt><dd>read · disk</dd><dt>path</dt><dd>/database/…/users/data.jsonl</dd><dt>bytes</dt><dd>103 KB</dd><dt>fingerprint</dt><dd class="faint">— (disk)</dd><dt>revision</dt><dd class="faint">—</dd></dl>
+        <div class="note res" style="padding:6px 12px;font-size:9.5px"><span>ⓘ</span>fingerprint/revision real only on S3-like sources — never zero-filled.</div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 04</b> &nbsp;·&nbsp; Run · Lineage (Databricks) — the data↔trace bridge: who touched this path · [↗ open in Data] · jump back to any op</div>
+</section>
+
+<!-- ===================== FRAME 5 — DATA · TABLE (Snowsight) ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp</div><span class="chip"><span class="dot" style="background:var(--in);width:6px;height:6px"></span>TEST</span>
+      <span class="crumb">Data / <b>/database/tables/users</b></span>
+      <div class="cmdk">Search &amp; jump <kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <!-- catalog -->
+      <div class="rail">
+        <div class="tree-h"><span class="up muted">Catalog · northhill_corp</span></div>
+        <div class="rrow"><span class="dot e-durable"></span><span class="pth">▾ /database</span><span class="badge b-mut" style="margin-left:auto;padding:0 4px">table</span></div>
+        <div class="rrow on" style="padding-left:24px"><span style="color:var(--m-db)">▦</span><span class="pth">users</span><span class="faint mono" style="margin-left:auto;font-size:9px">500</span></div>
+        <div class="rrow" style="padding-left:24px"><span style="color:var(--m-db)">▦</span><span class="pth">invoices</span><span class="faint mono" style="margin-left:auto;font-size:9px">200</span></div>
+        <div class="rrow" style="padding-left:24px"><span style="color:var(--m-db)">▦</span><span class="pth">subscriptions</span><span class="faint mono" style="margin-left:auto;font-size:9px">51</span></div>
+        <div class="rrow" style="padding-left:24px"><span style="color:var(--m-db)">▦</span><span class="pth">events</span><span class="faint mono" style="margin-left:auto;font-size:9px">5000</span></div>
+        <div class="rrow"><span class="dot e-durable"></span><span class="pth">▸ /s3</span></div>
+        <div class="rrow"><span class="dot e-ext"></span><span class="pth">▸ /slack</span></div>
+        <div class="rrow"><span class="dot e-sor"></span><span class="pth">▸ /finance</span></div>
+        <div class="rrow"><span class="dot e-sor"></span><span class="pth">▸ /customers</span></div>
+      </div>
+      <!-- table detail -->
+      <div class="center">
+        <div style="padding:10px 14px 8px;border-bottom:1px solid var(--bd)">
+          <div style="display:flex;align-items:center;gap:10px"><span class="h1" style="font-size:15px">users</span><span class="badge b-cap">500 rows · 105,590 B · updated 2026-05-15</span><span class="muted mono" style="font-size:9px">stats.json · solid</span></div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px;height:26px;border:1px solid var(--bd);border-radius:7px;background:var(--s0);padding:0 10px;opacity:.5;cursor:not-allowed"><span class="faint mono" style="font-size:11px">SELECT … — live query (catalog-proxy: NotImplementedError)</span><span class="badge b-mut" style="margin-left:auto;padding:0 4px">disabled</span></div>
+        </div>
+        <div class="lens" style="height:32px"><span class="lt">Schema</span><span class="lt on">Data</span></div>
+        <div style="flex:1;overflow:hidden">
+          <table class="dg" style="width:100%">
+            <thead><tr>
+              <th>user_id<div class="prof"><span>txt</span><span>·</span><span>500 distinct</span></div></th>
+              <th>account_id<div class="prof"><span>txt</span><span>·</span><span>312 distinct</span></div></th>
+              <th>email<div class="prof"><span>txt</span><span>·</span><span>0% null</span></div></th>
+              <th>plan<div class="prof"><span class="spark"><i style="height:13px"></i><i style="height:6px"></i><i style="height:4px"></i></span><span>3</span></div></th>
+              <th>status<div class="prof"><span class="spark"><i style="height:12px"></i><i style="height:5px"></i></span><span>2</span></div></th>
+              <th>last_login<div class="prof"><span class="nullbar"><i style="width:6%"></i></span><span>6% null</span></div></th>
+            </tr></thead>
+            <tbody>
+              <tr><td style="color:var(--ts)">usr_00000</td><td>ACCT-2024</td><td>arodriguez@example.org</td><td>free</td><td>active</td><td>2024-07-18</td></tr>
+              <tr><td style="color:var(--ts)">usr_00001</td><td>ACCT-2033</td><td>shannondiaz@example.com</td><td>free</td><td>inactive</td><td>2025-03-17</td></tr>
+              <tr><td style="color:var(--ts)">usr_00002</td><td>ACCT-2039</td><td>margarethaney@example.net</td><td>free</td><td>active</td><td>2026-02-19</td></tr>
+              <tr><td style="color:var(--ts)">usr_00003</td><td>ACCT-2041</td><td>jwest@example.com</td><td>business</td><td>active</td><td>2026-01-09</td></tr>
+              <tr><td style="color:var(--ts)">usr_00004</td><td>ACCT-2044</td><td>kbrooks@example.org</td><td>enterprise</td><td>active</td><td>2026-02-28</td></tr>
+            </tbody>
+          </table>
+          <div class="note res" style="padding:8px 13px"><span>ⓘ</span>Derived from data.jsonl · column profile computed client-side from 500 sampled rows · no live SQL.</div>
+        </div>
+      </div>
+      <!-- right: column profile + lineage + metadata -->
+      <div class="rail" style="width:380px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="card" style="margin:8px 10px">
+          <div class="ch"><b style="font-size:11px">Column · plan</b><span class="badge b-mut" style="margin-left:auto;padding:0 4px">client-side · 500 rows</span></div>
+          <div style="padding:9px 12px;font-family:var(--mono);font-size:10.5px;display:flex;flex-direction:column;gap:6px">
+            <div>free <span class="bar" style="display:inline-block;width:96px;background:var(--in);vertical-align:middle;margin:0 7px"></span><span class="sec">0.61</span></div>
+            <div>business <span class="bar" style="display:inline-block;width:35px;background:var(--in);vertical-align:middle;margin:0 7px"></span><span class="sec">0.22</span></div>
+            <div>enterprise <span class="bar" style="display:inline-block;width:27px;background:var(--in);vertical-align:middle;margin:0 7px"></span><span class="sec">0.17</span></div>
+            <div class="faint" style="margin-top:3px">null 0% · distinct 3 · click bar → filter grid</div>
+          </div>
+        </div>
+        <div class="card" style="margin:0 10px 8px">
+          <div class="ch"><span class="dot" style="background:var(--in)"></span><b style="font-size:11px">Touched by · 3 runs · 5 ops</b></div>
+          <div style="padding:8px 12px;font-family:var(--mono);font-size:10px;color:var(--tm)">▸ run_a1f8c2 "join users…" 2 ops ◀read<br/>▸ run_b27c91 "patch roster" 1 op ▶write<br/><span class="faint">click a row → jump into that run @ op</span></div>
+        </div>
+        <div class="note res" style="margin:0 12px;font-size:9.5px"><span>⊘</span>metadata · fingerprint — · revision — · consistency — <span class="faint">(S3-only via ETag)</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 05</b> &nbsp;·&nbsp; Data · Table (Snowsight) — catalog + data grid with per-column profiling + touched-by lineage + honest reserved metadata</div>
+</section>
+
+<!-- ===================== FRAME 6 — DATA · FILE-TREE ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp</div><span class="chip"><span class="dot" style="background:var(--in);width:6px;height:6px"></span>TEST</span>
+      <span class="crumb">Data / <b>/s3/…/2026-04-revenue.csv</b></span>
+      <div class="cmdk">Search &amp; jump <kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <div class="rail">
+        <div class="tree-h"><span class="up muted">Catalog · northhill_corp</span></div>
+        <div class="rrow"><span class="dot e-durable"></span><span class="pth">▾ /s3</span></div>
+        <div class="rrow" style="padding-left:22px"><span class="pth">▾ northhill-data</span></div>
+        <div class="rrow" style="padding-left:36px"><span class="pth">▾ exports/monthly</span></div>
+        <div class="rrow on" style="padding-left:50px"><span style="color:var(--m-s3)">▤</span><span class="pth">2026-04-revenue.csv</span></div>
+        <div class="rrow" style="padding-left:50px"><span style="color:var(--m-s3)">▤</span><span class="pth">2026-03-revenue.csv</span></div>
+        <div class="rrow"><span class="dot e-durable"></span><span class="pth">▸ /database</span></div>
+        <div class="rrow"><span class="dot e-ext"></span><span class="pth">▸ /slack</span></div>
+        <div class="rrow"><span class="dot e-github" style="background:var(--m-github)"></span><span class="pth">▸ /github</span></div>
+      </div>
+      <div class="center">
+        <div style="padding:9px 14px;border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:11px;color:var(--ts)">/s3 / northhill-data / exports / monthly / <b style="color:var(--tp)">2026-04-revenue.csv</b></div>
+        <div style="flex:1;overflow:hidden;padding:13px 16px;font-family:var(--mono);font-size:12px;color:var(--ts);line-height:1.7">
+          <span class="faint">account_id,plan,mrr,month</span><br/>ACCT-1001,enterprise,40000.00,2026-04<br/>ACCT-1002,business,8000.00,2026-04<br/>ACCT-1003,enterprise,40000.00,2026-04<br/>ACCT-1004,free,0.00,2026-04<br/>ACCT-1005,business,8000.00,2026-04<br/><span class="faint">…</span>
+        </div>
+        <div class="note res" style="padding:9px 16px;border-top:1px solid var(--bd)"><span>ⓘ</span>preview only · text decode · no binary / truncation beyond fetched bytes (vfsFile / cat).</div>
+      </div>
+      <div class="rail" style="width:340px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="lens" style="height:36px"><b style="font-size:11.5px">Metadata</b></div>
+        <dl class="kv"><dt>size</dt><dd>18.4 KB</dd><dt>mode</dt><dd>ro</dd><dt>effect-class</dt><dd>durable-internal <span class="dot e-durable" style="vertical-align:0"></span></dd><dt>fingerprint</dt><dd>etag-7c41a9 <span class="b-cap badge" style="padding:0 4px">solid · s3</span></dd><dt>revision</dt><dd>R12 <span class="b-cap badge" style="padding:0 4px">solid</span></dd></dl>
+        <div class="card" style="margin:6px 10px"><div class="ch"><span class="dot" style="background:var(--in)"></span><b style="font-size:11px">Touched by · 2 runs · 3 ops</b></div><div style="padding:8px 12px;font-family:var(--mono);font-size:10px;color:var(--tm)">▸ run_4e0d77 "reconcile" 2 ops ◀read<br/>▸ run_d5512a "export Q1" 1 op ◀read <span style="color:var(--wa)">⚑</span><br/><span class="badge" style="border-color:var(--in-soft);color:var(--in);margin-top:4px;padding:0 4px">● read 3</span> <span class="badge b-mut" style="padding:0 4px">src: s3</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 06</b> &nbsp;·&nbsp; Data · File-tree — non-tabular mounts: text preview + real S3 fingerprint/revision + the same touched-by bridge</div>
+</section>
+
+<!-- ===================== FRAME 7 — COMPARE ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp</div>
+      <span class="crumb">Compare / <b>run_a1f8c2</b> ↔ <b>run_a1f8d9</b></span>
+      <div class="cmdk" style="margin-left:auto"><kbd>⌘⇧C</kbd></div>
+    </div>
+    <!-- diff summary -->
+    <div style="display:flex;align-items:center;gap:14px;padding:9px 16px;border-bottom:1px solid var(--bd);background:var(--s1);font-size:11.5px">
+      <b>Δ summary</b>
+      <span class="badge">ops 23 → <span style="color:var(--su)">19</span> (−4)</span>
+      <span class="badge">bytes 1.2 MB → <span style="color:var(--su)">840 KB</span></span>
+      <span class="badge" style="border-color:var(--da)">A-only: checkout_2023.json ⚑</span>
+      <span class="badge b-ok">B-only: checkout.json (fresh)</span>
+      <span class="muted" style="margin-left:auto">both: /database/users · /s3/app.log</span>
+    </div>
+    <div class="body">
+      <!-- Run A -->
+      <div class="center" style="border-right:1px solid var(--bd)">
+        <div class="lens"><span class="badge" style="border-color:var(--in-soft);color:var(--in)">A · run_a1f8c2 · before</span><span class="muted" style="margin-left:auto;font-size:10.5px">23 ops · 1.2 MB</span></div>
+        <div style="flex:1;overflow:hidden">
+          <div class="iccard" style="opacity:.55;margin:8px 12px"><div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 1–2 · orient</b></div></div>
+          <div class="iccard sel" style="margin:8px 12px">
+            <div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 3 · correlate</b><span class="muted mono" style="font-size:9px;margin-left:auto">⚑</span></div>
+            <div class="ic-intent"><span class="lbl">ⓘ</span><span class="dotu">"read the <b style="color:var(--tp)">live</b> checkout dashboard"</span></div>
+            <div class="ic-cmd"><div class="cmdline"><span class="faint">▾</span><span style="color:var(--su)">$</span> cat …/checkout.json<span class="muted" style="margin-left:auto">exit 0</span></div>
+              <div class="ic-eff">└ read /s3/…/<b style="color:var(--wa)">checkout_2023.json</b> · <span class="badge b-mut" style="padding:0 4px">cache</span></div>
+              <div class="ic-flag">⚑ INTENT≠EFFECT — cached 2023 read</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Run B -->
+      <div class="center">
+        <div class="lens"><span class="badge b-ok">B · run_a1f8d9 · after fix</span><span class="muted" style="margin-left:auto;font-size:10.5px">19 ops · 840 KB</span></div>
+        <div style="flex:1;overflow:hidden">
+          <div class="iccard" style="opacity:.55;margin:8px 12px"><div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 1–2 · orient</b></div></div>
+          <div class="iccard sel" style="margin:8px 12px;border-color:oklch(0.76 0.18 155/0.45)">
+            <div class="ic-head"><span class="dot" style="background:var(--su)"></span><b>Step 3 · correlate</b><span class="badge b-ok" style="font-size:9px;margin-left:auto;padding:0 4px">no flag</span></div>
+            <div class="ic-intent"><span class="lbl">ⓘ</span><span class="dotu">"read the <b style="color:var(--tp)">live</b> checkout dashboard"</span></div>
+            <div class="ic-cmd"><div class="cmdline"><span class="faint">▾</span><span style="color:var(--su)">$</span> cat …/checkout.json<span class="muted" style="margin-left:auto">exit 0</span></div>
+              <div class="ic-eff" style="border-left-color:var(--su)">└ read /s3/…/<b style="color:var(--su)">checkout.json</b> · fresh · etag b2c0 · rev R5</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:9px 16px;border-top:1px solid var(--bd);background:var(--s1);font-size:11.5px;color:var(--ts)"><span style="color:var(--su)">✓ Verdict:</span> the fix turned a <b>data mistake</b> (stale cached read) into a clean read — the ⚑ flag disappearing A→B is the proof.</div>
+  </div>
+  <div class="figtag"><b>Fig 07</b> &nbsp;·&nbsp; Compare two runs — aligned intent+command spines; the INTENT≠EFFECT flag vanishing A→B proves the fix</div>
+</section>
+
+<!-- ===================== FRAME 8 — INVESTIGATION ===================== -->
+<section class="frame">
+  <div class="app">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp</div>
+      <span class="crumb">Investigations / <b>Stale checkout dashboard reads</b></span>
+      <div class="cmdk" style="margin-left:auto"><kbd>⌘⇧S</kbd> pin</div>
+    </div>
+    <div class="body">
+      <div class="rail" style="width:300px">
+        <div class="tree-h"><span class="up muted">Investigations</span></div>
+        <div class="rrow on" style="align-items:flex-start;padding:8px 11px"><span class="dot" style="background:var(--wa);margin-top:4px"></span><div><div style="font-size:12px;color:var(--tp)">Stale checkout dashboard reads</div><div class="faint mono" style="font-size:9px;margin-top:2px">P2 · needs_review · alert</div></div></div>
+        <div class="rrow" style="align-items:flex-start;padding:8px 11px"><span class="dot" style="background:var(--da);margin-top:4px"></span><div><div style="font-size:12px;color:var(--ts)">Q1 revenue export failure</div><div class="faint mono" style="font-size:9px;margin-top:2px">P3 · escalated</div></div></div>
+        <div class="rrow" style="align-items:flex-start;padding:8px 11px"><span class="dot" style="background:var(--su);margin-top:4px"></span><div><div style="font-size:12px;color:var(--ts)">Roster patch review</div><div class="faint mono" style="font-size:9px;margin-top:2px">P4 · resolved</div></div></div>
+      </div>
+      <div class="center">
+        <div style="padding:12px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px"><span class="h1" style="font-size:15px">Stale checkout dashboard reads</span><span class="badge b-warn">P2</span><span class="badge">needs_review</span><span class="badge b-mut">trigger: alert</span><span class="badge b-mut">read_only</span></div>
+        <div style="flex:1;overflow:hidden;padding:14px 18px;max-width:820px">
+          <div class="card" style="margin:0 0 11px">
+            <div class="ch"><span style="color:var(--wa)">⚑</span><b style="font-size:11px">INTENT≠EFFECT @ run_a1f8c2 · idx 14</b><span class="badge b-mut mono" style="margin-left:auto;padding:0 5px;font-size:9px">?run=a1f8c2&amp;cursor=14&amp;lens=timetravel</span></div>
+            <div style="padding:10px 13px;font-size:12px;color:var(--ts);line-height:1.5">agent claimed <b>live</b> but read <span class="mono" style="color:var(--wa)">/s3/…/checkout_2023.json</span> <span class="badge b-mut" style="padding:0 4px">cache</span> — a <b>data mistake</b>, not model. <span class="sec" style="cursor:pointer">↩ jump to this exact state</span></div>
+          </div>
+          <div class="card" style="margin:0 0 11px">
+            <div class="ch"><span class="dot" style="background:var(--in)"></span><b style="font-size:11px">DIFF @ run_a1f8c2 · idx 9</b></div>
+            <div style="padding:10px 13px;font-size:12px;color:var(--tm)">largest read 512 KB app.log — fine, not the cause.</div>
+          </div>
+          <div style="font-size:13px;color:var(--ts);line-height:1.6;padding:4px 2px"><b style="color:var(--tp)">## Root cause</b><br/>cache key omitted the date; fix = invalidate the dashboard cache nightly. Verified in <span class="mono sec">run_a1f8d9</span> (Compare) — flag cleared.</div>
+        </div>
+        <div style="padding:9px 18px;border-top:1px solid var(--bd)"><span class="badge b-cap">⤓ Export .mirage-session bundle</span> <span class="muted" style="font-size:10px;margin-left:8px">actions[] + getSessionTrace + mount manifest — re-import &amp; scrub offline</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 08</b> &nbsp;·&nbsp; Investigation — saved findings: pinned cards with cursor-permalinks that reconstruct the exact run state + export a repro</div>
+</section>
+
+<!-- ===================== FRAME 9 — CMD-K ===================== -->
+<section class="frame">
+  <div class="app" style="filter:saturate(.7) brightness(.6)">
+    <div class="ctx">
+      <div class="logo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill_corp</div><span class="crumb" style="margin-left:auto">Runs / run_a1f8c2</span>
+    </div>
+    <div class="body"><div class="rail"><div class="tree-h"><span class="up muted">▾ Run history</span></div><div class="rrow on"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);font-size:11px">correlate the deploy…</span></div></div><div class="center"></div></div>
+  </div>
+  <div style="position:absolute;inset:0;background:oklch(0.10 0.01 264/0.55)"></div>
+  <div style="position:absolute;top:92px;left:50%;transform:translateX(-50%);width:680px;border:1px solid var(--bds);border-radius:14px;background:oklch(0.205 0.015 264/0.98);box-shadow:0 24px 64px -12px rgba(0,0,0,.7);overflow:hidden">
+    <div style="display:flex;align-items:center;gap:11px;padding:14px 18px;border-bottom:1px solid var(--bd)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><span style="font-size:15px;color:var(--tp)">check</span><span style="width:1px;height:16px;background:var(--ac)"></span><span class="cmdk" style="margin-left:auto"><kbd>↑↓</kbd> <kbd>↵</kbd> <kbd>esc</kbd></span></div>
+    <div style="padding:7px 0;max-height:380px">
+      <div class="up faint" style="font-size:9px;padding:7px 18px 4px">Runs</div>
+      <div class="rrow" style="padding:7px 18px;gap:10px"><span class="dot" style="background:var(--su)"></span><span class="pth" style="font-family:var(--sans);color:var(--tp)">run_a1f8c2 — "correlate the deploy with the live checkout…"</span></div>
+      <div class="up faint" style="font-size:9px;padding:7px 18px 4px">Paths &amp; tables</div>
+      <div class="rrow" style="padding:7px 18px;gap:10px"><span style="color:var(--m-s3)">▤</span><span class="pth">/s3/dashboards/checkout.json</span></div>
+      <div class="rrow" style="padding:7px 18px;gap:10px"><span style="color:var(--m-s3)">▤</span><span class="pth">/s3/dashboards/checkout_2023.json</span></div>
+      <div class="up faint" style="font-size:9px;padding:7px 18px 4px">Ops</div>
+      <div class="rrow" style="padding:7px 18px;gap:10px"><span class="badge" style="padding:0 5px">→</span><span class="pth">jump to cursor 14 (read checkout_2023.json)</span></div>
+      <div class="up faint" style="font-size:9px;padding:7px 18px 4px">Commands</div>
+      <div class="rrow cur" style="padding:7px 18px;gap:10px;background:var(--ac-soft)"><span style="color:var(--acs)">▦</span><span class="pth" style="font-family:var(--sans);color:var(--tp)">Open /database/tables/users in Data</span><span class="badge" style="margin-left:auto;padding:0 4px">↵</span></div>
+      <div class="rrow" style="padding:7px 18px;gap:10px"><span style="color:var(--tm)">⌘\\</span><span class="pth" style="font-family:var(--sans)">Split lens: Profile right</span></div>
+      <div class="rrow" style="padding:7px 18px;gap:10px"><span style="color:var(--tm)">⤓</span><span class="pth" style="font-family:var(--sans)">Export .mirage-session</span></div>
+      <div class="up faint" style="font-size:9px;padding:7px 18px 4px">Governance <span class="muted">· the only home</span></div>
+      <div class="rrow" style="padding:7px 18px;gap:10px"><span style="color:var(--da)">⇧</span><span class="pth" style="font-family:var(--sans);color:var(--ts)">Promote workspace northhill_corp TEST→LIVE</span><span class="badge" style="margin-left:auto;padding:0 4px;border-color:var(--da);color:var(--da)">confirm</span></div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 09</b> &nbsp;·&nbsp; Cmd-K — universal teleporter across runs/paths/ops/findings + the only home for governance (Promote)</div>
+</section>
+
+</body>
+</html>

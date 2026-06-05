@@ -7,17 +7,20 @@ from typing import Optional
 
 import typer
 from dotenv import load_dotenv
+from rich.console import Console
+from rich.table import Table
+
 from mirage_eval.fixtures.build_snapshot import snapshot_workspace
 from mirage_eval.report.aggregate import aggregate_sweep
 from mirage_eval.report.canvas import write_canvas, write_compare_canvas
 from mirage_eval.report.markdown import write_markdown_summary
+from mirage_eval.report.store_index import (index_scorecard,
+                                            index_sweep_aggregate)
 from mirage_eval.runner.common import RunArtifacts
 from mirage_eval.runner.l1_synthetic import run_l1
 from mirage_eval.runner.l2_real import run_l2
 from mirage_eval.scenario import ENTERPRISE_ROOT, REPO_ROOT, ScenarioManifest
 from mirage_eval.scorers.composite import ScoreCard, score_run
-from rich.console import Console
-from rich.table import Table
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()
@@ -130,6 +133,7 @@ async def _run_and_score(*, scenario: str, task_id: str, model: str, seed: int,
     task = manifest.load_task(task_id)
     card = await score_run(artifacts, task)
     card.write_to(out_dir)
+    await index_scorecard(card, out_dir.name)
     return card
 
 
@@ -252,6 +256,7 @@ def sweep(
     agg = aggregate_sweep(sweep_dir)
     (sweep_dir / "aggregate.json").write_text(
         json.dumps(agg.to_dict(), indent=2))
+    asyncio.run(index_sweep_aggregate(scenario, sid, agg.to_dict()))
     write_markdown_summary(agg, sweep_dir / "SUMMARY.md")
     canvas_path = write_canvas(agg, manifest.absolute_canvas_path)
     console.print(

@@ -43,17 +43,33 @@ uv run mirage-eval seed --scenario northhill_corp
 uv run mirage-eval seed --scenario onboarding_it
 ```
 
-## 3. Start the Docker stack (recommended)
+## 3. Start the Docker stack
 
-Runs all services in one command.
+**Production (no hot reload):**
 
 ```bash
 cd docker && docker compose up --build
+# → http://localhost:8080
+```
+
+**Development (hot reload):** see the root [README](../../README.md#development-with-hot-reload). Quick version:
+
+```bash
+# Terminal 1
+cd docker && docker compose -f docker-compose.services.yml up --build
+
+# Terminal 2 (repo root)
+RELOAD=1 uv run python frontends/platform/server.py
+
+# Terminal 3
+cd frontends/platform && npm install && npm run dev
+# → http://localhost:5173
 ```
 
 | Service          | Port | What it does                                               |
 | ---------------- | ---- | ---------------------------------------------------------- |
-| arcadia-platform | 8080 | Unified UI (Portal + Console + Observability) + all APIs   |
+| arcadia-platform | 8080 | Unified UI (production compose only)                       |
+| platform-ui      | 5173 | Vite dev server (dev compose only)                         |
 | mock-services    | 3000 | Mock HTTP APIs for Slack, GitHub, Jira, PagerDuty, Datadog |
 | mirage           | 8081 | MCP server over Streamable HTTP                            |
 
@@ -113,6 +129,20 @@ uv run mirage-eval sweep \
 ```
 
 Results: `results/<scenario>/<sweep_id>/SUMMARY.md`
+
+### Scorecard indexing
+
+Scorecards and sweep aggregates are always written to JSON files under
+`results/<scenario>/<sweep_id>/` (the portable source of truth). When `DATABASE_URL`
+is set, the harness *also* writes each scorecard and the sweep aggregate through to the
+shared store (the `scorecards` / `sweep_aggregates` tables in `arcadia_store`), so the
+platform's results API can serve them DB-first across machines. With `DATABASE_URL`
+unset, indexing is a silent no-op and only the JSON files are produced.
+
+```bash
+DATABASE_URL=postgresql+asyncpg://arcadia:arcadia@localhost:5432/arcadia \
+  uv run mirage-eval sweep --scenario northhill_corp --models gpt-5-mini --seeds 1 --yes
+```
 
 ### Available tasks (northhill_corp)
 

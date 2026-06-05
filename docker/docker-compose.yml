@@ -8,6 +8,20 @@ services:
     volumes:
       - trace-data:/app/data
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: arcadia
+      POSTGRES_PASSWORD: arcadia
+      POSTGRES_DB: arcadia
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arcadia -d arcadia"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   arcadia-platform:
     build:
       context: ..
@@ -18,15 +32,20 @@ services:
       - DISK_ROOT=/app/fixture
       - TRACES_DB=/app/data/traces.db
       - RESULTS_DIR=/app/results
+      - DATABASE_URL=postgresql+asyncpg://arcadia:arcadia@postgres:5432/arcadia
+      - CONSOLE_SNAP_DIR=/app/console_snapshots
     env_file:
       - ../.env
     volumes:
       - ../packages/eval/scenarios/northhill_corp/fixture/disk:/app/fixture:ro
       - ../packages/eval/results:/app/results:ro
       - trace-data:/app/data:ro
+      - console-snap:/app/console_snapshots
     depends_on:
       trace-generator:
         condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/api/health"]
       interval: 5s
@@ -73,3 +92,5 @@ services:
 
 volumes:
   trace-data:
+  pg-data:
+  console-snap:

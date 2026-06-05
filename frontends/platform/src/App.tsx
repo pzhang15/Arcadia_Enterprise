@@ -1,14 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, NavLink, useLocation } from "react-router-dom";
+import {
+  Activity,
+  BarChart3,
+  Boxes,
+  ChevronsLeft,
+  ClipboardList,
+  Database,
+  FolderTree,
+  HelpCircle,
+  Send,
+  Settings,
+} from "lucide-react";
 import { useEventStream } from "./hooks/useEventStream";
-import AgentWorkspace from "./pages/AgentWorkspace";
+import { getConfig } from "./api/client";
+import { hydrateInvestigations } from "./lib/investigationStore";
+import InboxPage from "./pages/InboxPage";
+import DispatchPage from "./pages/DispatchPage";
+import InvestigationDetail from "./pages/InvestigationDetail";
 import VFSExplorer from "./pages/VFSExplorer";
 import DataBrowser from "./pages/DataBrowser";
 import TracesView from "./pages/TracesView";
 import ScorecardView from "./pages/ScorecardView";
+import ConsoleLayout from "./console/ConsoleLayout";
+import ConsoleV3 from "./console/v3/ConsoleV3";
+import { cn } from "./lib/utils";
 
 interface NavItem {
   path: string;
+  match?: (pathname: string) => boolean;
   label: string;
   icon: React.ReactNode;
   section: string;
@@ -17,109 +37,201 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   {
     path: "/",
-    label: "Agent Workspace",
-    icon: <AgentIcon />,
-    section: "Agent",
+    match: (p) => p === "/" || p.startsWith("/investigations"),
+    label: "Inbox",
+    icon: <ClipboardList size={16} strokeWidth={1.75} />,
+    section: "Operations",
+  },
+  {
+    path: "/dispatch",
+    label: "Dispatch",
+    icon: <Send size={16} strokeWidth={1.75} />,
+    section: "Operations",
   },
   {
     path: "/vfs",
-    label: "VFS Explorer",
-    icon: <FolderIcon />,
-    section: "Agent",
+    label: "Workspace Inspector",
+    icon: <FolderTree size={16} strokeWidth={1.75} />,
+    section: "Investigate",
   },
   {
     path: "/data",
-    label: "Data Browser",
-    icon: <DatabaseIcon />,
-    section: "Data",
+    label: "Data Catalog",
+    icon: <Database size={16} strokeWidth={1.75} />,
+    section: "Investigate",
   },
   {
-    path: "/traces",
-    label: "Trace Timeline",
-    icon: <TimelineIcon />,
-    section: "Observability",
+    path: "/observability",
+    label: "Observability",
+    icon: <Activity size={16} strokeWidth={1.75} />,
+    section: "Govern",
   },
   {
-    path: "/scorecard",
-    label: "Scorecard",
-    icon: <ChartIcon />,
-    section: "Observability",
+    path: "/evaluations",
+    label: "Evaluations",
+    icon: <BarChart3 size={16} strokeWidth={1.75} />,
+    section: "Govern",
+  },
+  {
+    path: "/console",
+    match: (p) => p.startsWith("/console"),
+    label: "Mirage Console",
+    icon: <Boxes size={16} strokeWidth={1.75} />,
+    section: "Develop",
   },
 ];
 
 export default function App() {
+  const location = useLocation();
+  if (location.pathname.startsWith("/v3")) {
+    return (
+      <Routes>
+        <Route path="/v3/*" element={<ConsoleV3 />} />
+      </Routes>
+    );
+  }
+  if (location.pathname.startsWith("/console")) {
+    return (
+      <Routes>
+        <Route path="/console/*" element={<ConsoleLayout />} />
+      </Routes>
+    );
+  }
+  return <OpsShell />;
+}
+
+function OpsShell() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { events, connected } = useEventStream("/events");
   const location = useLocation();
+  const [model, setModel] = useState<string>("");
+  const [baseUrl, setBaseUrl] = useState<string>("");
+
+  useEffect(() => {
+    getConfig()
+      .then((c) => {
+        setModel(c.model);
+        if (
+          c &&
+          typeof (c as unknown as { base_url?: string }).base_url === "string"
+        ) {
+          setBaseUrl((c as unknown as { base_url: string }).base_url);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    hydrateInvestigations();
+  }, []);
 
   let currentSection = "";
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-screen min-w-[980px] overflow-hidden text-text-primary">
       <nav
-        className={`flex flex-col border-r border-border bg-surface-1 transition-all duration-200 ${sidebarCollapsed ? "w-[60px]" : "w-[240px]"}`}
+        className={cn(
+          "relative z-10 flex shrink-0 flex-col border-r border-border bg-surface-1/80 backdrop-blur-xl transition-[width] duration-200",
+          sidebarCollapsed ? "w-[64px]" : "w-[244px]",
+        )}
       >
-        <div className="flex items-center gap-2 border-b border-border px-4 py-4">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-bold text-white">
-            A
+        <div
+          className={cn(
+            "flex h-14 shrink-0 items-center gap-3 border-b border-border px-3",
+            sidebarCollapsed && "justify-center px-2",
+          )}
+        >
+          <div className="relative shrink-0">
+            <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-accent/60 to-info/40 opacity-50 blur-md" />
+            <div className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-accent to-info text-white shadow-sm">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 21l9-18 9 18" />
+                <path d="M7.5 14h9" />
+              </svg>
+            </div>
           </div>
           {!sidebarCollapsed && (
-            <div className="flex flex-col overflow-hidden">
-              <span className="truncate text-sm font-semibold text-text-primary">
+            <div className="flex min-w-0 flex-col leading-tight">
+              <span className="truncate text-[14px] font-semibold tracking-tight text-text-primary">
                 Arcadia
               </span>
-              <span className="truncate text-[10px] text-text-muted">
-                platform
+              <span className="truncate text-[11px] text-text-muted">
+                Operations · Production
               </span>
             </div>
           )}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary"
-          >
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className={`h-3.5 w-3.5 transition-transform ${sidebarCollapsed ? "rotate-180" : ""}`}
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              className="ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary"
+              title="Collapse sidebar"
             >
-              <path d="M10 3L5 8l5 5" />
-            </svg>
-          </button>
+              <ChevronsLeft size={15} />
+            </button>
+          )}
         </div>
 
-        <div className="flex-1 overflow-y-auto py-2">
+        {sidebarCollapsed && (
+          <button
+            onClick={() => setSidebarCollapsed(false)}
+            className="mx-auto mt-2 grid h-7 w-7 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary"
+            title="Expand sidebar"
+          >
+            <ChevronsLeft size={15} className="rotate-180" />
+          </button>
+        )}
+
+        <div className="flex-1 overflow-y-auto px-2 py-3">
           {NAV_ITEMS.map((item) => {
             const showSection = item.section !== currentSection;
             if (showSection) currentSection = item.section;
-            const isActive =
-              item.path === "/"
-                ? location.pathname === "/"
-                : location.pathname.startsWith(item.path);
+            const isActive = item.match
+              ? item.match(location.pathname)
+              : location.pathname === item.path;
 
             return (
               <div key={item.path}>
                 {showSection && !sidebarCollapsed && (
-                  <div className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+                  <div className="px-2 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-text-faint first:pt-0">
                     {item.section}
                   </div>
                 )}
                 <NavLink
                   to={item.path}
                   end={item.path === "/"}
-                  className={`mx-2 flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-colors ${
-                    isActive
-                      ? "bg-accent-muted text-accent"
-                      : "text-text-secondary hover:bg-surface-3 hover:text-text-primary"
-                  } ${sidebarCollapsed ? "justify-center" : ""}`}
                   title={sidebarCollapsed ? item.label : undefined}
+                  className={cn(
+                    "group relative my-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-all duration-150 ease-out",
+                    isActive
+                      ? "bg-accent-soft text-accent"
+                      : "text-text-secondary hover:bg-surface-3 hover:text-text-primary",
+                    sidebarCollapsed && "justify-center px-0",
+                  )}
                 >
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center [&>svg]:h-4 [&>svg]:w-4">
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-x-2 -translate-y-1/2 rounded-full bg-accent" />
+                  )}
+                  <span
+                    className={cn(
+                      "flex h-4 w-4 shrink-0 items-center justify-center",
+                      isActive ? "text-accent" : "text-text-muted group-hover:text-text-secondary",
+                    )}
+                  >
                     {item.icon}
                   </span>
                   {!sidebarCollapsed && (
-                    <span className="truncate">{item.label}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                      {item.label}
+                    </span>
                   )}
                 </NavLink>
               </div>
@@ -127,77 +239,82 @@ export default function App() {
           })}
         </div>
 
-        <div className="border-t border-border px-3 py-3">
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-1.5 w-1.5 shrink-0 rounded-full ${connected ? "bg-success" : "bg-danger"}`}
-            />
-            {!sidebarCollapsed && (
-              <span className="text-xs text-text-muted">
-                {connected ? "Connected" : "Disconnected"}
-              </span>
-            )}
-            {!sidebarCollapsed && events.length > 0 && (
-              <span className="ml-auto font-mono text-[10px] text-text-muted">
-                {events.length}
-              </span>
-            )}
-          </div>
+        <div className="border-t border-border p-2.5">
+          {!sidebarCollapsed ? (
+            <>
+              <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-surface-2 px-2.5 py-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="relative shrink-0">
+                    <span
+                      className={cn(
+                        "block h-2 w-2 rounded-full",
+                        connected ? "bg-success" : "bg-danger",
+                      )}
+                    />
+                    {connected && (
+                      <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-60" />
+                    )}
+                  </div>
+                  <div className="min-w-0 leading-tight">
+                    <div className="truncate text-[11px] font-medium text-text-secondary">
+                      {connected ? "Connected" : "Offline"}
+                    </div>
+                    <div className="truncate text-[10px] text-text-muted">
+                      {events.length} events
+                    </div>
+                  </div>
+                </div>
+                {model && (
+                  <span
+                    className="rounded-md border border-border bg-surface-1 px-1.5 py-0.5 font-mono text-[10px] text-text-muted"
+                    title={baseUrl ? `Routed via ${baseUrl}` : undefined}
+                  >
+                    {model}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <button className="grid h-8 flex-1 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+                  <Settings size={14} />
+                </button>
+                <button className="grid h-8 flex-1 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+                  <HelpCircle size={14} />
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <span
+                className={cn(
+                  "block h-2 w-2 rounded-full",
+                  connected ? "bg-success" : "bg-danger",
+                )}
+              />
+              <button className="grid h-7 w-7 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+                <Settings size={14} />
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
-      <main className="flex-1 overflow-hidden">
+      <main className="relative min-w-0 flex-1 overflow-hidden">
         <Routes>
-          <Route path="/" element={<AgentWorkspace events={events} />} />
+          <Route path="/" element={<InboxPage />} />
+          <Route path="/dispatch" element={<DispatchPage />} />
+          <Route
+            path="/investigations/:sessionId"
+            element={<InvestigationDetail events={events} />}
+          />
           <Route path="/vfs" element={<VFSExplorer />} />
           <Route path="/data" element={<DataBrowser />} />
+          <Route path="/observability" element={<TracesView events={events} />} />
+          <Route path="/evaluations" element={<ScorecardView />} />
+          {/* Legacy redirects */}
           <Route path="/traces" element={<TracesView events={events} />} />
           <Route path="/scorecard" element={<ScorecardView />} />
         </Routes>
       </main>
     </div>
-  );
-}
-
-function AgentIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <rect x="2" y="2" width="12" height="12" rx="2" />
-      <path d="M5 6l2.5 2.5L5 11M9 11h3" />
-    </svg>
-  );
-}
-
-function FolderIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M2 4.5A1.5 1.5 0 013.5 3H6l1.5 1.5h5A1.5 1.5 0 0114 6v5.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 11.5z" />
-    </svg>
-  );
-}
-
-function DatabaseIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <ellipse cx="8" cy="4" rx="5" ry="2" />
-      <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4" />
-      <path d="M3 8c0 1.1 2.2 2 5 2s5-.9 5-2" />
-    </svg>
-  );
-}
-
-function TimelineIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M2 3h12M2 8h8M2 13h10" />
-    </svg>
-  );
-}
-
-function ChartIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M4 14V8M8 14V4M12 14V6" />
-    </svg>
   );
 }

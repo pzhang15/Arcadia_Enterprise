@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mirage Console — Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:oklch(0.145 0.012 264); --s0:oklch(0.145 0.012 264); --s1:oklch(0.175 0.014 264);
+  --s2:oklch(0.205 0.015 264); --s3:oklch(0.245 0.016 264); --s4:oklch(0.285 0.017 264);
+  --tp:oklch(0.965 0.005 264); --ts:oklch(0.755 0.018 264); --tm:oklch(0.555 0.020 264); --tf:oklch(0.415 0.020 264);
+  --bd:oklch(0.255 0.014 264); --bds:oklch(0.315 0.016 264); --bdh:oklch(0.345 0.018 264);
+  --ac:oklch(0.68 0.19 280); --acs:oklch(0.72 0.21 280); --ac-soft:oklch(0.68 0.19 280/0.16); --ac-ring:oklch(0.68 0.19 280/0.45);
+  --su:oklch(0.76 0.18 155); --su-soft:oklch(0.76 0.18 155/0.14);
+  --wa:oklch(0.82 0.17 80); --wa-soft:oklch(0.82 0.17 80/0.14);
+  --da:oklch(0.68 0.22 25); --da-soft:oklch(0.68 0.22 25/0.14);
+  --in:oklch(0.73 0.15 230); --in-soft:oklch(0.73 0.15 230/0.14);
+  --cap:oklch(0.81 0.12 195); --cap-soft:oklch(0.81 0.12 195/0.15);
+  --sim:oklch(0.81 0.16 72); --sim-soft:oklch(0.81 0.16 72/0.16);
+  --live:oklch(0.62 0.25 20);
+  --m-tickets:oklch(0.73 0.15 230); --m-slack:oklch(0.70 0.20 305); --m-github:oklch(0.85 0.02 264);
+  --m-pagerduty:oklch(0.76 0.18 155); --m-finance:oklch(0.82 0.17 80); --m-datadog:oklch(0.75 0.16 50);
+  --m-compliance:oklch(0.72 0.16 250); --m-customers:oklch(0.74 0.16 195); --m-s3:oklch(0.73 0.15 230);
+  --m-db:oklch(0.78 0.13 300);
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#0a0a0f;font-family:var(--sans);color:var(--tp);-webkit-font-smoothing:antialiased;font-feature-settings:"cv02","cv03","cv11","ss01"}
+.frame{position:relative;width:1440px;height:900px;margin:0 auto;overflow:hidden;
+  background:
+    radial-gradient(1200px 600px at 0% -10%,oklch(0.68 0.19 280/0.06),transparent 60%),
+    radial-gradient(900px 500px at 100% 0%,oklch(0.73 0.15 230/0.05),transparent 55%),
+    var(--bg);
+  border-bottom:1px solid #000;}
+.figtag{position:absolute;left:16px;bottom:12px;z-index:80;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--tm);background:oklch(0.205 0.015 264/0.86);border:1px solid var(--bd);
+  padding:4px 9px;border-radius:6px;backdrop-filter:blur(8px)}
+.figtag b{color:var(--tp)}
+
+/* ---------- text utils ---------- */
+.mono{font-family:var(--mono)}
+.muted{color:var(--tm)} .faint{color:var(--tf)} .sec{color:var(--ts)}
+.up{text-transform:uppercase;letter-spacing:.1em}
+.dot{display:inline-block;width:7px;height:7px;border-radius:99px;flex:none}
+.dim{opacity:.45}
+
+/* ---------- console shell ---------- */
+.console{display:flex;flex-direction:column;height:100%;width:100%}
+.hdr{height:44px;flex:none;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--bd);
+  background:oklch(0.175 0.014 264/0.85);backdrop-filter:blur(12px)}
+.logo{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,var(--ac),var(--in))}
+.wsw{display:flex;align-items:center;gap:7px;height:28px;padding:0 10px;border:1px solid var(--bd);border-radius:7px;background:var(--s2);font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;border-radius:5px;font-size:10.5px;font-family:var(--mono);border:1px solid var(--bd);background:var(--s2);color:var(--ts)}
+.pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:6px;font-size:11px;border:1px solid var(--bd);background:var(--s1);color:var(--ts)}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:7px;overflow:hidden;background:var(--s1)}
+.seg button{height:26px;padding:0 11px;font-size:11px;background:transparent;border:none;color:var(--tm);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
+.seg button.on{background:var(--ac-soft);color:var(--acs)}
+.cmdk{margin-left:auto;display:flex;align-items:center;gap:7px;height:28px;padding:0 10px;border:1px solid var(--bd);border-radius:7px;background:var(--s2);color:var(--tm);font-size:11.5px}
+.cmdk kbd{font-family:var(--mono);font-size:10px;background:var(--s3);border:1px solid var(--bds);border-radius:4px;padding:1px 5px;color:var(--ts)}
+
+.body{flex:1;display:flex;min-height:0}
+.rail{width:380px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--bd);background:var(--s0);min-height:0}
+.center{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--s0)}
+.pillar{width:54px;flex:none;border-left:1px solid var(--bd);background:var(--s1);display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:3px}
+
+/* run rail */
+.runrail{flex:none;border-bottom:1px solid var(--bd);background:var(--s1);max-height:152px;overflow:hidden}
+.runrail .rrhead{display:flex;align-items:center;justify-content:space-between;padding:7px 11px 4px;font-size:9.5px}
+.runlane{display:flex;align-items:center;gap:9px;padding:6px 11px;border-left:2px solid transparent;cursor:pointer}
+.runlane:hover{background:var(--s2)}
+.runlane.red{border-left-color:var(--da);background:oklch(0.68 0.22 25/0.07)}
+.runlane.sel{background:var(--ac-soft);border-left-color:var(--ac)}
+.runlane .rmeta{min-width:0;flex:1}
+.runlane .rtitle{font-size:11.5px;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.runlane .rsub{font-size:10px;color:var(--tm);font-family:var(--mono);margin-top:1px}
+.runlane .rbar{width:46px;height:4px;border-radius:9px;background:var(--s3);overflow:hidden;flex:none}
+.runlane .rbar i{display:block;height:100%;background:var(--in)}
+
+/* filter bar */
+.filt{flex:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border-bottom:1px solid var(--bd);background:var(--s0)}
+.tchip{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:99px;border:1px solid var(--bd);color:var(--tm);background:var(--s1);cursor:pointer}
+.tchip.on{border-color:var(--ac-ring);color:var(--acs);background:var(--ac-soft)}
+.search{flex:1;min-width:120px;height:24px;border:1px solid var(--bd);border-radius:6px;background:var(--s1);padding:0 9px;font-size:11px;color:var(--ts);display:flex;align-items:center;gap:6px}
+
+/* action list */
+.alist{flex:1;overflow:hidden;min-height:0}
+.arow{display:flex;align-items:center;gap:8px;padding:5px 11px 5px 9px;border-bottom:1px solid oklch(0.255 0.014 264/0.5);font-size:11.5px;cursor:pointer;border-left:2px solid transparent}
+.arow:hover{background:var(--s1)}
+.arow.cur{background:var(--ac-soft);border-left-color:var(--ac)}
+.arow.fut{opacity:.42;border-left-style:dotted;border-left-color:var(--bds)}
+.agut{font-family:var(--mono);font-size:9.5px;color:var(--tf);width:46px;flex:none;text-align:right;line-height:1.25}
+.atype{font-family:var(--mono);font-size:9px;font-weight:600;padding:1.5px 5px;border-radius:4px;flex:none;letter-spacing:.02em}
+.asum{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ts);font-family:var(--mono);font-size:10.5px}
+.asum .pth{color:var(--tp)}
+.adelta{font-family:var(--mono);font-size:9.5px;color:var(--su);flex:none}
+/* type chip colors */
+.t-run{background:var(--ac-soft);color:var(--acs)} .t-step{background:var(--in-soft);color:var(--in)}
+.t-think{background:oklch(0.70 0.20 305/0.16);color:oklch(0.78 0.16 305)} .t-text{background:var(--s3);color:var(--ts)}
+.t-tool{background:var(--wa-soft);color:var(--wa)} .t-read{background:var(--in-soft);color:var(--in)}
+.t-write{background:var(--cap-soft);color:var(--cap)} .t-cmd{background:var(--s2);color:var(--tm)}
+.t-mock{background:oklch(0.75 0.16 50/0.16);color:var(--m-datadog)}
+/* effect dots */
+.e-scratch{background:var(--tf)} .e-durable{background:var(--in)} .e-sor{background:var(--wa)} .e-ext{background:var(--da)}
+
+/* lens strip + inspector */
+.lens{flex:none;display:flex;align-items:center;gap:2px;height:38px;padding:0 10px;border-bottom:1px solid var(--bd);background:var(--s1)}
+.lens .lt{height:38px;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:var(--tm);border-bottom:2px solid transparent;cursor:pointer;font-weight:500}
+.lens .lt.on{color:var(--tp);border-bottom-color:var(--ac)}
+.lens .lt .ld{width:5px;height:5px;border-radius:99px;background:var(--tf)}
+.lens .right{margin-left:auto;display:flex;gap:7px;align-items:center}
+.insp{flex:1;overflow:hidden;min-height:0;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+
+/* cards */
+.card{border:1px solid var(--bd);border-radius:10px;background:var(--s1);overflow:hidden}
+.card .ch{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--bd);background:var(--s1);font-size:11px}
+.card .cb{padding:11px 13px}
+.kv{display:grid;grid-template-columns:128px 1fr;gap:5px 12px;font-size:11.5px}
+.kv dt{color:var(--tm);font-family:var(--mono);font-size:10.5px}
+.kv dd{color:var(--tp);font-family:var(--mono);font-size:11px;word-break:break-all}
+.badge{font-size:9.5px;font-family:var(--mono);padding:2px 7px;border-radius:5px;border:1px solid var(--bd);color:var(--ts);background:var(--s2)}
+.b-ok{color:var(--su);border-color:oklch(0.76 0.18 155/0.4);background:var(--su-soft)}
+.b-err{color:var(--da);border-color:oklch(0.68 0.22 25/0.4);background:var(--da-soft)}
+.b-inf{color:var(--sim);border-color:oklch(0.81 0.16 72/0.4);background:var(--sim-soft)}
+.b-der{color:var(--tm);border-color:var(--bd);background:var(--s2)}
+.b-cap{color:var(--cap);border-color:oklch(0.81 0.12 195/0.4);background:var(--cap-soft)}
+.note{font-size:10.5px;color:var(--tm);display:flex;gap:7px;align-items:flex-start;line-height:1.5}
+.note.warn{color:var(--sim)} .note.res{color:var(--tf)}
+
+/* git hunk diff */
+.hunk{font-family:var(--mono);font-size:11.5px;border-radius:8px;overflow:hidden;border:1px solid var(--bd)}
+.hunk .hl{display:flex;gap:10px;padding:3px 12px}
+.hunk .add{background:oklch(0.76 0.18 155/0.10);color:var(--su)}
+.hunk .ctx{color:var(--tm)}
+.hunk .gut{color:var(--tf);width:26px;text-align:right;flex:none;user-select:none}
+
+/* state tree */
+.tree{font-family:var(--mono);font-size:11.5px;line-height:1.85}
+.tnode{padding-left:2px}
+.tnode>.tlbl{display:flex;align-items:center;gap:7px;cursor:pointer}
+.tnode .car{color:var(--tf);width:10px;display:inline-block}
+.tkey{color:var(--in)} .tval{color:var(--tp)} .tcount{color:var(--tm)}
+.tchild{padding-left:22px;border-left:1px solid var(--bd);margin-left:5px}
+.ring{box-shadow:0 0 0 1px var(--ac-ring);border-radius:5px;background:var(--ac-soft);padding:0 4px}
+
+/* transport */
+.trans{height:36px;flex:none;display:flex;align-items:center;gap:12px;padding:0 12px;border-top:1px solid var(--bd);background:var(--s1)}
+.tbtn{width:24px;height:24px;border-radius:6px;border:1px solid var(--bd);background:var(--s2);color:var(--ts);display:grid;place-items:center;cursor:pointer}
+.tbtn.play{background:var(--ac-soft);border-color:var(--ac-ring);color:var(--acs)}
+.minimap{flex:1;height:18px;border-radius:5px;background:var(--s0);border:1px solid var(--bd);position:relative;overflow:hidden;display:flex;align-items:flex-end;gap:1px;padding:0 2px}
+.minimap i{flex:1;background:var(--bds);border-radius:1px 1px 0 0}
+.minimap .fut i{background:oklch(0.315 0.016 264/0.5)}
+.playhead{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ac);box-shadow:0 0 8px var(--ac-ring)}
+.curbadge{font-family:var(--mono);font-size:10.5px;color:var(--ts);flex:none}
+.spd{display:flex;gap:0;border:1px solid var(--bd);border-radius:6px;overflow:hidden}
+.spd b{font-size:10px;padding:3px 7px;color:var(--tm);font-family:var(--mono);cursor:pointer}
+.spd b.on{background:var(--ac-soft);color:var(--acs)}
+
+/* data pillar dots */
+.pdot{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:#0a0a0f;font-weight:700;position:relative}
+.pdot.ro::after{content:"";position:absolute;right:-1px;top:-1px;width:6px;height:6px;border-radius:99px;background:var(--tf);border:1.5px solid var(--s1)}
+
+/* cover */
+.cover{padding:46px 56px;height:100%;display:flex;flex-direction:column;gap:22px}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--ac);text-transform:uppercase}
+.h1{font-size:42px;font-weight:700;letter-spacing:-0.02em;line-height:1}
+.tag{font-size:15px;color:var(--ts);max-width:980px;line-height:1.5}
+.cgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.ccard{border:1px solid var(--bd);border-radius:12px;background:oklch(0.175 0.014 264/0.6);padding:16px 17px}
+.ccard h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ac);margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.ccard p{font-size:12.5px;color:var(--ts);line-height:1.55}
+.ccard code{font-family:var(--mono);font-size:11px;color:var(--tp);background:var(--s2);padding:1px 5px;border-radius:4px}
+.spine{font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--ts)}
+.spine .lf{color:var(--cap);font-weight:600}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--tm);align-items:center}
+.legbox{width:22px;height:11px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:6px}
+.anat{display:flex;gap:0;border:1px solid var(--bds);border-radius:10px;overflow:hidden;height:118px;font-size:10.5px}
+.anat>div{padding:9px 11px;border-right:1px dashed var(--bd);color:var(--tm)}
+.anat b{color:var(--tp);font-size:11px;display:block;margin-bottom:3px}
+svg{display:block}
+</style>
+</head>
+<body>
+
+<!-- ============================ FRAME 0 — COVER ============================ -->
+<section class="frame">
+  <div class="cover">
+    <div>
+      <div class="kick">Arcadia · Platform Design · Mirage</div>
+      <div style="display:flex;align-items:flex-end;gap:16px;margin-top:10px">
+        <div class="logo" style="width:46px;height:46px;border-radius:13px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+        <h1 class="h1">Mirage&nbsp;Console</h1>
+        <span class="chip" style="margin-bottom:8px">developer debug console · v2</span>
+      </div>
+      <p class="tag" style="margin-top:14px"><b style="color:var(--tp)">Redux DevTools for your agent's data plane.</b> Scrub every action in a workspace, watch the state it mutated, and trace any byte back to the step that touched it. The workspace is the <i>store</i>; the real I/O mirage observes are the <i>actions</i>; one time-travel cursor sweeps it all — and because mirage <i>is</i> the data plane, it doubles as a live explorer of the connected sources with a bidirectional <b style="color:var(--tp)">data&nbsp;↔&nbsp;trace</b> bridge.</p>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccard">
+        <h3><span class="dot" style="background:var(--ac)"></span>Store = Workspace</h3>
+        <p>One mirage workspace is the container. The home shows <b style="color:var(--tp)">all traces and all events</b> in it — a run-rail to spot the red run, and a unified action stream beneath.</p>
+      </div>
+      <div class="ccard">
+        <h3><span class="dot" style="background:var(--in)"></span>Actions = Real I/O</h3>
+        <p>Every row is observed ground truth — an <code>OpRecord</code> at <code>observe.record()</code>: path · bytes · source · cache · fingerprint. Not the model's self-reported tool args.</p>
+      </div>
+      <div class="ccard">
+        <h3><span class="dot" style="background:var(--cap)"></span>State = Reconstructed</h3>
+        <p>The cursor folds <code>trajectory[0..idx]</code> into the workspace state at that moment — overlay, mounts, reads-so-far, run tree — with the <b style="color:var(--tp)">exact</b> per-action diff.</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:18px;flex:1;min-height:0">
+      <div class="ccard" style="display:flex;flex-direction:column;gap:10px">
+        <h3 style="margin:0"><span class="dot" style="background:var(--cap)"></span>The spine — one tree, folded (the bottom is the moat)</h3>
+        <div class="spine">
+          Session&nbsp;<span class="faint">(≈ workspace · thread_id)</span><br/>
+          &nbsp;└─ Run&nbsp;<span class="faint">(run-… · one turn · joins ScoreCard by run_id)</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;└─ Step&nbsp;<span class="faint">(reasoning + tool calls)</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ Reasoning&nbsp;<span class="faint">(THINKING / TEXT)</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ ToolCall&nbsp;<span class="faint">('exec' = one Workspace.execute())</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="lf">VfsOp ← ground-truth leaf</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="faint">op·path·source·bytes·dur·cache·fingerprint</span>
+        </div>
+        <div class="legend" style="margin-top:auto;padding-top:8px;border-top:1px solid var(--bd)">
+          <span><span class="legbox" style="background:var(--cap)"></span>solid = ground truth</span>
+          <span><span class="legbox" style="background:var(--sim)"></span>muted = inferred / derived</span>
+          <span><span class="legbox" style="background:var(--s3)"></span>dimmed = not yet emitted</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+        <div class="ccard">
+          <h3><span class="dot" style="background:var(--ac)"></span>One organism — no routed pages</h3>
+          <div class="anat" style="margin-top:4px">
+            <div style="width:33%"><b>Action list</b>every event in the workspace · type-chip filters · Flat ⇄ By-run/step grouping</div>
+            <div style="width:40%"><b>Lens inspector</b>Diff · State Tree · Action · Trace · Data — tabs over <i>one</i> cursor</div>
+            <div style="width:27%;border-right:none"><b>Data pillar</b>mount catalog · touched-by bridge</div>
+          </div>
+          <div class="note" style="margin-top:9px"><span>▸</span>A full-width <b style="color:var(--ts)">transport bar</b> (mini-map + playhead + play/step + speed) scrubs the single time-travel cursor. Cmd-K goes anywhere. Permalink = <code style="font-family:var(--mono);font-size:10px">?cursor=idx&lens=&path=&preset=</code>.</div>
+        </div>
+        <div class="ccard" style="flex:1">
+          <h3><span class="dot" style="background:var(--in)"></span>What the screens show</h3>
+          <p style="font-size:11.5px;line-height:1.7">
+            <b style="color:var(--tp)">01</b> Workspace home · all-traces + action stream &nbsp;·&nbsp;
+            <b style="color:var(--tp)">02</b> Time-Travel + exact per-action Diff &nbsp;·&nbsp;
+            <b style="color:var(--tp)">03</b> By-run/step Trace waterfall &nbsp;·&nbsp;
+            <b style="color:var(--tp)">04</b> Data sources + touched-by bridge &nbsp;·&nbsp;
+            <b style="color:var(--tp)">05</b> Action payload + provenance &nbsp;·&nbsp;
+            <b style="color:var(--tp)">06</b> Compare two runs &nbsp;·&nbsp;
+            <b style="color:var(--tp)">07</b> Cmd-K + import/export repro
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 00</b> &nbsp;·&nbsp; Overview — the Redux mental model</div>
+</section>
+
+<!-- ============================ FRAME 1 — S1 WORKSPACE HOME ============================ -->
+<section class="frame">
+  <div class="console">
+    <!-- header -->
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92 <span class="faint" style="font-family:var(--mono);font-size:10px">▾</span></div>
+      <span class="chip">branch main</span><span class="chip" title="TEST mode">T</span>
+      <div class="seg" style="margin-left:6px"><button class="on">⏱ Time-Travel</button><button>▦ Data</button></div>
+      <span class="pill"><span class="dot" style="background:var(--su)"></span>persisted · arcadia_store</span>
+      <div class="cmdk">Search & jump <kbd>⌘K</kbd></div>
+    </div>
+
+    <div class="body">
+      <!-- left rail -->
+      <div class="rail">
+        <!-- run rail -->
+        <div class="runrail">
+          <div class="rrhead"><span class="up muted">All traces · 3 runs</span><span class="faint mono">newest ↑</span></div>
+          <div class="runlane red sel">
+            <span class="dot" style="background:var(--da)"></span>
+            <div class="rmeta"><div class="rtitle">forensic RCA INC-5521</div><div class="rsub">run-9f2c1a · 14:03 · 4 steps · 11 tools · 38 ops · 1.4 MB</div></div>
+            <div class="rbar"><i style="width:88%;background:var(--da)"></i></div>
+          </div>
+          <div class="runlane">
+            <span class="dot" style="background:var(--su)"></span>
+            <div class="rmeta"><div class="rtitle">customer revenue Q1</div><div class="rsub">run-7be004 · 11:48 · 3 steps · 6 tools · 19 ops · 842 KB</div></div>
+            <div class="rbar"><i style="width:40%"></i></div>
+          </div>
+          <div class="runlane">
+            <span class="dot" style="background:var(--su)"></span>
+            <div class="rmeta"><div class="rtitle">enterprise review GlobalTech</div><div class="rsub">run-22af90 · 09:12 · 5 steps · 14 tools · 51 ops · 2.1 MB</div></div>
+            <div class="rbar"><i style="width:62%"></i></div>
+          </div>
+        </div>
+        <!-- filter -->
+        <div class="filt">
+          <span class="tchip on">all</span><span class="tchip">RUN</span><span class="tchip">STEP</span><span class="tchip">THINKING</span><span class="tchip">TOOL_CALL</span><span class="tchip on">vfs_op</span><span class="tchip">command</span>
+          <div class="search"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> path / command / stdout…</div>
+        </div>
+        <!-- action list -->
+        <div class="alist">
+          <div class="arow"><span class="agut">§312</span><span class="atype t-tool">TOOL_RES</span><span class="asum">exec exit_code=0</span></div>
+          <div class="arow cur"><span class="agut">§311<br/>idx57</span><span class="atype t-write">WRITE</span><span class="asum">write <span class="pth">/rca_inc_5521.md</span></span><span class="adelta">Δ+1</span><span class="dot e-durable"></span></div>
+          <div class="arow"><span class="agut">§310<br/>idx56</span><span class="atype t-read">READ</span><span class="asum">read <span class="pth">/slack/…/incidents__C305/bridge.jsonl</span> · 18 KB</span><span class="dot e-ext"></span></div>
+          <div class="arow"><span class="agut">4188<br/>idx55</span><span class="atype t-read">READ</span><span class="asum">read <span class="pth">/github/…/commits/f3a1b2c8.json</span> · 2.0 KB</span><span class="dot e-durable"></span></div>
+          <div class="arow"><span class="agut">4187</span><span class="atype t-cmd">CMD</span><span class="asum">cat /github/…/commits/f3a1b2c8.json · exit 0</span></div>
+          <div class="arow"><span class="agut">§305</span><span class="atype t-think">THINK</span><span class="asum">correlating deploy time to first error…</span></div>
+          <div class="arow"><span class="agut">§304</span><span class="atype t-step">STEP</span><span class="asum">step-3 'establish causal deployment'</span></div>
+          <div class="arow fut"><span class="agut">§303</span><span class="atype t-read">READ</span><span class="asum">read /datadog/logs/platform-api/2026/05/15/14.jsonl · 96 KB</span></div>
+          <div class="arow fut"><span class="agut">§302</span><span class="atype t-tool">TOOL</span><span class="asum">exec: cat /datadog/logs/platform-api/…/14.jsonl</span></div>
+          <div class="arow fut"><span class="agut">§301</span><span class="atype t-mock">MOCK</span><span class="asum">datadog GET /api/v1/logs · 200 · 96 KB</span></div>
+        </div>
+      </div>
+
+      <!-- center: lens + state tree -->
+      <div class="center">
+        <div class="lens">
+          <span class="lt"><span class="ld"></span>Diff</span>
+          <span class="lt on">State&nbsp;Tree</span>
+          <span class="lt">Action</span>
+          <span class="lt">Trace</span>
+          <span class="lt">Data</span>
+          <span class="right"><span class="badge">cursor #312 / 419</span><span class="badge b-inf">order inferred · seq vs §seq</span></span>
+        </div>
+        <div class="insp">
+          <div class="note"><span>▸</span>State reconstructed at <b class="sec">cursor idx 57</b> — folded from <span class="mono sec">trajectory[0..57]</span> + AG-UI reducer. Solid where derivable; <span class="b-der badge">backing pinned at stand-up</span></div>
+          <div class="card" style="flex:1">
+            <div class="ch"><b>workspace state @ idx 57</b><span class="faint mono" style="margin-left:auto">deterministic fold</span></div>
+            <div class="cb tree">
+              <div class="tnode"><div class="tlbl"><span class="car">▾</span><span class="tkey">overlay</span> <span class="tcount">· 1 change on /</span></div>
+                <div class="tchild"><span class="ring"><span class="tval">+ /rca_inc_5521.md</span> <span class="muted">+4.2 KB</span> <span class="badge b-cap">captured</span></span></div>
+              </div>
+              <div class="tnode"><div class="tlbl"><span class="car">▾</span><span class="tkey">reads-so-far</span> <span class="tcount">· 47 paths</span></div>
+                <div class="tchild muted">/pagerduty/incidents/triggered/INC-5521.json<br/>/datadog/logs/platform-api/2026/05/15/*.jsonl <span class="faint">· 9 files</span><br/>/github/…/commits/f3a1b2c8.json<br/><span class="faint">… 44 more</span></div>
+              </div>
+              <div class="tnode"><div class="tlbl"><span class="car">▾</span><span class="tkey">mounts</span> <span class="tcount">· 13</span></div>
+                <div class="tchild muted">/ <span class="faint">ram·rw·scratch</span> · /slack <span class="faint">ro·external</span> · /database <span class="faint">ro·sor</span> · /s3 <span class="faint">ro·durable</span> · /github · /datadog · /pagerduty <span class="faint">… +6</span></div>
+              </div>
+              <div class="tnode"><div class="tlbl"><span class="car">▾</span><span class="tkey">run</span> <span class="tcount">· run-9f2c1a › step-4 › tc-aa31</span></div>
+                <div class="tchild muted">status <span class="b-err badge">error</span> · 4 steps · 11 tool calls</div>
+              </div>
+              <div class="tnode dim"><div class="tlbl"><span class="car">▸</span><span class="tkey">state (snapshot)</span> <span class="badge b-der">not yet emitted · STATE_SNAPSHOT dead enum</span></div></div>
+            </div>
+          </div>
+        </div>
+        <!-- transport -->
+        <div class="trans">
+          <div class="tbtn play">▶</div><div class="tbtn">⏮</div><div class="tbtn">◀</div><div class="tbtn">▶</div><div class="tbtn">⏭</div>
+          <div class="minimap">
+            <i style="height:40%"></i><i style="height:55%"></i><i style="height:30%"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:88%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:50%"></i><i style="height:42%"></i>
+            <span class="playhead" style="left:58%"></span>
+            <span style="flex:1;display:flex;gap:1px;align-items:flex-end" class="fut"><i style="height:38%"></i><i style="height:66%"></i><i style="height:30%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:72%"></i></span>
+          </div>
+          <div class="spd"><b class="on">1×</b><b>2×</b><b>4×</b></div>
+          <div class="curbadge">#312 of 419 · §312 · 14:03:41.187</div>
+        </div>
+      </div>
+
+      <!-- data pillar (collapsed) -->
+      <div class="pillar">
+        <div class="pdot" style="background:var(--tf)" title="/ ram">/</div>
+        <div class="pdot ro" style="background:var(--m-slack)" title="/slack">sl</div>
+        <div class="pdot ro" style="background:var(--m-db)" title="/database">db</div>
+        <div class="pdot ro" style="background:var(--m-s3)" title="/s3">s3</div>
+        <div class="pdot ro" style="background:var(--m-github)" title="/github">gh</div>
+        <div class="pdot ro" style="background:var(--m-datadog)" title="/datadog">dd</div>
+        <div class="pdot ro" style="background:var(--m-pagerduty)" title="/pagerduty">pd</div>
+        <div class="pdot ro" style="background:var(--m-finance)" title="/finance">fi</div>
+        <div class="pdot ro" style="background:var(--m-customers)" title="/customers">cu</div>
+        <div style="margin-top:auto;margin-bottom:10px;color:var(--tf);font-size:9px;writing-mode:vertical-rl;letter-spacing:.1em">DATA ▸</div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 01</b> &nbsp;·&nbsp; Workspace Home — all traces + the unified action stream, State Tree folded to the cursor</div>
+</section>
+
+<!-- ============================ FRAME 2 — S2 TIME-TRAVEL / DIFF ============================ -->
+<section class="frame">
+  <div class="console">
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92 <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip">branch main</span><span class="chip">T</span>
+      <div class="seg" style="margin-left:6px"><button class="on">⏱ Time-Travel</button><button>▦ Data</button></div>
+      <span class="pill"><span class="dot" style="background:var(--su)"></span>persisted</span>
+      <div class="cmdk">Search & jump <kbd>⌘K</kbd></div>
+    </div>
+
+    <div class="body">
+      <div class="rail">
+        <div class="filt" style="border-top:none">
+          <span class="tchip">all</span><span class="tchip on">vfs_op</span><span class="tchip">TOOL_CALL</span><span class="tchip">STEP</span>
+          <div class="search"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> filter actions…</div>
+        </div>
+        <div class="alist">
+          <div class="arow"><span class="agut">idx55</span><span class="atype t-read">READ</span><span class="asum">read <span class="pth">/github/…/f3a1b2c8.json</span> · 2.0 KB</span><span class="dot e-durable"></span></div>
+          <div class="arow"><span class="agut">idx56</span><span class="atype t-read">READ</span><span class="asum">read <span class="pth">/database/tables/users/data.jsonl</span> · 1 KB</span><span class="dot e-sor"></span></div>
+          <div class="arow"><span class="agut">idx57</span><span class="atype t-tool">TOOL</span><span class="asum">exec: tee /rca_inc_5521.md</span></div>
+          <div class="arow cur"><span class="agut">idx57</span><span class="atype t-write">WRITE</span><span class="asum">write <span class="pth">/rca_inc_5521.md</span> · +4.2 KB</span><span class="adelta">Δ+1</span><span class="dot e-durable"></span></div>
+          <div class="arow fut"><span class="agut">idx58</span><span class="atype t-read">READ</span><span class="asum">read /compliance/policies/retention.md · 3 KB</span><span class="dot e-durable"></span></div>
+          <div class="arow fut"><span class="agut">idx59</span><span class="atype t-think">THINK</span><span class="asum">drafting remediation steps…</span></div>
+          <div class="arow fut"><span class="agut">idx60</span><span class="atype t-write">WRITE</span><span class="asum">write /rca_inc_5521.md · +1.1 KB</span><span class="dot e-durable"></span></div>
+          <div class="arow fut"><span class="agut">idx61</span><span class="atype t-tool">TOOL</span><span class="asum">exec exit_code=0</span></div>
+          <div class="arow fut"><span class="agut">idx62</span><span class="atype t-run">RUN</span><span class="asum">RUN_ERROR: tee: /slack/post: read-only mount</span></div>
+        </div>
+      </div>
+
+      <div class="center">
+        <div class="lens">
+          <span class="lt on">Diff</span>
+          <span class="lt"><span class="ld"></span>State&nbsp;Tree</span>
+          <span class="lt">Action</span>
+          <span class="lt">Trace</span>
+          <span class="lt">Data</span>
+          <span class="right"><span class="badge b-cap">EXACT · action idx == OpRecord[57]</span><span class="badge">⤓ Export</span></span>
+        </div>
+        <div class="insp">
+          <!-- action summary card -->
+          <div class="card">
+            <div class="ch">
+              <span class="atype t-write">WRITE</span><b>CUSTOM(vfs_op)</b><span class="muted mono" style="font-size:10px">idx 57 · 14:03:41.187</span>
+              <span class="badge" style="margin-left:auto">source=ram</span><span class="badge">6 ms</span><span class="dot e-durable" style="width:9px;height:9px"></span><span class="badge b-der">durable-internal · reversible</span>
+            </div>
+            <div class="cb">
+              <div class="hunk">
+                <div class="hl ctx"><span class="gut"></span>@@ overlay / · captured write @@</div>
+                <div class="hl add"><span class="gut">+</span>/rca_inc_5521.md&nbsp;&nbsp;<span style="color:var(--tm)">(new file)</span>&nbsp;&nbsp;+4.2 KB</div>
+                <div class="hl ctx"><span class="gut"> </span>change-key 57:write:/rca_inc_5521.md</div>
+              </div>
+              <div class="note" style="margin-top:10px"><span>▸</span>This is the <b class="sec">exact</b> mutation — no wrapper tool could show it truthfully. The diff renders <span class="mono sec">diff(stateAt(56), stateAt(57))</span> via the existing OverlayDiff hunk renderer.</div>
+            </div>
+          </div>
+
+          <!-- sibling collision -->
+          <div class="card">
+            <div class="ch"><b>Siblings at this timestamp</b><span class="badge b-inf" style="margin-left:auto">order inferred</span></div>
+            <div class="cb">
+              <div class="note warn"><span>⚠</span>2 actions share <span class="mono">14:03:41.187</span> — relay <span class="mono">§57 vfs_op</span> vs agui <span class="mono">§57b TEXT_MESSAGE_CONTENT</span>. Ordered by timestamp; merge seam shown, never hidden.</div>
+            </div>
+          </div>
+
+          <!-- skip what-if -->
+          <div class="card" style="border-color:oklch(0.81 0.16 72/0.4)">
+            <div class="ch" style="background:var(--sim-soft)"><span class="dot" style="background:var(--sim)"></span><b style="color:var(--sim)">Hypothetical: action #92 skipped</b><span class="badge" style="margin-left:auto;cursor:pointer">↩ revert</span></div>
+            <div class="cb"><div class="note">Right-click → <b class="sec">Skip</b> re-folds <span class="mono sec">[0..idx]</span> minus the redundant re-read at idx 92. State recomputes for overlay / reads / run (deterministic). The later write to <span class="mono">/rca_inc_5521.md</span> still occurs → it did not depend on #92.</div></div>
+          </div>
+        </div>
+
+        <div class="trans">
+          <div class="tbtn play">▶</div><div class="tbtn">⏮</div><div class="tbtn">◀</div><div class="tbtn">▶</div><div class="tbtn">⏭</div>
+          <div class="minimap">
+            <i style="height:40%"></i><i style="height:55%"></i><i style="height:30%"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:60%"></i>
+            <span class="playhead" style="left:46%"></span>
+            <span style="flex:2;display:flex;gap:1px;align-items:flex-end" class="fut"><i style="height:88%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:50%"></i><i style="height:42%"></i><i style="height:66%"></i><i style="height:30%"></i><i style="height:52%"></i></span>
+          </div>
+          <div class="spd"><b class="on">1×</b><b>2×</b><b>4×</b></div>
+          <div class="curbadge">#57 of 419 · idx 57 · 14:03:41.187</div>
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="pdot" style="background:var(--tf)">/</div>
+        <div class="pdot ro" style="background:var(--m-slack)">sl</div>
+        <div class="pdot ro" style="background:var(--m-db);box-shadow:0 0 0 2px var(--ac-ring)">db</div>
+        <div class="pdot ro" style="background:var(--m-s3)">s3</div>
+        <div class="pdot ro" style="background:var(--m-github)">gh</div>
+        <div class="pdot ro" style="background:var(--m-datadog)">dd</div>
+        <div style="margin-top:auto;margin-bottom:10px;color:var(--tf);font-size:9px;writing-mode:vertical-rl;letter-spacing:.1em">DATA ▸</div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 02</b> &nbsp;·&nbsp; Time-Travel — the exact per-action <b>Diff</b> (action idx == OpRecord[idx]), future-dimming, skip-action what-if</div>
+</section>
+
+<!-- ============================ FRAME 3 — S3 BY-RUN/STEP TRACE LENS ============================ -->
+<section class="frame">
+  <div class="console">
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92 <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip">branch main</span><span class="chip">T</span>
+      <div class="seg" style="margin-left:6px"><button class="on">⏱ Time-Travel</button><button>▦ Data</button></div>
+      <span class="pill"><span class="dot" style="background:var(--su)"></span>persisted</span>
+      <div class="cmdk">Search & jump <kbd>⌘K</kbd></div>
+    </div>
+
+    <div class="body">
+      <!-- left rail: grouping = By run/step -> indented tree -->
+      <div class="rail">
+        <div class="filt" style="border-top:none">
+          <div class="seg" style="height:26px"><button>≣ Flat</button><button class="on">⌄ By run/step</button></div>
+          <div class="search" style="flex-basis:100%;margin-top:2px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> filter tree…</div>
+        </div>
+        <div class="alist">
+          <div class="arow"><span class="agut" style="width:14px"></span><span class="dot" style="background:var(--da)"></span><span class="asum" style="color:var(--tp);font-family:var(--sans);font-weight:600">▾ run-9f2c1a · forensic RCA INC-5521</span><span class="badge b-err">error</span></div>
+          <div class="arow" style="padding-left:24px"><span class="atype t-step">STEP</span><span class="asum" style="font-family:var(--sans)">step-1 · orient</span></div>
+          <div class="arow" style="padding-left:24px"><span class="atype t-step">STEP</span><span class="asum" style="font-family:var(--sans)">step-2 · pull incident context</span></div>
+          <div class="arow cur" style="padding-left:24px"><span class="atype t-step">STEP</span><span class="asum" style="font-family:var(--sans);color:var(--tp)">▾ step-3 · establish causal deployment</span></div>
+          <div class="arow" style="padding-left:42px"><span class="atype t-tool">TOOL</span><span class="asum">tc-aa30 · exec: ls /github/…/commits</span></div>
+          <div class="arow cur" style="padding-left:42px"><span class="atype t-tool">TOOL</span><span class="asum">▾ tc-aa31 · exec: cat …/f3a1b2c8.json</span></div>
+          <div class="arow" style="padding-left:64px"><span class="atype t-read">READ</span><span class="asum">idx41 /github/…/f3a1b2c8.json</span><span class="dot e-durable"></span><span class="badge b-inf" style="padding:0 4px">inf</span></div>
+          <div class="arow" style="padding-left:64px"><span class="atype t-read">READ</span><span class="asum">idx42 /github/…/deployments/05-15.json</span><span class="dot e-durable"></span><span class="badge b-inf" style="padding:0 4px">inf</span></div>
+          <div class="arow" style="padding-left:42px"><span class="atype t-tool">TOOL</span><span class="asum">tc-aa32 · exec: cat /datadog/…/14.jsonl</span></div>
+          <div class="arow" style="padding-left:24px"><span class="atype t-step">STEP</span><span class="asum" style="font-family:var(--sans)">step-4 · draft RCA</span><span class="badge b-err" style="padding:0 4px">err</span></div>
+        </div>
+      </div>
+
+      <div class="center">
+        <div class="lens">
+          <span class="lt">Diff</span><span class="lt">State&nbsp;Tree</span><span class="lt">Action</span>
+          <span class="lt on">Trace</span><span class="lt">Data</span>
+          <span class="right"><span class="badge">tc-aa31</span><span class="badge">⧉ permalink</span></span>
+        </div>
+        <div class="insp">
+          <!-- run rollup -->
+          <div class="card">
+            <div class="ch">
+              <span class="dot" style="background:var(--da);width:9px;height:9px"></span><b>run-9f2c1a</b><span class="muted mono" style="font-size:10px">RED · 4 steps</span>
+              <span class="right" style="margin-left:auto;display:flex;gap:6px">
+                <span class="badge">38 ops</span><span class="badge">1.4 MB</span><span class="badge b-der">cache_hit 0.21 · derived</span><span class="badge b-ok">within_budget ✓ · ScoreCard</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- latency phase bar -->
+          <div class="card">
+            <div class="ch"><b>ToolCall tc-aa31</b><span class="mono muted" style="font-size:10px">exec: cat /github/…/commits/f3a1b2c8.json · exit 0</span><span class="badge" style="margin-left:auto">224 ms</span></div>
+            <div class="cb">
+              <div style="display:flex;height:18px;border-radius:5px;overflow:hidden;border:1px solid var(--bd)">
+                <div style="width:90%;background:var(--ac)" title="model"></div>
+                <div style="width:3%;background:var(--cap);opacity:.5;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(0,0,0,.25) 2px,rgba(0,0,0,.25) 4px)" title="cache (derived)"></div>
+                <div style="width:7%;background:var(--in)" title="byte-fetch"></div>
+              </div>
+              <div class="legend" style="margin-top:8px;font-size:10.5px">
+                <span><span class="legbox" style="background:var(--ac)"></span>220 ms model</span>
+                <span><span class="legbox" style="background:var(--cap);opacity:.6"></span>~0 ms cache <span class="faint">(derived)</span></span>
+                <span><span class="legbox" style="background:var(--in)"></span>4 ms byte-fetch</span>
+              </div>
+              <div class="note" style="margin-top:9px"><span>▸</span>Phase split from per-op <span class="mono sec">duration_ms</span> + Span <span class="mono sec">cache_hits/api_calls</span>. Model-heavy → fix the prompt, not the data layout. <b class="sec">No competitor has phase-level data-layer timing.</b></div>
+            </div>
+          </div>
+
+          <!-- correlated vfsop table -->
+          <div class="card" style="flex:1">
+            <div class="ch"><b>VfsOps caused by this tool call</b><span class="badge b-inf" style="margin-left:auto">attribution inferred</span></div>
+            <div class="cb" style="padding:0">
+              <table style="width:100%;font-family:var(--mono);font-size:11px;border-collapse:collapse">
+                <thead><tr style="color:var(--tm);text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em">
+                  <th style="padding:7px 13px">idx</th><th>op</th><th>path</th><th>source</th><th>bytes</th><th>dur</th><th style="padding-right:13px">effect</th></tr></thead>
+                <tbody>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:7px 13px;color:var(--tf)">41</td><td style="color:var(--in)">read</td><td class="pth">/github/…/commits/f3a1b2c8.json</td><td class="muted">github</td><td>2.0 KB</td><td>4 ms</td><td style="padding-right:13px"><span class="dot e-durable"></span> durable</td></tr>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:7px 13px;color:var(--tf)">42</td><td style="color:var(--in)">read</td><td class="pth">/github/…/deployments/2026-05-15.json</td><td class="muted">github</td><td>1.1 KB</td><td>3 ms</td><td style="padding-right:13px"><span class="dot e-durable"></span> durable</td></tr>
+                </tbody>
+              </table>
+              <div class="note res" style="padding:10px 13px;border-top:1px solid var(--bd)"><span>⊘</span>Drift flag not surfaced — <span class="mono">/github</span> is disk-backed; no ETag. Only S3 (<span class="mono">SUPPORTS_SNAPSHOT</span>) populates fingerprint/revision for stale-read detection.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="trans">
+          <div class="tbtn">▶</div><div class="tbtn">⏮</div><div class="tbtn">◀</div><div class="tbtn">▶</div><div class="tbtn">⏭</div>
+          <div class="minimap"><i style="height:40%"></i><i style="height:55%"></i><i style="height:88%"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:60%"></i><i style="height:50%"></i><i style="height:42%"></i><i style="height:66%"></i><i style="height:30%"></i><span class="playhead" style="left:30%"></span></div>
+          <div class="spd"><b class="on">1×</b><b>2×</b><b>4×</b></div>
+          <div class="curbadge">#41 of 419 · idx 41 · 14:02:58.044</div>
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="pdot" style="background:var(--tf)">/</div>
+        <div class="pdot ro" style="background:var(--m-github);box-shadow:0 0 0 2px var(--ac-ring)">gh</div>
+        <div class="pdot ro" style="background:var(--m-slack)">sl</div>
+        <div class="pdot ro" style="background:var(--m-db)">db</div>
+        <div class="pdot ro" style="background:var(--m-s3)">s3</div>
+        <div class="pdot ro" style="background:var(--m-datadog)">dd</div>
+        <div style="margin-top:auto;margin-bottom:10px;color:var(--tf);font-size:9px;writing-mode:vertical-rl;letter-spacing:.1em">DATA ▸</div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 03</b> &nbsp;·&nbsp; By-run/step <b>Trace</b> lens — the waterfall is a grouping of the same actions; latency phases + correlated VfsOps</div>
+</section>
+
+<!-- ============================ FRAME 4 — S4 DATA FOCUS ============================ -->
+<section class="frame">
+  <div class="console">
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92 <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip">branch main</span><span class="chip">T</span>
+      <div class="seg" style="margin-left:6px"><button>⏱ Time-Travel</button><button class="on">▦ Data</button></div>
+      <span class="pill"><span class="dot" style="background:var(--su)"></span>persisted</span>
+      <div class="cmdk">Search & jump <kbd>⌘K</kbd></div>
+    </div>
+
+    <div class="body">
+      <!-- mount catalog (left) -->
+      <div class="rail" style="width:268px">
+        <div class="filt" style="border-top:none"><span class="up muted" style="font-size:9.5px">Connected sources · 13 mounts</span></div>
+        <div class="alist">
+          <div class="arow" style="gap:7px"><span class="dot e-scratch"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/</span><span class="badge" style="padding:0 5px">rw</span><span class="faint mono" style="font-size:9px">ram</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-ext"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/slack</span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">9 tr</span></div>
+          <div class="arow cur" style="gap:7px"><span class="dot e-sor"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/database <span class="faint" style="font-size:9px">table</span></span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">4 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-durable"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/s3</span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">11 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-durable"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/tickets</span><span class="badge" style="padding:0 5px">rw</span><span class="faint mono" style="font-size:9px">6 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-durable"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/github</span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">7 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-durable"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/datadog</span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">5 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-durable"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/pagerduty</span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">3 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-sor"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/customers</span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">4 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-sor"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/finance</span><span class="badge" style="padding:0 5px">ro</span><span class="faint mono" style="font-size:9px">2 tr</span></div>
+          <div class="arow" style="gap:7px"><span class="dot e-durable"></span><span class="asum" style="font-family:var(--sans);color:var(--tp)">/compliance</span><span class="badge" style="padding:0 5px">ro</span></div>
+        </div>
+      </div>
+
+      <!-- table browser (center) -->
+      <div class="center">
+        <div class="lens">
+          <span class="mono sec" style="font-size:11px">/database / tables / <b style="color:var(--tp)">users</b></span>
+          <span class="lt on" style="margin-left:14px">Schema</span><span class="lt">Rows</span><span class="lt">Stats</span>
+          <span class="right"><span class="search" style="width:200px;background:var(--s2)"><span class="faint">⚲ SQL query…</span></span><span class="badge b-der">query.json · NotImplementedError</span></span>
+        </div>
+        <div class="insp">
+          <div class="note res"><span>⊘</span>TableCard derived from files on disk (<span class="mono">schema.json · data.jsonl · stats.json</span>) — <b>no live SQL engine</b>. catalog-proxy adapters are designed but stubbed.</div>
+          <div class="card" style="flex:1">
+            <div class="ch"><b>Schema</b><span class="faint mono" style="font-size:10px">/database/tables/users/schema.json</span><span class="badge" style="margin-left:auto">7 columns</span></div>
+            <div class="cb" style="padding:0">
+              <table style="width:100%;font-family:var(--mono);font-size:11.5px;border-collapse:collapse">
+                <thead><tr style="color:var(--tm);text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em"><th style="padding:8px 14px">column</th><th>type</th><th style="padding-right:14px">key</th></tr></thead>
+                <tbody>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:6px 14px;color:var(--tp)">user_id</td><td class="muted">varchar(36)</td><td style="padding-right:14px"><span class="badge b-cap" style="padding:0 5px">PK</span></td></tr>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:6px 14px;color:var(--tp)">account_id</td><td class="muted">varchar(16)</td><td style="padding-right:14px"><span class="badge" style="padding:0 5px">FK</span></td></tr>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:6px 14px;color:var(--tp)">email</td><td class="muted">varchar(255)</td><td></td></tr>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:6px 14px;color:var(--tp)">created_at</td><td class="muted">timestamptz</td><td></td></tr>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:6px 14px;color:var(--tp)">last_login</td><td class="muted">timestamptz null</td><td></td></tr>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:6px 14px;color:var(--tp)">plan</td><td class="muted">varchar(32)</td><td></td></tr>
+                  <tr style="border-top:1px solid var(--bd)"><td style="padding:6px 14px;color:var(--tp)">status</td><td class="muted">varchar(32)</td><td></td></tr>
+                </tbody>
+              </table>
+              <div style="padding:9px 14px;border-top:1px solid var(--bd);font-family:var(--mono);font-size:10.5px;color:var(--tm)">stats · row_count <b style="color:var(--ts)">500</b> · size <b style="color:var(--ts)">105,590 B</b> · last_updated 2026-05-15T12:00:00Z</div>
+            </div>
+          </div>
+          <div class="note res"><span>⊘</span>metadata strip — fingerprint <b>—</b> · revision <b>—</b> · consistency <b>—</b> &nbsp; (not surfaced; <span class="mono">ls -la</span> drops these — S3-only via ETag)</div>
+        </div>
+        <div class="trans">
+          <div class="tbtn">▶</div><div class="tbtn">⏮</div><div class="tbtn">◀</div><div class="tbtn">▶</div>
+          <div class="minimap"><i style="height:40%"></i><i style="height:55%"></i><i style="height:30%"></i><i style="height:70%"></i><i style="height:45%"></i><span class="playhead" style="left:21%"></span></div>
+          <div class="curbadge">cursor linked · #88 · idx 88</div>
+        </div>
+      </div>
+
+      <!-- touched-by (right) -->
+      <div class="rail" style="width:380px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="lens" style="height:38px"><b style="font-size:12px">Touched-by</b><span class="badge b-cap" style="margin-left:auto">EXACT · mount_prefix+path</span></div>
+        <div class="insp" style="padding:13px 14px;gap:11px">
+          <div class="mono sec" style="font-size:11px">/database/tables/users/data.jsonl</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="font-size:22px;font-weight:700">5</div><div class="muted" style="font-size:11px">actions touched this<br/><b style="color:var(--in)">4 read</b> · <b style="color:var(--cap)">1 write</b></div>
+            <div style="margin-left:auto;text-align:right"><div class="faint" style="font-size:9.5px;letter-spacing:.05em">READ/WRITE</div>
+              <div style="display:flex;gap:2px;align-items:flex-end;height:20px;margin-top:3px">
+                <i style="width:7px;height:60%;background:var(--in);border-radius:1px"></i><i style="width:7px;height:90%;background:var(--in);border-radius:1px"></i><i style="width:7px;height:40%;background:var(--in);border-radius:1px"></i><i style="width:7px;height:70%;background:var(--in);border-radius:1px"></i><i style="width:7px;height:100%;background:var(--cap);border-radius:1px"></i>
+              </div></div>
+          </div>
+          <!-- wrong-file callout -->
+          <div class="card" style="border-color:oklch(0.82 0.17 80/0.4)">
+            <div class="ch" style="background:var(--wa-soft)"><span class="dot" style="background:var(--wa)"></span><b style="color:var(--wa);font-size:11px">Sibling table also read</b></div>
+            <div class="cb"><div class="note warn" style="font-size:10.5px"><span>⚠</span><span><span class="mono">/database/tables/<b>users_2023</b>/data.jsonl</span> was read by <span class="mono">run-7be004 / step-2</span> — likely the stale-table bug. Click to jump the cursor there.</span></div></div>
+          </div>
+          <div class="card" style="flex:1">
+            <div class="ch"><b style="font-size:11px">Usages</b><span class="badge b-inf" style="margin-left:auto">owning step inferred</span></div>
+            <div class="cb" style="padding:0;font-family:var(--mono);font-size:10.5px">
+              <div class="arow" style="padding:7px 13px"><span class="atype t-read">READ</span><span class="asum">idx88 · 1 KB · ram · 3ms</span><span class="faint">7be004/s2</span></div>
+              <div class="arow" style="padding:7px 13px"><span class="atype t-read">READ</span><span class="asum">idx92 · 1 KB · ram · 2ms</span><span class="faint">7be004/s2</span></div>
+              <div class="arow" style="padding:7px 13px"><span class="atype t-read">READ</span><span class="asum">idx140 · 1 KB · ram · 2ms</span><span class="faint">22af90/s3</span></div>
+              <div class="arow" style="padding:7px 13px"><span class="atype t-write">WRITE</span><span class="asum">idx207 · +0.4 KB · ram</span><span class="faint">22af90/s4</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 04</b> &nbsp;·&nbsp; Data focus — connected-sources catalog, TableCard, and the <b>data → trace</b> "who touched this byte?" bridge</div>
+</section>
+
+<!-- ============================ FRAME 5 — S5 ACTION LENS ============================ -->
+<section class="frame">
+  <div class="console">
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92 <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip">branch main</span><span class="chip">T</span>
+      <div class="seg" style="margin-left:6px"><button class="on">⏱ Time-Travel</button><button>▦ Data</button></div>
+      <span class="pill"><span class="dot" style="background:var(--su)"></span>persisted</span>
+      <div class="cmdk">Search & jump <kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <div class="rail">
+        <div class="filt" style="border-top:none"><span class="tchip">all</span><span class="tchip on">vfs_op</span><span class="tchip">TOOL_CALL</span><div class="search"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> filter…</div></div>
+        <div class="alist">
+          <div class="arow"><span class="agut">idx55</span><span class="atype t-read">READ</span><span class="asum">read /github/…/f3a1b2c8.json</span></div>
+          <div class="arow"><span class="agut">idx56</span><span class="atype t-read">READ</span><span class="asum">read /database/tables/users/data.jsonl</span><span class="dot e-sor"></span></div>
+          <div class="arow cur"><span class="agut">§57</span><span class="atype t-write">WRITE</span><span class="asum">write <span class="pth">/rca_inc_5521.md</span></span><span class="dot e-durable"></span></div>
+          <div class="arow fut"><span class="agut">idx58</span><span class="atype t-read">READ</span><span class="asum">read /compliance/policies/retention.md</span></div>
+          <div class="arow fut"><span class="agut">idx59</span><span class="atype t-think">THINK</span><span class="asum">drafting remediation steps…</span></div>
+        </div>
+      </div>
+      <div class="center">
+        <div class="lens">
+          <span class="lt">Diff</span><span class="lt">State&nbsp;Tree</span><span class="lt on">Action</span><span class="lt">Trace</span><span class="lt">Data</span>
+          <span class="right"><span class="badge">⧉ copy permalink</span></span>
+        </div>
+        <div class="insp">
+          <div class="card">
+            <div class="ch"><b>Stream provenance</b><span class="badge" style="margin-left:auto">source=agui</span></div>
+            <div class="cb"><dl class="kv">
+              <dt>type</dt><dd>CUSTOM · name=vfs_op</dd>
+              <dt>counter</dt><dd>§seq 57 <span class="muted">(agui per-session)</span></dd>
+              <dt>thread_id</dt><dd>northhill-incident-fc92</dd>
+              <dt>run_id</dt><dd>run-9f2c1a</dd>
+              <dt>step_id</dt><dd class="muted">(absent)</dd>
+              <dt>tool_call_id</dt><dd class="muted">(absent)</dd>
+            </dl></div>
+          </div>
+          <div class="card" style="flex:1">
+            <div class="ch"><b>Raw event payload</b><span class="faint mono" style="font-size:10px;margin-left:auto">collapsible · copyable</span></div>
+            <div class="cb mono" style="font-size:12px;line-height:1.85">
+              <span class="muted">{</span><br/>
+              &nbsp;&nbsp;<span class="tkey">"type"</span>: <span style="color:var(--cap)">"CUSTOM"</span>,<br/>
+              &nbsp;&nbsp;<span class="tkey">"name"</span>: <span style="color:var(--cap)">"vfs_op"</span>,<br/>
+              &nbsp;&nbsp;<span class="tkey">"value"</span>: <span class="muted">{</span><br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="tkey">"op"</span>: <span style="color:var(--cap)">"write"</span>, <span class="tkey">"path"</span>: <span style="color:var(--cap)">"/rca_inc_5521.md"</span>,<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="tkey">"bytes"</span>: <span style="color:var(--sim)">4280</span>, <span class="tkey">"mount_prefix"</span>: <span style="color:var(--cap)">"/"</span><br/>
+              &nbsp;&nbsp;<span class="muted">},</span><br/>
+              &nbsp;&nbsp;<span class="tkey">"timestamp"</span>: <span style="color:var(--sim)">1747315421187</span><br/>
+              <span class="muted">}</span>
+            </div>
+          </div>
+          <div class="card" style="border-color:oklch(0.81 0.16 72/0.4)">
+            <div class="ch" style="background:var(--sim-soft)"><span class="dot" style="background:var(--sim)"></span><b style="color:var(--sim);font-size:11px">Dropped at emission</b></div>
+            <div class="cb"><div class="note warn"><span>⚠</span>This wire event dropped <span class="mono">source · duration_ms · fingerprint · revision · is_cache</span> and carries no <span class="mono">step_id / tool_call_id</span> → op→step link is <b>inferred</b>. Phase-0 fix: <span class="mono sec">server.py ~L1403</span>.</div></div>
+          </div>
+          <div class="note"><span>⧉</span><span class="mono sec" style="font-size:10.5px">/w/northhill-incident-fc92?cursor=57&lens=action</span></div>
+        </div>
+        <div class="trans">
+          <div class="tbtn">▶</div><div class="tbtn">⏮</div><div class="tbtn">◀</div><div class="tbtn">▶</div>
+          <div class="minimap"><i style="height:40%"></i><i style="height:55%"></i><i style="height:30%"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:60%"></i><span class="playhead" style="left:46%"></span></div>
+          <div class="spd"><b class="on">1×</b><b>2×</b><b>4×</b></div>
+          <div class="curbadge">#57 of 419 · §57 · 14:03:41.187</div>
+        </div>
+      </div>
+      <div class="pillar">
+        <div class="pdot" style="background:var(--tf)">/</div><div class="pdot ro" style="background:var(--m-slack)">sl</div><div class="pdot ro" style="background:var(--m-db)">db</div><div class="pdot ro" style="background:var(--m-s3)">s3</div><div class="pdot ro" style="background:var(--m-github)">gh</div>
+        <div style="margin-top:auto;margin-bottom:10px;color:var(--tf);font-size:9px;writing-mode:vertical-rl;letter-spacing:.1em">DATA ▸</div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 05</b> &nbsp;·&nbsp; <b>Action</b> lens — raw wire payload, stream provenance, and an honest "dropped at emission" note</div>
+</section>
+
+<!-- ============================ FRAME 6 — S6 COMPARE ============================ -->
+<section class="frame">
+  <div class="console">
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92 <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip">Compare</span>
+      <div class="seg" style="margin-left:6px"><button class="on">⏱ Time-Travel</button><button>▦ Data</button></div>
+      <span class="pill"><span class="dot" style="background:var(--su)"></span>persisted</span>
+      <div class="cmdk">Search & jump <kbd>⌘K</kbd></div>
+    </div>
+    <div class="body">
+      <div class="center" style="border-right:1px solid var(--bd)">
+        <!-- dual cursor bar + summary -->
+        <div class="lens" style="height:auto;padding:9px 14px;flex-wrap:wrap;gap:10px">
+          <span class="badge" style="border-color:var(--in-soft);color:var(--in)">⊙ pin A · run-7be004 · main</span>
+          <span class="badge" style="border-color:var(--ac-ring);color:var(--acs)">⊙ pin B · run-7be004-fork</span>
+          <span class="right" style="display:flex;gap:8px;font-size:10.5px"><span class="badge">A 19 ops / 842 KB</span><span class="badge">B 21 ops / 905 KB</span><span class="badge b-inf">first divergence 11:49:02</span></span>
+        </div>
+        <div class="insp" style="padding:0">
+          <!-- first divergence marker -->
+          <div style="margin:14px 16px 0;padding:11px 14px;border:1px solid oklch(0.82 0.17 80/0.45);border-radius:10px;background:var(--wa-soft)">
+            <div style="display:flex;align-items:center;gap:8px;font-size:11.5px"><span class="dot" style="background:var(--wa)"></span><b style="color:var(--wa)">First divergence — step-2 read</b><span class="muted mono" style="font-size:10px;margin-left:auto">the moment the regression entered</span></div>
+            <div class="mono" style="font-size:11px;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><span class="badge" style="border-color:var(--in-soft);color:var(--in)">A</span> read <span class="pth">/database/tables/<b>users</b>/data.jsonl</span></div>
+              <div><span class="badge" style="border-color:var(--ac-ring);color:var(--acs)">B</span> read <span class="pth" style="color:var(--wa)">/database/tables/<b>users_2023</b>/data.jsonl</span></div>
+            </div>
+          </div>
+          <!-- two columns -->
+          <div style="display:flex;flex:1;gap:0;margin-top:14px;min-height:0">
+            <div style="flex:1;border-top:1px solid var(--bd);border-right:1px solid var(--bd);padding:12px 16px">
+              <div class="up faint" style="font-size:9.5px;margin-bottom:9px">state @ A · end of run-7be004</div>
+              <div class="tree" style="font-size:11px">
+                <div><span class="tkey">overlay</span> <span class="tcount">· /scratch/summary.md</span> <span class="muted">1.1 KB</span></div>
+                <div><span class="tkey">reads</span> <span class="tcount">· 14 paths</span></div>
+                <div class="mono" style="margin-top:7px;color:var(--in)">/database/tables/users/data.jsonl</div>
+              </div>
+            </div>
+            <div style="flex:1;border-top:1px solid var(--bd);padding:12px 16px">
+              <div class="up faint" style="font-size:9.5px;margin-bottom:9px">state @ B · end of run-7be004-fork</div>
+              <div class="tree" style="font-size:11px">
+                <div><span class="tkey">overlay</span> <span class="tcount">· /scratch/summary.md</span> <span class="muted">1.6 KB</span> <span class="badge b-cap" style="padding:0 4px">+14 lines</span></div>
+                <div><span class="tkey">reads</span> <span class="tcount">· 16 paths</span></div>
+                <div class="mono" style="margin-top:7px;color:var(--wa)">/database/tables/users_2023/data.jsonl ⚠</div>
+              </div>
+            </div>
+          </div>
+          <!-- file side by side -->
+          <div class="card" style="margin:0 16px 14px;flex:none">
+            <div class="ch"><b>/scratch/summary.md</b><span class="badge b-der" style="margin-left:auto">text-only preview</span></div>
+            <div class="cb" style="display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0;font-family:var(--mono);font-size:10.5px">
+              <div style="padding:9px 13px;border-right:1px solid var(--bd)"><div class="faint">A · 1.1 KB</div><div class="muted" style="margin-top:4px">ARR Q1 = $2.4M (500 users)</div></div>
+              <div style="padding:9px 13px"><div class="faint">B · 1.6 KB</div><div style="margin-top:4px;color:var(--wa)">ARR Q1 = $1.9M (412 users · 2023 table)</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="trans">
+          <span class="badge" style="border-color:var(--in-soft);color:var(--in)">◀ cursor A · idx 19</span>
+          <div class="minimap" style="max-width:400px"><i style="height:40%"></i><i style="height:55%"></i><i style="height:30%"></i><i style="height:70%"></i><i style="height:45%;background:var(--wa)"></i><i style="height:60%"></i><span class="playhead" style="left:55%"></span></div>
+          <span class="badge" style="border-color:var(--ac-ring);color:var(--acs)">cursor B · idx 21 ▶</span>
+          <div class="curbadge" style="margin-left:auto">diff(A, B) · 1 changed file · 1 divergent read</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 06</b> &nbsp;·&nbsp; <b>Compare</b> — two cursors / two runs; first-divergence pinpoints the wrong-file regression (a data bug transcripts can't see)</div>
+</section>
+
+<!-- ============================ FRAME 7 — S7 CMD-K ============================ -->
+<section class="frame">
+  <div class="console" style="filter:saturate(.7) brightness(.62)">
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92</div>
+      <div class="seg" style="margin-left:6px"><button class="on">⏱ Time-Travel</button><button>▦ Data</button></div>
+      <span class="pill" style="margin-left:auto"><span class="dot" style="background:var(--su)"></span>persisted</span>
+    </div>
+    <div class="body">
+      <div class="rail"><div class="filt"><span class="tchip">all</span><span class="tchip">vfs_op</span></div>
+        <div class="alist"><div class="arow"><span class="agut">§312</span><span class="atype t-tool">TOOL</span><span class="asum">exec exit 0</span></div><div class="arow"><span class="agut">idx57</span><span class="atype t-write">WRITE</span><span class="asum">write /rca_inc_5521.md</span></div><div class="arow"><span class="agut">idx56</span><span class="atype t-read">READ</span><span class="asum">read /database/tables/users/data.jsonl</span></div></div>
+      </div>
+      <div class="center"><div class="lens"><span class="lt on">State&nbsp;Tree</span><span class="lt">Diff</span></div><div class="insp"><div class="card" style="flex:1"></div></div></div>
+    </div>
+  </div>
+  <!-- backdrop + palette -->
+  <div style="position:absolute;inset:0;background:oklch(0.10 0.01 264/0.55);backdrop-filter:blur(2px)"></div>
+  <div style="position:absolute;top:96px;left:50%;transform:translateX(-50%);width:680px;border:1px solid var(--bds);border-radius:14px;background:oklch(0.205 0.015 264/0.97);box-shadow:0 24px 64px -12px rgba(0,0,0,.7);overflow:hidden">
+    <div style="display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid var(--bd)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tm)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+      <span style="font-size:15px;color:var(--tp)">users.jsonl</span><span style="width:1px;height:16px;background:var(--ac);margin-left:1px"></span>
+      <span class="cmdk" style="margin-left:auto"><kbd>↑↓</kbd> navigate <kbd>↵</kbd> open <kbd>esc</kbd></span>
+    </div>
+    <div style="padding:7px 0;max-height:330px">
+      <div class="up faint" style="font-size:9px;padding:7px 18px 4px">Sources</div>
+      <div class="arow" style="padding:8px 18px;gap:10px"><span class="dot" style="background:var(--m-db)"></span><span class="asum" style="font-family:var(--mono)">/database/tables/users/data.jsonl</span><span class="badge" style="margin-left:auto">▦ Data</span></div>
+      <div class="up faint" style="font-size:9px;padding:9px 18px 4px">Actions</div>
+      <div class="arow" style="padding:8px 18px;gap:10px"><span class="atype t-read">READ</span><span class="asum">idx 88 · read users/data.jsonl</span><span class="badge" style="margin-left:auto">→ cursor</span></div>
+      <div class="arow" style="padding:8px 18px;gap:10px"><span class="atype t-read">READ</span><span class="asum">idx 92 · read users/data.jsonl</span><span class="badge" style="margin-left:auto">→ cursor</span></div>
+      <div class="up faint" style="font-size:9px;padding:9px 18px 4px">Commands</div>
+      <div class="arow cur" style="padding:8px 18px;gap:10px"><span style="color:var(--acs)">⤓</span><span class="asum" style="font-family:var(--sans);color:var(--tp)">Export session bundle <span class="faint">· ~1.8 MB · 419 actions + agui trace + overlay</span></span><span class="badge" style="margin-left:auto">↵</span></div>
+      <div class="arow" style="padding:8px 18px;gap:10px"><span style="color:var(--tm)">▦</span><span class="asum" style="font-family:var(--sans)">Toggle Data focus</span></div>
+      <div class="arow" style="padding:8px 18px;gap:10px"><span style="color:var(--sim)">⇧</span><span class="asum" style="font-family:var(--sans)">Promote effects <span class="faint">· 1 pending: /rca_inc_5521.md · SIMULATED</span></span></div>
+    </div>
+    <div style="padding:10px 18px;border-top:1px solid var(--bd);display:flex;gap:9px;align-items:center;font-size:10.5px;color:var(--tm)">
+      <span class="badge b-cap">Export</span> merged action log ✓ · agui trace ✓ · overlay snapshot ✓ · mount manifest ✓ → <span class="mono">session-…fc92.mirage-session.json</span>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 07</b> &nbsp;·&nbsp; <b>Cmd-K</b> — go-to-anything (paths / runs / action idx) + export a replayable <span style="font-family:var(--mono)">.mirage-session.json</span> repro</div>
+</section>
+
+<!-- ============================ FRAME 8 — LIFECYCLE OF ONE EXEC ============================ -->
+<section class="frame">
+  <div style="padding:30px 40px;height:100%;display:flex;flex-direction:column;gap:14px">
+    <div>
+      <div class="kick">Walkthrough · Lifecycle of one exec</div>
+      <div style="display:flex;align-items:baseline;gap:14px;margin-top:5px">
+        <h2 style="font-size:25px;font-weight:700;letter-spacing:-0.01em">From agent command → developer insight</h2>
+        <span class="chip mono" style="height:24px;font-size:11px">EXEC: cat /s3/dashboards/checkout.json</span>
+      </div>
+    </div>
+
+    <!-- pipeline row -->
+    <div style="display:flex;align-items:stretch;gap:4px">
+      <div style="flex:1;border:1px solid var(--bd);border-radius:10px;background:oklch(0.68 0.19 280/0.08);border-color:var(--ac-ring);padding:10px 12px">
+        <div style="display:flex;gap:7px;align-items:center"><span class="badge" style="background:var(--ac-soft);color:var(--acs);border-color:var(--ac-ring)">1</span><b style="font-size:12px">Agent</b></div>
+        <div class="muted" style="font-size:10.5px;margin-top:5px;line-height:1.45">Sandboxed agent calls its <span class="mono sec">exec</span> tool — one shell command, zero new SDKs.</div>
+      </div>
+      <div style="color:var(--tf);font-size:17px;display:flex;align-items:center">▸</div>
+      <div style="flex:1;border:1px solid var(--bd);border-radius:10px;background:var(--s1);padding:10px 12px">
+        <div style="display:flex;gap:7px;align-items:center"><span class="badge">2</span><b style="font-size:12px">Endpoint · Shell</b></div>
+        <div class="muted" style="font-size:10.5px;margin-top:5px;line-height:1.45"><span class="mono sec">Workspace.execute()</span> — tree-sitter bash parse → <span class="mono">ExecutionNode</span>. No <span class="mono">/bin/bash</span>.</div>
+      </div>
+      <div style="color:var(--tf);font-size:17px;display:flex;align-items:center">▸</div>
+      <div style="flex:1;border:1px solid var(--bd);border-radius:10px;background:var(--s1);padding:10px 12px">
+        <div style="display:flex;gap:7px;align-items:center"><span class="badge">3</span><b style="font-size:12px">VFS + 2-layer cache</b></div>
+        <div class="muted" style="font-size:10.5px;margin-top:5px;line-height:1.45">Resolve <span class="mono">/s3</span> → resource. Cache <b style="color:var(--ts)">miss</b> → fetch; <b style="color:var(--ts)">hit</b> → short-circuit.</div>
+      </div>
+      <div style="color:var(--tf);font-size:17px;display:flex;align-items:center">▸</div>
+      <div style="flex:1;border:1px solid var(--bd);border-radius:10px;background:var(--s1);padding:10px 12px">
+        <div style="display:flex;gap:7px;align-items:center"><span class="badge">4</span><b style="font-size:12px">Backend</b></div>
+        <div class="muted" style="font-size:10.5px;margin-top:5px;line-height:1.45">S3 GET on miss → bytes + <span class="mono">ETag</span>/<span class="mono">VersionId</span>. (Hit serves RAM, no fetch.)</div>
+      </div>
+      <div style="color:var(--tf);font-size:17px;display:flex;align-items:center">▸</div>
+      <div style="flex:1.15;border:1px solid oklch(0.81 0.12 195/0.5);border-radius:10px;background:var(--cap-soft);padding:10px 12px">
+        <div style="display:flex;gap:7px;align-items:center"><span class="badge b-cap">5 ★</span><b style="font-size:12px;color:var(--cap)">observe.record()</b></div>
+        <div style="font-size:10.5px;margin-top:5px;line-height:1.45;color:var(--ts)"><b style="color:var(--cap)">Ground truth is born.</b> Emits an <span class="mono">OpRecord</span> onto <span class="mono">ExecutionNode.records</span>.</div>
+      </div>
+    </div>
+
+    <!-- fork row -->
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="flex:none;width:188px;border:1px solid oklch(0.81 0.12 195/0.5);border-radius:10px;background:var(--cap-soft);padding:9px 12px">
+        <div class="mono" style="font-size:9.5px;color:var(--cap);font-weight:600">★ OpRecord</div>
+        <div class="mono" style="font-size:9.5px;color:var(--ts);margin-top:3px;line-height:1.5">op·path·source·bytes<br/>dur·mount·fingerprint<br/>revision·is_cache</div>
+      </div>
+      <div style="color:var(--tf);font-size:16px">▸</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;gap:7px;align-items:center;border:1px solid var(--bd);border-radius:8px;background:var(--s1);padding:6px 11px"><span class="atype t-read" style="background:var(--in-soft);color:var(--in)">AG-UI</span><span class="mono muted" style="font-size:10px">TOOL_CALL_* · CUSTOM(vfs_op)</span><span class="badge b-inf" style="margin-left:auto;font-size:9px">drops source/fingerprint + tool_call_id → Phase-0</span></div>
+        <div style="display:flex;gap:7px;align-items:center;border:1px solid var(--bd);border-radius:8px;background:var(--s1);padding:6px 11px"><span class="atype t-tool" style="background:var(--wa-soft);color:var(--wa)">RELAY</span><span class="mono muted" style="font-size:10px">/events SSE · stream_events · monotonic seq</span><span class="badge b-der" style="margin-left:auto;font-size:9px">op feed capped at last-20</span></div>
+        <div style="display:flex;gap:7px;align-items:center;border:1px solid var(--bd);border-radius:8px;background:var(--s1);padding:6px 11px"><span class="atype t-cmd" style="background:var(--s2);color:var(--tm)">AUDIT</span><span class="mono muted" style="font-size:10px">.sessions/&lt;date&gt;/&lt;session&gt;.jsonl</span><span class="badge b-der" style="margin-left:auto;font-size:9px">drops fingerprint/revision</span></div>
+      </div>
+      <div style="color:var(--tf);font-size:16px">▸</div>
+      <div style="flex:none;width:150px;border:1px solid var(--bd);border-radius:10px;background:var(--s1);padding:9px 12px">
+        <b style="font-size:11px">Coalescer → store</b>
+        <div class="mono muted" style="font-size:9.5px;margin-top:4px;line-height:1.45">runs · steps · tool_calls<br/>vfs_ops · agui_events</div>
+      </div>
+      <div style="color:var(--tf);font-size:16px">▸</div>
+      <div style="flex:none;width:150px;border:1px solid var(--ac-ring);border-radius:10px;background:oklch(0.68 0.19 280/0.08);padding:9px 12px">
+        <b style="font-size:11px;color:var(--acs)">Mirage Console</b>
+        <div class="muted" style="font-size:9.5px;margin-top:4px;line-height:1.45">live tail + store → ACTION · STATE fold · Diff</div>
+      </div>
+    </div>
+
+    <!-- dual POV -->
+    <div style="display:flex;gap:16px;flex:1;min-height:0">
+      <!-- agent -->
+      <div class="card" style="flex:1;display:flex;flex-direction:column">
+        <div class="ch"><span class="dot" style="background:var(--ac)"></span><b>Agent perspective</b><span class="badge" style="margin-left:auto">sees the claim</span></div>
+        <div class="cb" style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <div class="mono" style="font-size:11.5px;background:var(--s0);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;line-height:1.7">
+            <span style="color:var(--su)">$</span> cat /s3/dashboards/checkout.json<br/>
+            <span class="muted">{ "p95_ms": 812, "error_rate": 0.041, … }</span><br/>
+            <span style="color:var(--su)">exit 0</span>
+          </div>
+          <div class="note"><span>▸</span>Gets back <b class="sec">stdout + exit code</b> — exactly like a normal shell. Believes: <i>"I read the live checkout dashboard."</i></div>
+          <div class="note res" style="margin-top:auto"><span>⊘</span>Cannot see: which <b>source</b> served it, <b>bytes</b>, <b>cache hit/miss</b>, <b>fingerprint/revision</b>, <b>effect class</b>. The model only ever knows its own self-report.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;color:var(--tf);font-weight:600;font-size:12px">vs</div>
+      <!-- developer -->
+      <div class="card" style="flex:1.25;display:flex;flex-direction:column;border-color:oklch(0.81 0.12 195/0.45)">
+        <div class="ch"><span class="dot" style="background:var(--cap)"></span><b>Developer perspective — Mirage Console</b><span class="badge b-cap" style="margin-left:auto">sees the ground truth</span></div>
+        <div class="cb" style="flex:1;display:flex;flex-direction:column;gap:9px">
+          <dl class="kv" style="grid-template-columns:104px 1fr">
+            <dt>op · path</dt><dd>read · /s3/dashboards/checkout.json</dd>
+            <dt>source · bytes</dt><dd>s3 · 38,204 B · 210 ms</dd>
+            <dt>fingerprint</dt><dd>ETag 9a1f3c… · <span class="muted">revision v3</span> · is_cache=false</dd>
+            <dt>effect_class</dt><dd>durable-internal <span class="dot e-durable" style="vertical-align:0"></span></dd>
+          </dl>
+          <div style="border:1px solid oklch(0.68 0.22 25/0.45);background:var(--da-soft);border-radius:8px;padding:8px 11px">
+            <div style="font-size:11px;color:var(--da);font-weight:600">⚠ DRIFT — stale read</div>
+            <div class="mono" style="font-size:10.5px;color:var(--ts);margin-top:3px">read pinned ETag 9a1f3c… (v3) · backend current b2c0d4… (v5)</div>
+          </div>
+          <div class="note"><span>▸</span>Appears as <b class="sec">action idx 57</b>; State Tree <span class="mono">reads-so-far +1</span>; Data pillar rings <span class="mono">/s3</span>; Diff lens shows the read-preview.</div>
+          <div style="margin-top:auto;display:flex;gap:8px;align-items:center;border-top:1px solid var(--bd);padding-top:9px">
+            <span class="badge b-err">verdict</span><span style="font-size:11.5px;color:var(--tp)"><b>Data mistake, not a model mistake</b> — the agent read exactly what it asked for; the workspace served a pinned-stale revision.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 08</b> &nbsp;·&nbsp; Lifecycle of one <span style="font-family:var(--mono)">exec</span> — the agent sees the claim; the console sees the observed byte</div>
+</section>
+
+<!-- ============================ FRAME 9 — WHERE THE AGENT RUNS ============================ -->
+<section class="frame">
+  <div style="padding:30px 44px;height:100%;display:flex;flex-direction:column;gap:16px">
+    <div>
+      <div class="kick">Architecture · Where does the agent happen?</div>
+      <h2 style="font-size:25px;font-weight:700;letter-spacing:-0.01em;margin-top:5px">Capturing the agent's <span style="color:var(--cap)">intention</span>, not just its actions</h2>
+    </div>
+
+    <div style="display:flex;gap:18px;flex:1;min-height:0">
+      <!-- Model A -->
+      <div class="card" style="flex:1;display:flex;flex-direction:column;opacity:.96">
+        <div class="ch"><span class="badge">A</span><b>Agent-external</b><span class="muted" style="font-size:10px">today's default</span><span class="badge b-inf" style="margin-left:auto">data plane only</span></div>
+        <div class="cb" style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <div style="border:1px dashed var(--bds);border-radius:9px;padding:9px 12px;background:var(--s0)"><b style="font-size:11.5px">Your agent / framework</b><div class="muted" style="font-size:10px;margin-top:2px">OpenAI Agents · LangChain · BFF EXEC loop — the model call lives <i>outside</i> mirage</div></div>
+          <div style="text-align:center;color:var(--tf)">↓ <span class="mono" style="font-size:10px">exec(cmd)</span></div>
+          <div style="border:1px solid var(--bd);border-radius:9px;padding:9px 12px;background:var(--s1)"><b style="font-size:11.5px">Mirage — data layer (VFS)</b><div class="muted" style="font-size:10px;margin-top:2px">sees the command + the bytes it moved</div></div>
+          <div style="text-align:center;color:var(--tf)">↓</div>
+          <div style="border:1px solid oklch(0.81 0.12 195/0.4);border-radius:9px;padding:8px 12px;background:var(--cap-soft);display:flex;gap:8px;align-items:center"><span class="dot" style="background:var(--cap)"></span><b style="font-size:11px;color:var(--cap)">VfsOp — observed ✓</b><span class="muted" style="font-size:10px">ground truth</span></div>
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--bd);padding-top:9px">
+            <div class="note"><span class="dot" style="background:var(--cap);margin-top:5px"></span><span><b class="sec">Actions (what)</b> — observed at the chokepoint.</span></div>
+            <div class="note warn"><span class="dot" style="background:var(--sim);margin-top:5px"></span><span><b style="color:var(--sim)">Intention (why)</b> — only what the framework volunteers via AG-UI <span class="mono">THINKING</span>. Self-reported, lossy, often <b>absent</b>.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model B -->
+      <div class="card" style="flex:1.05;display:flex;flex-direction:column;border-color:var(--ac-ring);box-shadow:0 0 0 1px var(--ac-ring)">
+        <div class="ch" style="background:oklch(0.68 0.19 280/0.08)"><span class="badge" style="background:var(--ac-soft);color:var(--acs);border-color:var(--ac-ring)">B</span><b>Mirage-hosted agent</b><span class="muted" style="font-size:10px">proposed</span><span class="badge b-cap" style="margin-left:auto">cognition + data plane</span></div>
+        <div class="cb" style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <div style="border:1px solid var(--ac-ring);border-radius:9px;padding:9px 12px;background:oklch(0.68 0.19 280/0.06)"><b style="font-size:11.5px;color:var(--acs)">Mirage runtime hosts the agent loop</b><div class="muted" style="font-size:10px;margin-top:2px">observe → think → decide → act, all inside mirage</div></div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;border:1px solid oklch(0.81 0.12 195/0.45);border-radius:9px;padding:8px 11px;background:var(--cap-soft)"><b style="font-size:10.5px;color:var(--cap)">★ Model gateway</b><div class="mono" style="font-size:9px;color:var(--ts);margin-top:3px;line-height:1.5">context-in (system + file_prompt + history)<br/>completion-out (reasoning + decision)<br/>tokens · model · latency</div></div>
+            <div style="flex:none;width:120px;border:1px solid oklch(0.81 0.12 195/0.45);border-radius:9px;padding:8px 11px;background:var(--cap-soft)"><b style="font-size:10.5px;color:var(--cap)">★ Data plane</b><div class="mono" style="font-size:9px;color:var(--ts);margin-top:3px;line-height:1.5">exec → VfsOp<br/>(as before)</div></div>
+          </div>
+          <div style="text-align:center;color:var(--tf)">↓ <span class="mono" style="font-size:10px">every intention + every effect, at one chokepoint</span></div>
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--bd);padding-top:9px">
+            <div class="note"><span class="dot" style="background:var(--cap);margin-top:5px"></span><span><b class="sec">Actions (what)</b> — observed.</span></div>
+            <div class="note"><span class="dot" style="background:var(--cap);margin-top:5px"></span><span><b style="color:var(--cap)">Intention (why)</b> — <b>observed at the gateway</b>: the exact context the model saw and the exact reasoning that produced each decision. Not self-report — ground truth.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- extended spine + new bug class -->
+    <div style="display:flex;gap:16px;align-items:stretch">
+      <div class="card" style="flex:1.4">
+        <div class="ch"><b>The spine extends — Intent → Action → Effect, all observed</b></div>
+        <div class="cb mono" style="font-size:11.5px;line-height:1.8">
+          Run › Step › <span style="color:var(--acs)">ModelCall</span> <span class="faint">(★ context-in + reasoning + decision)</span> › <span style="color:var(--wa)">ToolCall</span> <span class="faint">(exec)</span> › <span style="color:var(--cap)">VfsOp</span> <span class="faint">(bytes)</span><br/>
+          <span class="faint" style="font-size:10px">the "inferred" op→step dot disappears for hosted runs — causality is now observed end-to-end, not timestamp-guessed</span>
+        </div>
+      </div>
+      <div class="card" style="flex:1;border-color:oklch(0.68 0.22 25/0.4)">
+        <div class="ch" style="background:var(--da-soft)"><span class="dot" style="background:var(--da)"></span><b style="color:var(--da)">New bug class unlocked</b></div>
+        <div class="cb"><div class="note"><span>▸</span><b class="sec">Intent ≠ Effect.</b> The model stated it would read the <i>live</i> dashboard; the op served a <b>stale cache (v3)</b>. Only hosted mirage holds <b>both</b> the stated intent and the observed truth — so it can flag the divergence automatically.</div></div>
+      </div>
+    </div>
+    <div class="note res" style="font-size:10.5px"><span>⊘</span>Honesty: a run carries a <b>fidelity badge</b> — <span class="badge b-cap" style="padding:0 5px">cognition observed · hosted</span> vs <span class="badge b-inf" style="padding:0 5px">reasoning self-reported · external</span>. Same IA, different fidelity — never faked.</div>
+  </div>
+  <div class="figtag"><b>Fig 09</b> &nbsp;·&nbsp; Where the agent runs — hosting the loop turns "why" from a black box into observed ground truth</div>
+</section>
+
+<!-- ============================ FRAME 10 — TAMING THE LONG REASONING CHAIN ============================ -->
+<section class="frame">
+  <div class="console">
+    <div class="hdr">
+      <div class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-18 9 18"/><path d="M7.5 14h9"/></svg></div>
+      <span style="font-size:13px;font-weight:600">Mirage Console</span>
+      <div class="wsw"><span class="dot" style="background:var(--su)"></span>northhill-incident-fc92 <span class="faint mono" style="font-size:10px">▾</span></div>
+      <span class="chip" title="hosted run — cognition observed">run-9f2c1a</span>
+      <span class="badge b-cap">cognition observed · hosted</span>
+      <div class="cmdk" style="margin-left:auto">Search & jump <kbd>⌘K</kbd></div>
+    </div>
+
+    <div class="body">
+      <!-- left: decision skeleton -->
+      <div class="rail" style="width:432px">
+        <div class="filt" style="border-top:none;gap:7px">
+          <div class="seg" style="height:26px"><button>≣ Flat</button><button class="on">🧠 Decisions</button></div>
+          <span class="badge b-der">reasoning collapsed</span>
+          <div class="search" style="flex-basis:100%;margin-top:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> search reasoning… <span class="mono" style="margin-left:auto;font-size:9.5px;color:var(--sim)">'stale' 3 · 'users_2023' 1</span></div>
+        </div>
+        <div class="alist">
+          <!-- each row = one step's INTENT (operative line), raw tokens collapsed; left token-heat gutter -->
+          <div class="arow" style="gap:8px"><i style="width:3px;height:13px;background:var(--bds);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s1</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans)">Survey the incident surface</span></div>
+          <div class="arow" style="gap:8px"><i style="width:3px;height:13px;background:var(--in);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s2</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans)">Pull PagerDuty incident + Slack bridge</span></div>
+          <div class="arow cur" style="gap:8px"><i style="width:3px;height:13px;background:var(--in);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s3</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans);color:var(--tp)">Read the <b>live</b> checkout dashboard to correlate deploy</span><span class="dot" style="background:var(--da)" title="intent≠effect"></span></div>
+          <div class="arow" style="gap:8px"><i style="width:3px;height:24px;background:var(--wa);border-radius:2px;flex:none" title="heavy reasoning (8.7k tok)"></i><span class="agut" style="width:24px">s4</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans)">Draft causal hypothesis <span class="faint">· 8.7k tok</span></span></div>
+          <div class="arow" style="gap:8px"><i style="width:3px;height:13px;background:var(--bds);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s5</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans)">Check Datadog error rates</span></div>
+          <div class="arow" style="gap:8px;background:var(--in-soft)"><i style="width:3px;height:13px;background:var(--in);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s7</span><span class="badge" style="padding:0 5px;background:var(--in-soft);color:var(--in)">⚑ pivot</span><span class="asum" style="font-family:var(--sans)">Reconsider: maybe the DB migration, not the deploy</span></div>
+          <div class="arow" style="gap:8px"><i style="width:3px;height:13px;background:var(--bds);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s12</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans)">Inspect migration logs</span></div>
+          <div class="arow" style="gap:8px;background:var(--da-soft)"><i style="width:3px;height:13px;background:var(--da);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s19</span><span class="badge b-err" style="padding:0 5px">⚑ error</span><span class="asum" style="font-family:var(--sans)">ls failed → retry with corrected path</span></div>
+          <div class="arow" style="gap:8px;background:var(--wa-soft)"><i style="width:3px;height:20px;background:var(--wa);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s23</span><span class="badge" style="padding:0 5px;background:var(--wa-soft);color:var(--wa)">⚑ thrash</span><span class="asum" style="font-family:var(--sans)">Re-reading the same logs (×3)</span></div>
+          <div class="arow" style="gap:8px"><i style="width:3px;height:13px;background:var(--bds);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s38</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans)">Synthesize remediation</span></div>
+          <div class="arow" style="gap:8px"><i style="width:3px;height:13px;background:var(--cap);border-radius:2px;flex:none"></i><span class="agut" style="width:24px">s42</span><span style="font-size:10px">🧠</span><span class="asum" style="font-family:var(--sans)">Write RCA → /rca_inc_5521.md</span><span class="dot e-durable"></span></div>
+        </div>
+      </div>
+
+      <!-- center: reasoning reader -->
+      <div class="center">
+        <div class="lens">
+          <span class="lt">Diff</span><span class="lt">State&nbsp;Tree</span><span class="lt on">Reasoning</span><span class="lt">Context</span><span class="lt">Trace</span>
+          <span class="right"><span class="badge">Step 3 · ModelCall</span><span class="badge b-der">intent: derived · verbatim 1 click</span></span>
+        </div>
+        <div class="insp">
+          <!-- operative intent -->
+          <div class="card">
+            <div class="ch"><span style="font-size:12px">🧠</span><b>Intent — why step 3 happened</b><span class="badge b-cap" style="margin-left:auto">observed @ gateway</span></div>
+            <div class="cb">
+              <div style="font-size:13px;color:var(--tp);line-height:1.55;border-left:2px solid var(--acs);padding-left:11px">“I'll read the <b>live</b> checkout dashboard (<span class="mono">/s3/dashboards/checkout.json</span>) to correlate the deploy window with the error spike.”</div>
+              <div class="note" style="margin-top:9px"><span>▾</span><span class="sec" style="cursor:pointer">show 1,842 verbatim reasoning tokens</span> <span class="faint">· the operative sentence above is a derived summary — the raw chain is one click away, never hidden</span></div>
+              <div class="mono" style="font-size:10.5px;color:var(--tm);margin-top:8px;display:flex;gap:8px;align-items:center">caused → <span class="badge" style="padding:1px 5px;background:var(--wa-soft);color:var(--wa)">ToolCall tc-aa31</span> → <span class="badge" style="padding:1px 5px;background:var(--cap-soft);color:var(--cap)">VfsOp read 38 KB</span></div>
+            </div>
+          </div>
+
+          <!-- the mismatch -->
+          <div class="card" style="border-color:oklch(0.68 0.22 25/0.45)">
+            <div class="ch" style="background:var(--da-soft)"><span class="dot" style="background:var(--da)"></span><b style="color:var(--da)">Intent ≠ Effect — the key insight</b><span class="badge b-err" style="margin-left:auto">data mistake</span></div>
+            <div class="cb">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:11.5px">
+                <div><div class="faint up" style="font-size:9px">stated intent</div><div class="sec" style="margin-top:3px">read the <b>live</b> dashboard</div></div>
+                <div><div class="faint up" style="font-size:9px">observed effect</div><div class="mono" style="margin-top:3px;color:var(--da)">cache HIT · ETag v3 · <b>STALE</b> (current v5)</div></div>
+              </div>
+              <div class="note" style="margin-top:9px"><span>▸</span>The model reasoned correctly and acted on its intent — the workspace served a pinned-stale revision. <b class="sec">You found the bug without reading the other 60,000 tokens.</b></div>
+            </div>
+          </div>
+
+          <!-- context disclosure -->
+          <div class="card">
+            <div class="ch"><b>Context the model saw</b><span class="muted mono" style="font-size:10px;margin-left:auto">system + file_prompt + 9 msgs · 12,403 tok ▾</span></div>
+            <div class="cb"><div class="note res"><span>▸</span>Open the <b>Context</b> lens to see the exact window: the mount <span class="mono">file_prompt</span> (how mirage described <span class="mono">/s3</span>), prior tool results fed back, and the system prompt — the real "why upstream of the why."</div></div>
+          </div>
+        </div>
+
+        <div class="trans">
+          <div class="tbtn">◀</div><div class="tbtn">▶</div>
+          <div class="minimap">
+            <i style="height:30%"></i><i style="height:35%"></i><i style="height:88%;background:var(--da)" title="mismatch @ s3"></i><i style="height:55%"></i><i style="height:40%"></i><i style="height:60%;background:var(--in)" title="pivot @ s7"></i><i style="height:38%"></i><i style="height:44%"></i><i style="height:70%;background:var(--da)" title="error @ s19"></i><i style="height:42%"></i><i style="height:66%;background:var(--wa)" title="thrash @ s23"></i><i style="height:33%"></i><i style="height:48%"></i><i style="height:40%"></i>
+            <span class="playhead" style="left:14%"></span>
+          </div>
+          <span class="badge b-der">notches = reasoning-search + anomalies</span>
+          <div class="curbadge">step 3 / 42 · 61,204 reasoning tok</div>
+        </div>
+      </div>
+
+      <!-- right: decision map -->
+      <div class="rail" style="width:286px;border-right:none;border-left:1px solid var(--bd)">
+        <div class="lens" style="height:38px;padding:0 13px"><b style="font-size:11.5px">Decision Map</b><span class="badge" style="margin-left:auto">42 · 61k tok</span></div>
+        <div class="insp" style="padding:12px 13px;gap:7px;overflow:hidden">
+          <div class="note res" style="font-size:10px"><span>▸</span>Skim 42 decisions, not 60k tokens. 4 moments flagged.</div>
+          <div style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-family:var(--mono)">
+            <div style="display:flex;gap:8px;align-items:center;color:var(--tm)"><span class="dot" style="background:var(--bds)"></span>s1–s2 orient</div>
+            <div style="display:flex;gap:8px;align-items:center;padding:3px 6px;border-radius:5px;background:var(--da-soft);color:var(--da)"><span class="dot" style="background:var(--da)"></span><b>s3 · intent≠effect (stale)</b></div>
+            <div style="display:flex;gap:8px;align-items:center;color:var(--tm)"><span class="dot" style="background:var(--bds)"></span>s4–s6 hypothesize <span class="faint">▆ 8.7k</span></div>
+            <div style="display:flex;gap:8px;align-items:center;padding:3px 6px;border-radius:5px;background:var(--in-soft);color:var(--in)"><span class="dot" style="background:var(--in)"></span><b>s7 · plan pivot</b></div>
+            <div style="display:flex;gap:8px;align-items:center;color:var(--tm)"><span class="dot" style="background:var(--bds)"></span>s8–s18 investigate</div>
+            <div style="display:flex;gap:8px;align-items:center;padding:3px 6px;border-radius:5px;background:var(--da-soft);color:var(--da)"><span class="dot" style="background:var(--da)"></span><b>s19 · error recovery</b></div>
+            <div style="display:flex;gap:8px;align-items:center;color:var(--tm)"><span class="dot" style="background:var(--bds)"></span>s20–s22 read logs</div>
+            <div style="display:flex;gap:8px;align-items:center;padding:3px 6px;border-radius:5px;background:var(--wa-soft);color:var(--wa)"><span class="dot" style="background:var(--wa)"></span><b>s23–25 · thrash (×3)</b></div>
+            <div style="display:flex;gap:8px;align-items:center;color:var(--tm)"><span class="dot" style="background:var(--bds)"></span>s26–s41 synthesize</div>
+            <div style="display:flex;gap:8px;align-items:center;color:var(--tm)"><span class="dot e-durable"></span>s42 write RCA</div>
+          </div>
+          <div style="margin-top:auto;border-top:1px solid var(--bd);padding-top:9px;display:flex;flex-direction:column;gap:5px;font-size:9.5px;color:var(--tm)">
+            <span><span class="dot" style="background:var(--da);display:inline-block;margin-right:6px"></span>mismatch / error</span>
+            <span><span class="dot" style="background:var(--in);display:inline-block;margin-right:6px"></span>plan pivot &nbsp; <span class="dot" style="background:var(--wa);display:inline-block;margin:0 6px"></span>thrash / stall</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="figtag"><b>Fig 10</b> &nbsp;·&nbsp; Taming long reasoning — navigate by consequence, not by scrolling: decision skeleton · jump-to-cause · intent≠effect · anomaly map</div>
+</section>
+
+<!-- ============================ FRAME 11 — STORAGE & REPLAY · BUILD VS LEVERAGE ============================ -->
+<section class="frame">
+  <div style="padding:28px 40px;height:100%;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:16px">
+      <div>
+        <div class="kick">Architecture · Storage for full replay</div>
+        <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.01em;margin-top:5px">Event-source the chokepoint · standards on the wire · build only the moat</h2>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <span class="badge b-cap">▢ LEVERAGE — adopt a standard</span>
+        <span class="badge b-der">▢ COMMODITY — buy an engine</span>
+        <span class="badge" style="border-color:var(--ac-ring);color:var(--acs)">▢ BUILD — the moat</span>
+      </div>
+    </div>
+
+    <!-- pipeline -->
+    <div style="display:flex;align-items:stretch;gap:5px">
+      <div style="flex:1;border:1px solid var(--ac-ring);border-radius:10px;background:oklch(0.68 0.19 280/0.07);padding:10px 12px">
+        <div style="display:flex;gap:6px;align-items:center"><b style="font-size:11.5px;color:var(--acs)">Chokepoint</b></div>
+        <div class="muted" style="font-size:10px;margin-top:4px;line-height:1.45">hosted agent: <span class="mono">model gateway</span> (intent) + <span class="mono">Workspace.execute()</span> (effect)</div>
+      </div>
+      <div style="color:var(--tf);font-size:16px;display:flex;align-items:center">▸</div>
+      <div style="flex:1;border:1px solid oklch(0.81 0.12 195/0.45);border-radius:10px;background:var(--cap-soft);padding:10px 12px">
+        <div style="display:flex;gap:6px;align-items:center"><b style="font-size:11.5px;color:var(--cap)">OpenTelemetry events</b></div>
+        <div class="muted" style="font-size:10px;margin-top:4px;line-height:1.45">GenAI / OpenInference spans for cognition · a <span class="mono">mirage.vfs.*</span> convention for the data plane</div>
+      </div>
+      <div style="color:var(--tf);font-size:16px;display:flex;align-items:center">▸</div>
+      <!-- storage centerpiece -->
+      <div style="flex:1.5;border:1px solid var(--bds);border-radius:10px;background:var(--s1);padding:9px 11px;display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;gap:6px;align-items:center"><b style="font-size:11.5px">Replay store</b><span class="badge" style="margin-left:auto;font-size:8.5px;border-color:var(--ac-ring);color:var(--acs)">BUILD discipline · COMMODITY engines</span></div>
+        <div style="border:1px solid oklch(0.68 0.19 280/0.35);border-radius:7px;background:oklch(0.68 0.19 280/0.06);padding:6px 9px"><b style="font-size:10px;color:var(--acs)">① Append-only event log</b><div class="mono muted" style="font-size:9px;margin-top:1px">one total order · immutable · ClickHouse/Postgres</div></div>
+        <div style="border:1px solid oklch(0.81 0.12 195/0.4);border-radius:7px;background:var(--cap-soft);padding:6px 9px"><b style="font-size:10px;color:var(--cap)">② Content-addressed blobs</b><div class="mono muted" style="font-size:9px;margin-top:1px">reasoning · context · tool results · <b style="color:var(--ts)">bytes read/written</b> · dedup by hash · S3</div></div>
+        <div style="border:1px solid var(--bd);border-radius:7px;background:var(--s2);padding:6px 9px"><b style="font-size:10px;color:var(--ts)">③ Snapshots + deltas</b><div class="mono muted" style="font-size:9px;margin-top:1px">revive STATE_SNAPSHOT/DELTA · seek without O(n) fold</div></div>
+      </div>
+      <div style="color:var(--tf);font-size:16px;display:flex;align-items:center">▸</div>
+      <div style="flex:0.9;border:1px solid var(--bd);border-radius:10px;background:var(--s1);padding:10px 12px">
+        <div style="display:flex;gap:6px;align-items:center"><b style="font-size:11.5px">Projections</b><span class="badge b-der" style="margin-left:auto;font-size:8.5px">derived cache</span></div>
+        <div class="mono muted" style="font-size:9px;margin-top:4px;line-height:1.45">runs·steps·tool_calls<br/>vfs_ops·model_calls<br/><span class="faint">rebuildable from the log</span></div>
+      </div>
+    </div>
+
+    <!-- console + export row -->
+    <div style="display:flex;align-items:stretch;gap:5px">
+      <div style="flex:1.6;border:1px solid var(--ac-ring);border-radius:10px;background:oklch(0.68 0.19 280/0.07);padding:10px 13px;display:flex;gap:14px;align-items:center">
+        <div><b style="font-size:12px;color:var(--acs)">Mirage Console</b><span class="badge" style="margin-left:8px;font-size:8.5px;border-color:var(--ac-ring);color:var(--acs)">BUILD — the moat</span><div class="muted" style="font-size:10px;margin-top:3px">browse via projections · <b style="color:var(--ts)">time-travel via log replay</b> · the Redux organism (Fig 01–10)</div></div>
+        <div class="mono" style="margin-left:auto;font-size:10px;color:var(--cap);border-left:1px solid var(--bd);padding-left:14px;line-height:1.6">stateAt(idx) =<br/>nearest snapshot<br/>+ forward deltas<br/><span class="faint">content from blobs → no live backend</span></div>
+      </div>
+      <div style="color:var(--tf);font-size:16px;display:flex;align-items:center">↔</div>
+      <div style="flex:1;border:1px solid oklch(0.81 0.12 195/0.4);border-radius:10px;background:var(--cap-soft);padding:10px 13px">
+        <div style="display:flex;gap:6px;align-items:center"><b style="font-size:11.5px;color:var(--cap)">Export / interop</b><span class="badge b-cap" style="margin-left:auto;font-size:8.5px">LEVERAGE</span></div>
+        <div class="muted" style="font-size:10px;margin-top:4px;line-height:1.5">OTel out → Jaeger·Tempo·Datadog·Grafana · ingest → <b style="color:var(--ts)">Langfuse·Phoenix</b> for eval & dashboards · <span class="mono">.mirage-session.json</span> = log+blobs, portable</div>
+      </div>
+    </div>
+
+    <!-- build vs leverage table -->
+    <div style="display:flex;gap:16px;flex:1;min-height:0">
+      <div class="card" style="flex:1;border-color:oklch(0.81 0.12 195/0.35)">
+        <div class="ch" style="background:var(--cap-soft)"><span class="dot" style="background:var(--cap)"></span><b style="color:var(--cap)">Leverage — do NOT rebuild</b></div>
+        <div class="cb" style="font-size:11px;line-height:1.5;display:flex;flex-direction:column;gap:7px">
+          <div class="note"><span>▸</span><b class="sec">OTel SDK + GenAI/OpenInference conventions</b> — context propagation, the LLM/tool/retrieval span model the whole industry converges on. Your AG-UI events are a bespoke re-derivation of this; align them.</div>
+          <div class="note"><span>▸</span><b class="sec">Storage engines</b> — ClickHouse/Postgres for the log, object storage for blobs. Don't write a database.</div>
+          <div class="note"><span>▸</span><b class="sec">Aggregate dashboards & LLM-eval</b> — Langfuse / Phoenix self-hosted; feed them via OTel for cross-run analytics and judging. The ScoreCard harness interops here.</div>
+        </div>
+      </div>
+      <div class="card" style="flex:1;border-color:var(--ac-ring)">
+        <div class="ch" style="background:oklch(0.68 0.19 280/0.08)"><span class="dot" style="background:var(--ac)"></span><b style="color:var(--acs)">Build — only these (the moat)</b></div>
+        <div class="cb" style="font-size:11px;line-height:1.5;display:flex;flex-direction:column;gap:7px">
+          <div class="note"><span>▸</span><b class="sec">The <span class="mono">mirage.vfs.*</span> data-plane convention</b> — op/path/source/mount/bytes/cache/fingerprint/revision. No standard models this. It's the moat vocabulary; you own it (and can upstream it).</div>
+          <div class="note"><span>▸</span><b class="sec">The event-sourced replay log</b> — single total order, immutability, <b>content-capture-on-read</b>, snapshots. Observability stacks sample &amp; aggregate; replay needs completeness &amp; determinism. Different discipline.</div>
+          <div class="note"><span>▸</span><b class="sec">The console + time-travel engine</b> — data-plane scrubbing + intent↔action↔effect + the data↔trace bridge. No existing UI does this.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note res" style="font-size:10.5px"><span>⊘</span><b>Honesty / the one real cost:</b> true data-plane replay requires <b>capturing the bytes at read time</b> into the blob store (with redaction + sampling + TTL policy). Without capture you fall back to today's limit — <span class="mono">backing pinned at stand-up</span>, ops replay but content doesn't. Capture-on-read is the backend change that makes "FULLY replayable" actually true.</div>
+  </div>
+  <div class="figtag"><b>Fig 11</b> &nbsp;·&nbsp; Storage &amp; replay — event-source the chokepoint; OTel on the wire; build the data-plane convention, the replay log, and the console</div>
+</section>
+
+</body>
+</html>

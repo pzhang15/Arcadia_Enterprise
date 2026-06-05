@@ -1,5 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  AlertCircle,
+  ChevronRight,
+  File,
+  FileText,
+  Folder,
+  FolderOpen,
+  FolderTree,
+  HardDrive,
+  Info,
+} from "lucide-react";
 import { listSessions, vfsList, vfsFile } from "@/api/client";
+import { cn, formatBytes } from "@/lib/utils";
+import { Badge, EmptyState, SectionLabel } from "@/components/ui";
+import { useInvestigations } from "@/lib/investigationStore";
 
 interface VfsEntry {
   name: string;
@@ -24,9 +39,21 @@ interface SessionEntry {
   created_at: number;
   message_count: number;
   last_message: string;
+  has_workspace?: boolean;
 }
 
 const MOUNT_COLORS: Record<string, string> = {
+  tickets: "text-mount-tickets",
+  slack: "text-mount-slack",
+  github: "text-mount-github",
+  pagerduty: "text-mount-pagerduty",
+  finance: "text-mount-finance",
+  datadog: "text-mount-datadog",
+  compliance: "text-mount-compliance",
+  customers: "text-mount-customers",
+};
+
+const MOUNT_BG_COLORS: Record<string, string> = {
   tickets: "bg-mount-tickets",
   slack: "bg-mount-slack",
   github: "bg-mount-github",
@@ -37,23 +64,55 @@ const MOUNT_COLORS: Record<string, string> = {
   customers: "bg-mount-customers",
 };
 
+function getMount(path: string): string {
+  return path.split("/")[1] || "";
+}
+
 function getMountColor(path: string): string {
-  const mount = path.split("/")[1] || "";
-  return MOUNT_COLORS[mount] || "bg-text-muted";
+  return MOUNT_COLORS[getMount(path)] || "text-text-muted";
+}
+
+function getMountBg(path: string): string {
+  return MOUNT_BG_COLORS[getMount(path)] || "bg-text-muted";
 }
 
 export default function VFSExplorer() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const investigations = useInvestigations();
+
+  const initialSession = searchParams.get("session");
   const [sessions, setSessions] = useState<SessionEntry[]>([]);
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<string | null>(
+    initialSession,
+  );
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedFileSize, setSelectedFileSize] = useState<number | undefined>();
   const [fileContent, setFileContent] = useState<string>("");
   const [fileLoading, setFileLoading] = useState(false);
   const [treeError, setTreeError] = useState<string | null>(null);
 
   useEffect(() => {
-    listSessions().then(setSessions).catch(() => {});
+    let cancelled = false;
+    listSessions()
+      .then((rows) => {
+        if (cancelled) return;
+        setSessions(rows);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setSessionsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const workspaceSessions = useMemo(() => {
+    return sessions.filter((s) => s.has_workspace !== false);
+  }, [sessions]);
 
   const loadDirectory = useCallback(
     async (sessionId: string, path: string): Promise<TreeNode[]> => {
@@ -76,6 +135,10 @@ export default function VFSExplorer() {
       setSelectedFile(null);
       setFileContent("");
       setTreeError(null);
+      setTree([]);
+      const params = new URLSearchParams(searchParams);
+      params.set("session", sessionId);
+      setSearchParams(params, { replace: true });
       try {
         const children = await loadDirectory(sessionId, "/");
         setTree(children);
@@ -83,11 +146,27 @@ export default function VFSExplorer() {
         setTreeError(
           err instanceof Error ? err.message : "Failed to load VFS",
         );
-        setTree([]);
       }
     },
-    [loadDirectory],
+    [loadDirectory, searchParams, setSearchParams],
   );
+
+  // Auto-load when bound via URL
+  useEffect(() => {
+    if (!initialSession) return;
+    if (!sessionsLoaded) return;
+    if (tree.length > 0 || treeError) return;
+    handleSelectSession(initialSession);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSession, sessionsLoaded]);
+
+  // If no session bound, default to the most recent workspace-bearing session
+  useEffect(() => {
+    if (selectedSession) return;
+    if (!sessionsLoaded) return;
+    const candidate = workspaceSessions[0];
+    if (candidate) handleSelectSession(candidate.id);
+  }, [selectedSession, sessionsLoaded, workspaceSessions, handleSelectSession]);
 
   const handleToggleDir = useCallback(
     async (path: string) => {
@@ -136,9 +215,10 @@ export default function VFSExplorer() {
   );
 
   const handleSelectFile = useCallback(
-    async (path: string) => {
+    async (path: string, size?: number) => {
       if (!selectedSession) return;
       setSelectedFile(path);
+      setSelectedFileSize(size);
       setFileLoading(true);
       try {
         const res = await vfsFile(selectedSession, path);
@@ -152,89 +232,203 @@ export default function VFSExplorer() {
     [selectedSession],
   );
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-4 border-b border-border px-6 py-3">
-        <h1 className="text-sm font-semibold text-text-primary">
-          VFS Explorer
-        </h1>
-        <select
-          value={selectedSession || ""}
-          onChange={(e) =>
-            e.target.value
-              ? handleSelectSession(e.target.value)
-              : setSelectedSession(null)
-          }
-          className="rounded-md border border-border bg-surface-2 px-3 py-1.5 font-mono text-xs text-text-primary outline-none focus:border-accent"
-        >
-          <option value="">Select session...</option>
-          {sessions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.id} ({s.message_count} msgs)
-            </option>
-          ))}
-        </select>
-        {selectedFile && (
-          <span className="ml-auto font-mono text-xs text-text-muted">
-            {selectedFile}
-          </span>
-        )}
-      </div>
+  const pathSegments = selectedFile
+    ? selectedFile.split("/").filter(Boolean)
+    : [];
 
-      {!selectedSession ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <span className="text-3xl opacity-30">&#x1F4C2;</span>
-          <span className="text-sm text-text-muted">
-            Select a session to browse its VFS workspace
-          </span>
+  const currentInvestigation = selectedSession
+    ? investigations[selectedSession]
+    : null;
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface-1/60 px-6 backdrop-blur-md">
+        <div>
+          <h1 className="text-[14px] font-semibold tracking-tight text-text-primary">
+            Workspace Inspector
+          </h1>
+          <p className="text-[11px] text-text-muted">
+            Browse the Mirage virtual filesystem an investigation sees
+          </p>
         </div>
+        <div className="ml-auto flex items-center gap-2">
+          <SectionLabel className="text-text-muted">Investigation</SectionLabel>
+          <div className="relative">
+            <HardDrive
+              size={13}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+            />
+            <select
+              value={selectedSession || ""}
+              onChange={(e) => {
+                if (e.target.value) handleSelectSession(e.target.value);
+              }}
+              className="h-9 min-w-[300px] rounded-lg border border-border bg-surface-2 pl-8 pr-3 font-mono text-[12px] text-text-primary focus:border-accent"
+            >
+              <option value="">Select an investigation…</option>
+              {workspaceSessions.length > 0 && (
+                <optgroup label="With workspace">
+                  {workspaceSessions.map((s) => {
+                    const meta = investigations[s.id];
+                    return (
+                      <option key={s.id} value={s.id}>
+                        {meta?.title?.slice(0, 40) || s.id} · {s.id}
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              )}
+              {sessions.length > workspaceSessions.length && (
+                <optgroup label="No workspace (read-only)">
+                  {sessions
+                    .filter((s) => s.has_workspace === false)
+                    .map((s) => (
+                      <option key={s.id} value={s.id} disabled>
+                        {s.id} (no workspace mounted)
+                      </option>
+                    ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+          {currentInvestigation && (
+            <button
+              onClick={() => navigate(`/investigations/${selectedSession}`)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2.5 text-[12px] text-text-secondary transition-colors hover:bg-surface-3 hover:text-text-primary"
+            >
+              Open investigation
+              <ChevronRight size={12} />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {!sessionsLoaded ? (
+        <div className="flex flex-1 items-center justify-center text-text-muted">
+          <span className="text-[13px]">Loading sessions…</span>
+        </div>
+      ) : sessions.length === 0 ? (
+        <EmptyState
+          icon={<FolderTree size={22} />}
+          title="No investigations yet"
+          description="Dispatch an agent from the Inbox to spin up its first workspace, then come back here to inspect what it sees."
+          size="lg"
+          action={
+            <button
+              onClick={() => navigate("/dispatch")}
+              className="rounded-md bg-accent px-3 py-1.5 text-[12px] text-white hover:bg-accent-hover"
+            >
+              Dispatch agent
+            </button>
+          }
+        />
+      ) : !selectedSession ? (
+        <EmptyState
+          icon={<FolderTree size={22} />}
+          title="Pick an investigation to inspect"
+          description="Choose one above to walk its mounted Mirage paths and read the files the agent is reading."
+          size="lg"
+        />
       ) : treeError ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <span className="text-sm text-danger">
-            VFS not available for this session
-          </span>
-          <span className="text-xs text-text-muted">{treeError}</span>
-        </div>
+        <EmptyState
+          icon={<AlertCircle size={22} />}
+          title="Workspace not available"
+          description={
+            treeError.includes("400")
+              ? "This investigation was dispatched without an attached workspace — pick another one above."
+              : treeError
+          }
+          size="lg"
+        />
       ) : (
         <div className="flex flex-1 overflow-hidden">
-          <div className="w-[320px] shrink-0 overflow-y-auto border-r border-border bg-surface-1 py-2">
-            <TreeView
-              nodes={tree}
-              selectedFile={selectedFile}
-              onToggleDir={handleToggleDir}
-              onSelectFile={handleSelectFile}
-            />
+          <div className="flex w-[340px] shrink-0 flex-col border-r border-border bg-surface-1/40">
+            {currentInvestigation && (
+              <div className="border-b border-border bg-surface-1/60 px-3 py-2.5">
+                <div className="flex items-center gap-1.5">
+                  <Info size={11} className="text-text-muted" />
+                  <SectionLabel>Bound to investigation</SectionLabel>
+                </div>
+                <div className="mt-1 truncate text-[12px] font-semibold text-text-primary">
+                  {currentInvestigation.title}
+                </div>
+              </div>
+            )}
+            <div className="border-b border-border px-4 py-2.5">
+              <div className="flex items-center justify-between">
+                <SectionLabel>Filesystem</SectionLabel>
+                <span className="font-mono text-[10px] text-text-faint">
+                  {tree.length} mounts
+                </span>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto py-2">
+              <TreeView
+                nodes={tree}
+                selectedFile={selectedFile}
+                onToggleDir={handleToggleDir}
+                onSelectFile={handleSelectFile}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
             {selectedFile ? (
               <>
-                <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+                <div className="flex items-center gap-2 border-b border-border bg-surface-1/60 px-5 py-3 backdrop-blur-md">
                   <span
-                    className={`h-2 w-2 rounded-full ${getMountColor(selectedFile)}`}
+                    className={cn(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      getMountBg(selectedFile),
+                    )}
                   />
-                  <span className="font-mono text-xs text-text-primary">
-                    {selectedFile}
-                  </span>
+                  <div className="flex min-w-0 items-center gap-1 font-mono text-[12px]">
+                    {pathSegments.map((seg, i) => (
+                      <span key={i} className="flex items-center gap-1">
+                        {i > 0 && (
+                          <ChevronRight
+                            size={11}
+                            className="shrink-0 text-text-faint"
+                          />
+                        )}
+                        <span
+                          className={cn(
+                            i === pathSegments.length - 1
+                              ? "text-text-primary"
+                              : "text-text-muted",
+                          )}
+                        >
+                          {seg}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                  {selectedFileSize !== undefined && (
+                    <Badge tone="outline" size="sm" mono className="ml-auto">
+                      {formatBytes(selectedFileSize)}
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex-1 overflow-auto bg-surface-0 p-4">
+                <div className="flex-1 overflow-auto bg-surface-0 p-5">
                   {fileLoading ? (
-                    <span className="animate-pulse-fade text-sm text-text-muted">
-                      Loading...
-                    </span>
+                    <div className="flex items-center gap-2 text-text-muted">
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                      <span className="text-[12px]">Loading file…</span>
+                    </div>
                   ) : (
-                    <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-text-secondary">
+                    <pre className="whitespace-pre-wrap font-mono text-[12px] leading-relaxed text-text-secondary">
                       {tryFormatJson(fileContent)}
                     </pre>
                   )}
                 </div>
               </>
             ) : (
-              <div className="flex flex-1 items-center justify-center">
-                <span className="text-sm text-text-muted">
-                  Select a file to preview its contents
-                </span>
-              </div>
+              <EmptyState
+                icon={<FileText size={22} />}
+                title="Select a file"
+                description="Pick a file from the tree to preview its contents. Directories with a colored dot represent top-level Mirage mounts."
+                size="lg"
+              />
             )}
           </div>
         </div>
@@ -253,7 +447,7 @@ function TreeView({
   nodes: TreeNode[];
   selectedFile: string | null;
   onToggleDir: (path: string) => void;
-  onSelectFile: (path: string) => void;
+  onSelectFile: (path: string, size?: number) => void;
   depth?: number;
 }) {
   return (
@@ -283,53 +477,78 @@ function TreeNodeRow({
   depth: number;
   selectedFile: string | null;
   onToggleDir: (path: string) => void;
-  onSelectFile: (path: string) => void;
+  onSelectFile: (path: string, size?: number) => void;
 }) {
   const isDir = node.type === "dir";
   const isSelected = node.path === selectedFile;
 
   const handleClick = () => {
     if (isDir) onToggleDir(node.path);
-    else onSelectFile(node.path);
+    else onSelectFile(node.path, node.size);
   };
 
   return (
     <>
       <button
         onClick={handleClick}
-        className={`flex w-full items-center gap-1.5 px-2 py-1 text-left font-mono text-xs transition-colors ${
+        className={cn(
+          "group flex w-full items-center gap-1.5 px-2 py-1 text-left font-mono text-[11.5px] transition-colors",
           isSelected
-            ? "bg-accent-muted text-accent"
-            : "text-text-secondary hover:bg-surface-3"
-        }`}
-        style={{ paddingLeft: `${8 + depth * 16}px` }}
-      >
-        {isDir ? (
-          <svg
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            className={`h-3 w-3 shrink-0 transition-transform ${node.expanded ? "rotate-90" : ""}`}
-          >
-            <path d="M6 4l4 4-4 4" />
-          </svg>
-        ) : (
-          <span className="h-3 w-3" />
+            ? "bg-accent-soft text-accent"
+            : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
         )}
+        style={{ paddingLeft: `${8 + depth * 14}px` }}
+      >
+        <span className="grid h-3 w-3 shrink-0 place-items-center">
+          {isDir ? (
+            <ChevronRight
+              size={11}
+              className={cn(
+                "transition-transform text-text-muted",
+                node.expanded && "rotate-90",
+              )}
+            />
+          ) : (
+            <span />
+          )}
+        </span>
         {isDir ? (
-          <FolderSvg />
+          node.expanded ? (
+            <FolderOpen
+              size={13}
+              className={cn(
+                "shrink-0",
+                depth === 0 ? getMountColor(node.path) : "text-warning",
+              )}
+            />
+          ) : (
+            <Folder
+              size={13}
+              className={cn(
+                "shrink-0",
+                depth === 0 ? getMountColor(node.path) : "text-warning",
+              )}
+            />
+          )
         ) : (
-          <FileSvg />
+          <File size={13} className="shrink-0 text-text-muted" />
         )}
         <span className="truncate">{node.name}</span>
+        {!isDir && node.size !== undefined && (
+          <span className="ml-auto text-[10px] text-text-faint">
+            {formatBytes(node.size)}
+          </span>
+        )}
         {depth === 0 && (
           <span
-            className={`ml-auto h-1.5 w-1.5 rounded-full ${getMountColor(node.path)}`}
+            className={cn(
+              "ml-auto h-1.5 w-1.5 shrink-0 rounded-full",
+              getMountBg(node.path),
+            )}
           />
         )}
         {node.loading && (
-          <span className="ml-auto animate-spin text-text-muted">&#x25E6;</span>
+          <span className="ml-auto h-2.5 w-2.5 animate-spin rounded-full border-[1.5px] border-text-muted border-r-transparent" />
         )}
       </button>
       {isDir && node.expanded && node.children && (
@@ -342,35 +561,6 @@ function TreeNodeRow({
         />
       )}
     </>
-  );
-}
-
-function FolderSvg() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      className="h-3.5 w-3.5 shrink-0 text-warning"
-    >
-      <path d="M2 4.5A1.5 1.5 0 013.5 3H6l1.5 1.5h5A1.5 1.5 0 0114 6v5.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 11.5z" />
-    </svg>
-  );
-}
-
-function FileSvg() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      className="h-3.5 w-3.5 shrink-0 text-text-muted"
-    >
-      <path d="M4 2h5l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" />
-      <path d="M9 2v4h4" />
-    </svg>
   );
 }
 

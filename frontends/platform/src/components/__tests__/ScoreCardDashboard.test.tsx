@@ -9,12 +9,14 @@ describe("ScoreCardDashboard", () => {
       http.get("/api/results", () => HttpResponse.json([], { status: 500 })),
     );
     render(<ScoreCardDashboard />);
-    expect(await screen.findByText(/No eval results available/)).toBeInTheDocument();
+    expect(await screen.findByText(/No eval results yet/)).toBeInTheDocument();
   });
 
   it("shows header when sweeps list is empty", async () => {
     render(<ScoreCardDashboard />);
-    expect(await screen.findByText("Scorecard Dashboard")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Scorecard" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
@@ -91,6 +93,8 @@ describe("ScoreCardDashboard", () => {
     expect(selector).toBeInTheDocument();
     expect(selector).toHaveValue("northhill_corp/20260525");
 
-    expect(await screen.findByText("Scorecard Dashboard")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Scorecard" }),
+    ).toBeInTheDocument();
   });
 });
