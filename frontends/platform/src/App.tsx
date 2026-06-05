@@ -1,449 +1,319 @@
-import { useCallback, useEffect, useState } from "react";
-import { useEventStream } from "./hooks/useEventStream";
-import CommandTimeline from "./components/CommandTimeline";
-import MockRequestLog from "./components/MockRequestLog";
-import ScoreCardDashboard from "./components/ScoreCardDashboard";
-import ResourceMap from "./components/ResourceMap";
-import McpTraffic from "./components/McpTraffic";
-import TraceExplorer from "./components/TraceExplorer";
-import ITHelpdesk from "./components/ITHelpdesk";
-import HRDashboard from "./components/HRDashboard";
-import FinanceDashboard from "./components/FinanceDashboard";
-import EngineeringDashboard from "./components/EngineeringDashboard";
-import CustomerSupport from "./components/CustomerSupport";
-import ComplianceDashboard from "./components/ComplianceDashboard";
-import ServiceConnector from "./components/ServiceConnector";
-import SessionHistory from "./components/SessionHistory";
-import TaskDialog, { type ChatMessage } from "./components/TaskDialog";
-import LiveExecutionView from "./components/LiveExecutionView";
+import { useEffect, useState } from "react";
+import { Routes, Route, NavLink, useLocation } from "react-router-dom";
 import {
-  createSession,
-  getSessionHistory,
-  listSessions,
-  sendMessage,
-} from "./api/client";
-import type { QuickAction } from "./types";
-
-type View =
-  | "it"
-  | "hr"
-  | "finance"
-  | "engineering"
-  | "customers"
-  | "compliance"
-  | "console"
-  | "timeline"
-  | "mcp"
-  | "requests"
-  | "resources"
-  | "traces"
-  | "scorecard";
+  Activity,
+  BarChart3,
+  Boxes,
+  ChevronsLeft,
+  ClipboardList,
+  Database,
+  FolderTree,
+  HelpCircle,
+  Send,
+  Settings,
+} from "lucide-react";
+import { useEventStream } from "./hooks/useEventStream";
+import { getConfig } from "./api/client";
+import { hydrateInvestigations } from "./lib/investigationStore";
+import InboxPage from "./pages/InboxPage";
+import DispatchPage from "./pages/DispatchPage";
+import InvestigationDetail from "./pages/InvestigationDetail";
+import VFSExplorer from "./pages/VFSExplorer";
+import DataBrowser from "./pages/DataBrowser";
+import TracesView from "./pages/TracesView";
+import ScorecardView from "./pages/ScorecardView";
+import ConsoleLayout from "./console/ConsoleLayout";
+import ConsoleV3 from "./console/v3/ConsoleV3";
+import { cn } from "./lib/utils";
 
 interface NavItem {
-  id: View;
+  path: string;
+  match?: (pathname: string) => boolean;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   section: string;
 }
 
-const NAV: NavItem[] = [
-  { id: "it", label: "IT Helpdesk", icon: "ticket", section: "Portal" },
-  { id: "hr", label: "HR & People", icon: "people", section: "Portal" },
-  { id: "finance", label: "Finance", icon: "finance", section: "Portal" },
-  { id: "engineering", label: "Engineering", icon: "engineering", section: "Portal" },
-  { id: "customers", label: "Customer Support", icon: "customers", section: "Portal" },
-  { id: "compliance", label: "Compliance", icon: "compliance", section: "Portal" },
-  { id: "console", label: "Agent Console", icon: "console", section: "Console" },
-  { id: "timeline", label: "Command Timeline", icon: "timeline", section: "Observability" },
-  { id: "mcp", label: "MCP Traffic", icon: "mcp", section: "Observability" },
-  { id: "requests", label: "Request Log", icon: "requests", section: "Observability" },
-  { id: "resources", label: "Resource Map", icon: "resources", section: "Observability" },
-  { id: "traces", label: "Trace Explorer", icon: "traces", section: "Observability" },
-  { id: "scorecard", label: "Scorecard", icon: "scorecard", section: "Observability" },
+const NAV_ITEMS: NavItem[] = [
+  {
+    path: "/",
+    match: (p) => p === "/" || p.startsWith("/investigations"),
+    label: "Inbox",
+    icon: <ClipboardList size={16} strokeWidth={1.75} />,
+    section: "Operations",
+  },
+  {
+    path: "/dispatch",
+    label: "Dispatch",
+    icon: <Send size={16} strokeWidth={1.75} />,
+    section: "Operations",
+  },
+  {
+    path: "/vfs",
+    label: "Workspace Inspector",
+    icon: <FolderTree size={16} strokeWidth={1.75} />,
+    section: "Investigate",
+  },
+  {
+    path: "/data",
+    label: "Data Catalog",
+    icon: <Database size={16} strokeWidth={1.75} />,
+    section: "Investigate",
+  },
+  {
+    path: "/observability",
+    label: "Observability",
+    icon: <Activity size={16} strokeWidth={1.75} />,
+    section: "Govern",
+  },
+  {
+    path: "/evaluations",
+    label: "Evaluations",
+    icon: <BarChart3 size={16} strokeWidth={1.75} />,
+    section: "Govern",
+  },
+  {
+    path: "/console",
+    match: (p) => p.startsWith("/console"),
+    label: "Mirage Console",
+    icon: <Boxes size={16} strokeWidth={1.75} />,
+    section: "Develop",
+  },
 ];
 
-interface SessionListEntry {
-  id: string;
-  status: string;
-  services: string[];
-  created_at: number;
-  message_count: number;
-  last_message: string;
-}
-
-function NavIcon({ icon }: { icon: string }) {
-  switch (icon) {
-    case "timeline":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M2 3h12M2 8h8M2 13h10" />
-        </svg>
-      );
-    case "requests":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="2" y="2" width="12" height="12" rx="2" />
-          <path d="M2 6h12M6 6v8" />
-        </svg>
-      );
-    case "scorecard":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M4 14V8M8 14V4M12 14V6" />
-        </svg>
-      );
-    case "resources":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="4" cy="4" r="2" />
-          <circle cx="12" cy="4" r="2" />
-          <circle cx="8" cy="12" r="2" />
-          <path d="M5.5 5.5L7 10.5M10.5 5.5L9 10.5" />
-        </svg>
-      );
-    case "mcp":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M3 4l3 4-3 4M9 12h4" />
-        </svg>
-      );
-    case "traces":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M2 4h5M4 8h8M6 12h7" />
-          <circle cx="13" cy="4" r="1" fill="currentColor" />
-          <circle cx="12" cy="8" r="1" fill="currentColor" />
-          <circle cx="13" cy="12" r="1" fill="currentColor" />
-        </svg>
-      );
-    case "ticket":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="2" y="3" width="12" height="10" rx="2" />
-          <path d="M2 7h12" />
-          <path d="M5 10h6" />
-        </svg>
-      );
-    case "people":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="8" cy="5" r="2.5" />
-          <path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" />
-        </svg>
-      );
-    case "finance":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M8 2v12M5 4.5C5 3.7 6.3 3 8 3s3 .7 3 1.5S9.7 6 8 6 5 6.7 5 7.5 6.3 9 8 9s3 .7 3 1.5S9.7 12 8 12s-3-.7-3-1.5" />
-        </svg>
-      );
-    case "engineering":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M5.5 2L3 8l2.5 6M10.5 2L13 8l-2.5 6M9 2L7 14" />
-        </svg>
-      );
-    case "customers":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M14 12.5c0-1.4-1.8-2.5-4-2.5-1 0-1.9.2-2.6.6M6 12.5c0-1.4-1.8-2.5-4-2.5" />
-          <circle cx="10" cy="6" r="2" />
-          <circle cx="4.5" cy="7.5" r="1.5" />
-        </svg>
-      );
-    case "compliance":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="3" y="2" width="10" height="12" rx="1" />
-          <path d="M6 6h4M6 8.5h4M6 11h2" />
-        </svg>
-      );
-    case "console":
-      return (
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="2" y="2" width="12" height="12" rx="2" />
-          <path d="M5 6l2.5 2.5L5 11M9 11h3" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
 export default function App() {
-  const [view, setView] = useState<View>("it");
-  const { events, connected, clear } = useEventStream("/events");
+  const location = useLocation();
+  if (location.pathname.startsWith("/v3")) {
+    return (
+      <Routes>
+        <Route path="/v3/*" element={<ConsoleV3 />} />
+      </Routes>
+    );
+  }
+  if (location.pathname.startsWith("/console")) {
+    return (
+      <Routes>
+        <Route path="/console/*" element={<ConsoleLayout />} />
+      </Routes>
+    );
+  }
+  return <OpsShell />;
+}
 
-  const [selectedServices, setSelectedServices] = useState<Set<string>>(
-    new Set(["it", "hr"]),
-  );
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sessions, setSessions] = useState<SessionListEntry[]>([]);
+function OpsShell() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { events, connected } = useEventStream("/events");
+  const location = useLocation();
+  const [model, setModel] = useState<string>("");
+  const [baseUrl, setBaseUrl] = useState<string>("");
 
   useEffect(() => {
-    listSessions().then(setSessions).catch(() => {});
-  }, []);
-
-  const addMessage = useCallback(
-    (role: ChatMessage["role"], text: string) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          role,
-          text,
-          timestamp: Date.now(),
-        },
-      ]);
-    },
-    [],
-  );
-
-  const handleSend = useCallback(
-    async (task: string, quickAction?: QuickAction) => {
-      const services = quickAction
-        ? quickAction.services
-        : [...selectedServices];
-      if (services.length === 0) {
-        addMessage("system", "Please connect at least one service first.");
-        return;
-      }
-
-      if (quickAction) {
-        setSelectedServices((prev) => {
-          const next = new Set(prev);
-          for (const s of quickAction.services) next.add(s);
-          return next;
-        });
-      }
-
-      addMessage("user", task);
-      setIsProcessing(true);
-
-      try {
-        let sid = sessionId;
-        if (!sid) {
-          addMessage("system", "Creating session...");
-          const session = await createSession(services);
-          sid = session.id;
-          setSessionId(sid);
-          if (!session.has_workspace) {
-            addMessage(
-              "system",
-              "Note: workspace could not be built. Make sure seed data is generated.",
-            );
-          }
+    getConfig()
+      .then((c) => {
+        setModel(c.model);
+        if (
+          c &&
+          typeof (c as unknown as { base_url?: string }).base_url === "string"
+        ) {
+          setBaseUrl((c as unknown as { base_url: string }).base_url);
         }
-
-        const resp = await sendMessage(sid, task);
-        addMessage("agent", resp.reply);
-        listSessions().then(setSessions).catch(() => {});
-      } catch (err) {
-        addMessage(
-          "system",
-          `Error: ${err instanceof Error ? err.message : "Unknown error"}`,
-        );
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [selectedServices, sessionId, addMessage],
-  );
-
-  const handleToggleService = useCallback((service: string) => {
-    setSelectedServices((prev) => {
-      const next = new Set(prev);
-      if (next.has(service)) next.delete(service);
-      else next.add(service);
-      return next;
-    });
+      })
+      .catch(() => {});
   }, []);
 
-  const handleNewSession = useCallback(() => {
-    setSessionId(null);
-    setMessages([]);
-    setIsProcessing(false);
+  useEffect(() => {
+    hydrateInvestigations();
   }, []);
-
-  const handleSelectSession = useCallback(
-    async (id: string) => {
-      setSessionId(id);
-      setIsProcessing(false);
-      try {
-        const history = await getSessionHistory(id);
-        setMessages(
-          history.map((e, i) => ({
-            id: `${e.timestamp}-${i}`,
-            role: (e.role === "assistant" ? "agent" : e.role) as ChatMessage["role"],
-            text: e.content,
-            timestamp: e.timestamp * 1000,
-          })),
-        );
-      } catch {
-        setMessages([]);
-        addMessage("system", `Loaded session ${id}`);
-      }
-    },
-    [addMessage],
-  );
 
   let currentSection = "";
 
-  const renderContent = () => {
-    switch (view) {
-      case "it":
-        return <ITHelpdesk />;
-      case "hr":
-        return <HRDashboard />;
-      case "finance":
-        return <FinanceDashboard />;
-      case "engineering":
-        return <EngineeringDashboard />;
-      case "customers":
-        return <CustomerSupport />;
-      case "compliance":
-        return <ComplianceDashboard />;
-      case "timeline":
-        return <CommandTimeline events={events} onClear={clear} />;
-      case "requests":
-        return <MockRequestLog events={events} />;
-      case "scorecard":
-        return <ScoreCardDashboard />;
-      case "resources":
-        return <ResourceMap events={events} />;
-      case "mcp":
-        return <McpTraffic events={events} />;
-      case "traces":
-        return <TraceExplorer />;
-      case "console":
-        return (
-          <div className="console-layout">
-            <div
-              className="console-panel"
-              style={{ background: "var(--bg-secondary)" }}
-            >
-              <div className="panel-header flex items-center gap-2">
-                <span>Services</span>
-              </div>
-              <div className="panel-body">
-                <ServiceConnector
-                  selected={selectedServices}
-                  onToggle={handleToggleService}
-                />
-                <div style={{ marginTop: 16 }}>
-                  <button
-                    className="filter-btn"
-                    style={{ width: "100%" }}
-                    onClick={handleNewSession}
-                  >
-                    + New conversation
-                  </button>
-                </div>
-                <div style={{ margin: "20px 0 0" }}>
-                  <div className="sidebar-section" style={{ padding: "0 0 8px" }}>
-                    History
-                  </div>
-                  <SessionHistory
-                    sessions={sessions}
-                    activeId={sessionId}
-                    onSelect={handleSelectSession}
-                  />
-                </div>
-              </div>
+  return (
+    <div className="flex h-screen min-w-[980px] overflow-hidden text-text-primary">
+      <nav
+        className={cn(
+          "relative z-10 flex shrink-0 flex-col border-r border-border bg-surface-1/80 backdrop-blur-xl transition-[width] duration-200",
+          sidebarCollapsed ? "w-[64px]" : "w-[244px]",
+        )}
+      >
+        <div
+          className={cn(
+            "flex h-14 shrink-0 items-center gap-3 border-b border-border px-3",
+            sidebarCollapsed && "justify-center px-2",
+          )}
+        >
+          <div className="relative shrink-0">
+            <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-accent/60 to-info/40 opacity-50 blur-md" />
+            <div className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-accent to-info text-white shadow-sm">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 21l9-18 9 18" />
+                <path d="M7.5 14h9" />
+              </svg>
             </div>
-
-            <div
-              className="console-panel"
-              style={{ display: "flex", flexDirection: "column" }}
+          </div>
+          {!sidebarCollapsed && (
+            <div className="flex min-w-0 flex-col leading-tight">
+              <span className="truncate text-[14px] font-semibold tracking-tight text-text-primary">
+                Arcadia
+              </span>
+              <span className="truncate text-[11px] text-text-muted">
+                Operations · Production
+              </span>
+            </div>
+          )}
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              className="ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary"
+              title="Collapse sidebar"
             >
-              <div className="panel-header flex items-center gap-3">
-                <span>Agent Workspace</span>
-                {isProcessing && (
-                  <span className="badge info pulse">THINKING</span>
+              <ChevronsLeft size={15} />
+            </button>
+          )}
+        </div>
+
+        {sidebarCollapsed && (
+          <button
+            onClick={() => setSidebarCollapsed(false)}
+            className="mx-auto mt-2 grid h-7 w-7 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary"
+            title="Expand sidebar"
+          >
+            <ChevronsLeft size={15} className="rotate-180" />
+          </button>
+        )}
+
+        <div className="flex-1 overflow-y-auto px-2 py-3">
+          {NAV_ITEMS.map((item) => {
+            const showSection = item.section !== currentSection;
+            if (showSection) currentSection = item.section;
+            const isActive = item.match
+              ? item.match(location.pathname)
+              : location.pathname === item.path;
+
+            return (
+              <div key={item.path}>
+                {showSection && !sidebarCollapsed && (
+                  <div className="px-2 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-text-faint first:pt-0">
+                    {item.section}
+                  </div>
                 )}
-                {sessionId && (
+                <NavLink
+                  to={item.path}
+                  end={item.path === "/"}
+                  title={sidebarCollapsed ? item.label : undefined}
+                  className={cn(
+                    "group relative my-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-all duration-150 ease-out",
+                    isActive
+                      ? "bg-accent-soft text-accent"
+                      : "text-text-secondary hover:bg-surface-3 hover:text-text-primary",
+                    sidebarCollapsed && "justify-center px-0",
+                  )}
+                >
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-x-2 -translate-y-1/2 rounded-full bg-accent" />
+                  )}
                   <span
-                    className="mono text-sm text-tertiary"
-                    style={{ marginLeft: "auto" }}
+                    className={cn(
+                      "flex h-4 w-4 shrink-0 items-center justify-center",
+                      isActive ? "text-accent" : "text-text-muted group-hover:text-text-secondary",
+                    )}
                   >
-                    {sessionId}
+                    {item.icon}
+                  </span>
+                  {!sidebarCollapsed && (
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                      {item.label}
+                    </span>
+                  )}
+                </NavLink>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="border-t border-border p-2.5">
+          {!sidebarCollapsed ? (
+            <>
+              <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-surface-2 px-2.5 py-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="relative shrink-0">
+                    <span
+                      className={cn(
+                        "block h-2 w-2 rounded-full",
+                        connected ? "bg-success" : "bg-danger",
+                      )}
+                    />
+                    {connected && (
+                      <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-60" />
+                    )}
+                  </div>
+                  <div className="min-w-0 leading-tight">
+                    <div className="truncate text-[11px] font-medium text-text-secondary">
+                      {connected ? "Connected" : "Offline"}
+                    </div>
+                    <div className="truncate text-[10px] text-text-muted">
+                      {events.length} events
+                    </div>
+                  </div>
+                </div>
+                {model && (
+                  <span
+                    className="rounded-md border border-border bg-surface-1 px-1.5 py-0.5 font-mono text-[10px] text-text-muted"
+                    title={baseUrl ? `Routed via ${baseUrl}` : undefined}
+                  >
+                    {model}
                   </span>
                 )}
               </div>
-              <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  minHeight: 0,
-                }}
-              >
-                <div style={{ flex: 1, overflow: "hidden" }}>
-                  <TaskDialog
-                    messages={messages}
-                    onSend={handleSend}
-                    disabled={isProcessing}
-                  />
-                </div>
+              <div className="flex items-center gap-1">
+                <button className="grid h-8 flex-1 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+                  <Settings size={14} />
+                </button>
+                <button className="grid h-8 flex-1 place-items-center rounded-lg text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+                  <HelpCircle size={14} />
+                </button>
               </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <span
+                className={cn(
+                  "block h-2 w-2 rounded-full",
+                  connected ? "bg-success" : "bg-danger",
+                )}
+              />
+              <button className="grid h-7 w-7 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-3 hover:text-text-primary">
+                <Settings size={14} />
+              </button>
             </div>
-
-            <div
-              className="console-panel"
-              style={{ background: "var(--bg-secondary)", display: "flex", flexDirection: "column" }}
-            >
-              <div className="panel-header">Live Activity</div>
-              <div style={{ flex: 1, overflow: "auto" }}>
-                <LiveExecutionView events={events} sessionId={sessionId} />
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="app-layout">
-      <nav className="sidebar">
-        <div className="sidebar-logo">
-          Arcadia <span>platform</span>
-        </div>
-        {NAV.map((item) => {
-          const showSection = item.section !== currentSection;
-          if (showSection) currentSection = item.section;
-          return (
-            <div key={item.id}>
-              {showSection && (
-                <div className="sidebar-section">{item.section}</div>
-              )}
-              <div
-                className={`sidebar-item ${view === item.id ? "active" : ""}`}
-                onClick={() => setView(item.id)}
-              >
-                <NavIcon icon={item.icon} />
-                {item.label}
-              </div>
-            </div>
-          );
-        })}
-        <div className="sidebar-footer">
-          <div className="connection-status">
-            <div className={`connection-dot ${connected ? "connected" : ""}`} />
-            {connected ? "Connected" : "Disconnected"}
-            {events.length > 0 && (
-              <span className="text-tertiary" style={{ marginLeft: "auto" }}>
-                {events.length}
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </nav>
-      <main className={view === "console" ? "main-content console-main" : "main-content"}>
-        {renderContent()}
+
+      <main className="relative min-w-0 flex-1 overflow-hidden">
+        <Routes>
+          <Route path="/" element={<InboxPage />} />
+          <Route path="/dispatch" element={<DispatchPage />} />
+          <Route
+            path="/investigations/:sessionId"
+            element={<InvestigationDetail events={events} />}
+          />
+          <Route path="/vfs" element={<VFSExplorer />} />
+          <Route path="/data" element={<DataBrowser />} />
+          <Route path="/observability" element={<TracesView events={events} />} />
+          <Route path="/evaluations" element={<ScorecardView />} />
+          {/* Legacy redirects */}
+          <Route path="/traces" element={<TracesView events={events} />} />
+          <Route path="/scorecard" element={<ScorecardView />} />
+        </Routes>
       </main>
     </div>
   );

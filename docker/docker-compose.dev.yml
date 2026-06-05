@@ -1,0 +1,125 @@
+# Full dev stack with hot reload for platform API (uvicorn --reload) and UI (Vite HMR).
+# Open http://localhost:5173 — not :8080 (that is API-only in dev mode).
+services:
+  trace-generator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app
+    command: uv run python /app/docker/generate_traces.py
+    volumes:
+      - trace-data:/app/data
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: arcadia
+      POSTGRES_PASSWORD: arcadia
+      POSTGRES_DB: arcadia
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arcadia -d arcadia"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  platform-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app
+    command: >
+      uv run uvicorn server:app
+      --reload
+      --host 0.0.0.0
+      --port 8080
+      --app-dir frontends/platform
+      --reload-dir frontends/platform
+    ports:
+      - "127.0.0.1:8080:8080"
+    env_file:
+      - ../.env
+    environment:
+      - DISK_ROOT=/app/fixture
+      - TRACES_DB=/app/data/traces.db
+      - RESULTS_DIR=/app/results
+      - DATABASE_URL=postgresql+asyncpg://arcadia:arcadia@postgres:5432/arcadia
+      - CONSOLE_SNAP_DIR=/app/console_snapshots
+    volumes:
+      - ../frontends/platform/server.py:/app/frontends/platform/server.py
+      - ../packages/eval:/app/packages/eval
+      - ../packages/store:/app/packages/store
+      - ../packages/eval/scenarios/northhill_corp/fixture/disk:/app/fixture:ro
+      - ../packages/eval/results:/app/results:ro
+      - trace-data:/app/data:ro
+      - console-snap:/app/console_snapshots
+    depends_on:
+      trace-generator:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  platform-ui:
+    image: node:22-slim
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "127.0.0.1:5173:5173"
+    environment:
+      - VITE_API_PROXY_TARGET=http://platform-api:8080
+    volumes:
+      - ../frontends/platform:/app
+      - platform-ui-node-modules:/app/node_modules
+    depends_on:
+      platform-api:
+        condition: service_healthy
+
+  mock-services:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app/packages/eval
+    command: uv run python /app/docker/mock_server.py
+    ports:
+      - "3000:3000"
+    depends_on:
+      platform-api:
+        condition: service_healthy
+    environment:
+      - RELAY_URL=http://platform-api:8080
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mirage:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app/packages/eval
+    command: >
+      uv run mirage-mcp
+      --scenario northhill_corp
+      --transport streamable-http
+      --host 0.0.0.0
+    ports:
+      - "8081:8000"
+    depends_on:
+      mock-services:
+        condition: service_healthy
+    environment:
+      - MOCK_SERVICES_URL=http://mock-services:3000
+      - RELAY_URL=http://platform-api:8080
+
+volumes:
+  trace-data:
+  platform-ui-node-modules:
+  pg-data:
+  console-snap:

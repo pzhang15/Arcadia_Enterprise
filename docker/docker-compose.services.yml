@@ -1,0 +1,70 @@
+# Backing services only (mock HTTP APIs + MCP + trace DB).
+# Run the platform API and Vite UI on the host for hot reload — see README.
+services:
+  trace-generator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app
+    command: uv run python /app/docker/generate_traces.py
+    volumes:
+      - trace-data:/app/data
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: arcadia
+      POSTGRES_PASSWORD: arcadia
+      POSTGRES_DB: arcadia
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arcadia -d arcadia"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mock-services:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app/packages/eval
+    command: uv run python /app/docker/mock_server.py
+    ports:
+      - "3000:3000"
+    environment:
+      - RELAY_URL=http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mirage:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /app/packages/eval
+    command: >
+      uv run mirage-mcp
+      --scenario northhill_corp
+      --transport streamable-http
+      --host 0.0.0.0
+    ports:
+      - "8081:8000"
+    depends_on:
+      mock-services:
+        condition: service_healthy
+    environment:
+      - MOCK_SERVICES_URL=http://mock-services:3000
+      - RELAY_URL=http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  trace-data:
+  pg-data:

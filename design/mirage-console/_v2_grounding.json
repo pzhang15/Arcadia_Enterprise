@@ -1,0 +1,195 @@
+[
+  {
+    "pillar": "Connected Data-Source Exploration",
+    "summary": "Mirage mounts every backend (S3, Slack, Postgres, Datadog, disk, ...) behind one VFS, so a Data Sources explorer is fundamentally a mount tree + per-path file browser, NOT a per-backend native client. The ONLY live browse path that exists today is `GET /api/sessions/{id}/vfs` and `.../vfs/file` (server.py:1876-1900), which literally shell out to `ls -la {path}` and `cat {path}` inside the workspace and string-parse the result (`_parse_ls_output`, server.py:1856). That parse yields only `{name, type:dir|file, size}` \u2014 it drops modified-time, fingerprint, revision, mode, and consistency entirely, and file preview is plain decoded text with no binary/truncation handling. The richer console surface (`/api/console/workspaces/{id}/mounts|overlay|effects|trajectory|file`) reads mount metadata (prefix/resource/mode/effect_class) from `ws.mounts()` and op history from `ws.ops.records`, but still never surfaces fingerprint/revision. Crucially, what looks like \"Postgres tables\", \"Datadog dashboards\", and \"S3 buckets\" in the shipped northhill_corp demo are all `FakeXResource(DiskResource)` subclasses (packages/eval/mirage_eval/fixtures/) \u2014 a Postgres table is just `tables/<t>/{schema.json,data.jsonl,stats.json}` files on disk, a Datadog source is `logs/<svc>/<date>.jsonl`; so tables+rows+schema and dashboards are browseable/previewable as ordinary files via cat, but there is NO live query engine behind them. The catalog-proxy package (Iceberg/Snowflake/MCP) and the workspace-vfs `query.json`/.schema/.policy/.relationships/.stats layer are fully schema-designed but 100% NotImplementedError stubs \u2014 aspirational, not callable. DataBrowser.tsx does not touch the VFS at all; it renders mock REST seed data (/api/tickets, /api/finance/*) as tables and only labels it \"Mounted via Arcadia VFS\". The real moat \u2014 reverse-linking a data path to the traces/steps that touched it \u2014 is fully derivable from OpRecord.mount_prefix + OpRecord.path (the records are already collected per command), but the join key (tool_call_id/step_id/run_id) is never stamped onto emitted op events, so attribution is currently inferred by event ordering, not joined.",
+    "capabilities": [
+      {
+        "name": "Mount tree / source list (status, type, mode, effect-class)",
+        "whatItShows": "All mounted backends as the explorer's top level: prefix (e.g. /s3, /slack, /database), resource type name (s3/disk/ram/postgres), mode (read/write/exec), and a derived effect_class (scratch/durable-internal/system-of-record/external-effect) + reversibility blurb. This is the most solid per-source metadata available.",
+        "dataSource": "server.py _console_mounts_detail (L2199) over Workspace.mounts() -> Mount.prefix/.resource.name/.mode; effect_class via _effect_class_for_mount (L2147). Mount object in vendor/.../workspace/mount/mount.py carries prefix, resource, mode, consistency, revisions.",
+        "maturity": "shipped"
+      },
+      {
+        "name": "File-tree browse (ls) per source",
+        "whatItShows": "Expandable directory tree under each mount: dir/file + byte size. Works uniformly for s3/disk and for the disk-backed fakes (Postgres tables/, Datadog logs/, Slack channels are all just subdirectories). VFSExplorer.tsx renders this with hardcoded per-mount colors.",
+        "dataSource": "GET /api/sessions/{id}/vfs -> _execute_in_workspace('ls -la {path}') -> _parse_ls_output (server.py:1876-1887, 1856). Frontend: vfsList in client.ts:258; VFSExplorer.tsx loadDirectory.",
+        "maturity": "shipped"
+      },
+      {
+        "name": "File content preview (cat)",
+        "whatItShows": "Raw text of a selected file, JSON pretty-printed client-side. For the demo this is how you 'read' a Postgres schema.json, a Datadog .jsonl log, a Slack message file.",
+        "dataSource": "GET /api/sessions/{id}/vfs/file -> _execute_in_workspace('cat {path}') (server.py:1890-1900); vfsFile in client.ts:267; VFSExplorer.tsx handleSelectFile + tryFormatJson.",
+        "maturity": "shipped"
+      },
+      {
+        "name": "Tables + rows + schema (queryable sources)",
+        "whatItShows": "Postgres/database appears as tables/<table>/schema.json (columns,types,PK,FKs), data.jsonl (rows), stats.json (row_count,size,last_updated). These ARE real files you can ls/cat \u2014 so schema and sample rows are viewable, but only by reading files, not by querying.",
+        "dataSource": "packages/eval/mirage_eval/fixtures/fake_postgres.py (DiskResource subclass; layout described in its PROMPT). NOT the vendor PostgresResource. workspace-vfs metadata.py defines SchemaFile/ColumnDef/StatsFile models for the dot-file form.",
+        "maturity": "partial"
+      },
+      {
+        "name": "Channels / threads (Slack) & dashboards/logs (Datadog) as trees",
+        "whatItShows": "Slack mount = directory of channels/threads/message files; Datadog mount = logs/<service>/<date>.jsonl + metrics/<service>/<name>.json. Browseable + cat-previewable as files; no native channel/dashboard widget.",
+        "dataSource": "packages/eval/mirage_eval/fixtures/fake_slack.py and fake_datadog.py (both DiskResource subclasses). Real vendor SlackResource exists (resource/slack/slack.py, is_remote=True) but the demo does not use it.",
+        "maturity": "partial"
+      },
+      {
+        "name": "Live SQL / glob / similarity / full-text query via query.json",
+        "whatItShows": "Designed agent flow: write a query.json (type=sql|glob|similarity|search) into the VFS, get result.parquet materialized. Would make sources truly queryable through catalog-proxy adapters.",
+        "dataSource": "packages/workspace-vfs/workspace_vfs/query.py (QuerySpec model + validate_for_type) and packages/catalog-proxy (CatalogProxy.execute_query, BaseAdapter.execute). ALL bodies raise NotImplementedError.",
+        "maturity": "aspirational"
+      },
+      {
+        "name": "Live catalog adapters (Iceberg / Snowflake / MCP)",
+        "whatItShows": "Intended schema/table catalog + sample rows + execute for warehouse and SaaS-via-MCP sources, mapped into the VFS tree.",
+        "dataSource": "packages/catalog-proxy/catalog_proxy/adapters/{iceberg,mcp}.py + base.py. Every method (list_tables/get_schema/get_sample/execute) raises NotImplementedError. There is NO snowflake/postgres adapter file at all \u2014 only iceberg, mcp, base.",
+        "maturity": "aspirational"
+      },
+      {
+        "name": "Per-path metadata: fingerprint / revision / modified / consistency",
+        "whatItShows": "OpRecord and FileStat both carry fingerprint+revision; Mount carries consistency (LAZY/ALWAYS) and a revisions pin map; S3Resource sets SUPPORTS_SNAPSHOT=True and returns ETag. The data EXISTS at the FileStat/OpRecord layer.",
+        "dataSource": "vendor/.../types.py FileStat (name,size,modified,fingerprint,revision,type,extra); observe/record.py OpRecord (fingerprint,revision,is_cache,mount_prefix); mount.py (consistency, revisions). BUT _parse_ls_output drops everything except name/type/size, and no endpoint exposes FileStat directly.",
+        "maturity": "partial"
+      },
+      {
+        "name": "Reverse-link: data path -> traces/steps that touched it (THE BRIDGE)",
+        "whatItShows": "Given a mount/path, list every read/write that hit it, with bytes/duration/source/effect-class. Op history per workspace is already collected and effect-classified.",
+        "dataSource": "server.py _console_trajectory (L2308) / _console_effects (L2222) / _console_overlay (L2267) iterate ws.ops.records keyed by mount_prefix+path. Relay 'op' events (L1006) + AG-UI 'vfs_op' CUSTOM (L1401) carry path+mount_prefix. Join key to step/run is the gap (see bridge).",
+        "maturity": "partial"
+      }
+    ],
+    "perTypeNotes": "How each backend TYPE is actually browsed today (grounded in the shipped northhill_corp demo, which mounts Fake*Resource disk doubles, NOT vendor backends):\n\n- s3 / disk (file tree): Native fit. ls -la -> dir/file/size; cat -> bytes. Real S3Resource (resource/s3/s3.py) is_remote=True, SUPPORTS_SNAPSHOT=True, fingerprint=ETag, and resolve_glob works \u2014 so S3 is the ONE backend that can populate fingerprint/revision for drift/replay. Disk fingerprint = mtime, SUPPORTS_SNAPSHOT defaults False. In the demo, /s3 is FakeS3Resource(DiskResource), so even S3 is disk-backed and no ETag flows.\n\n- slack (channels/threads): Browsed as a directory tree of message files (FakeSlackResource = DiskResource). No native channel/thread/message widget; you cat a file to read a thread. A real vendor SlackResource exists but is unused by the demo.\n\n- postgres / iceberg / snowflake (tables+rows+schema): In the demo, /database = FakePostgresResource(DiskResource): each table is tables/<t>/schema.json + data.jsonl + stats.json \u2014 so schema (columns/types/PK/FK) and sample rows are READABLE via cat, and that's the whole story. There is NO live SQL. The vendor PostgresResource imports mirage.commands.builtin.postgres + mirage.ops.postgres and registers only filesystem ops (ops/postgres/{read,readdir,stat}.py) \u2014 i.e. it presents tables as a filesystem too, not a query API. Iceberg/Snowflake exist ONLY as NotImplementedError catalog-proxy adapter stubs (snowflake has no file at all).\n\n- datadog (dashboards/logs/metrics): NO datadog resource backend exists in vendor/.../resource/ (closest observability backend is langfuse). The demo /datadog = FakeDatadogResource(DiskResource): logs/<svc>/<date>.jsonl + metrics/<svc>/<name>.json. So 'Datadog' is browsed as a log/metric file tree and previewed via cat/jq; there is no dashboards concept and no live query.\n\n- ram (scratch/overlay): The workspace root '/' is RAMResource (WRITE) \u2014 agent scratch + write overlay. is_cache==True (source=='ram'), effect_class=scratch.\n\nNet: every source type collapses to 'directory tree + cat preview' today. 'Tables', 'channels', 'dashboards' are naming/layout conventions on top of disk dirs, not type-specific viewers, and nothing is live-queryable.",
+    "bridge": "Reverse-linking a data path/mount to the traces & steps that read/wrote it:\n\nWHAT EXISTS: Every observed I/O is an OpRecord (observe/record.py) with op, path (= mount_prefix + rel_path), source, bytes, timestamp, duration_ms, mount_prefix, fingerprint, revision, and is_cache (== source=='ram'). The server already collects per-command op deltas: _execute_in_workspace_detailed (server.py:984) snapshots len(ws.ops.records) before/after each ws.execute() and emits the new records. The console derives three path-keyed views straight off ws.ops.records: _console_trajectory (L2308, full op log with kind read|write|meta + effect_class), _console_effects (L2222, writes only), _console_overlay (L2267, writes grouped per mount). So the cleanest bridge is: filter ws.ops.records (or the persisted trajectory) by mount_prefix==<mount> and/or path startswith <path>. The relay 'op' StreamEvent (L1006-1018) and the AG-UI 'vfs_op' CUSTOM event (L1401-1412) also carry path + mount_prefix, so a path can be matched against the firehose too.\n\nTHE JOIN-KEY GAP (this is the one real blocker, matching the reframe Phase-0 note): op events are NOT stamped with tool_call_id/step_id/run_id. In the streaming turn (L1383-1412) new_ops are produced INSIDE the `for cmd` loop where tc_id is in scope, but the emitted vfs_op value is only {op,path,bytes,mount_prefix} \u2014 tc_id is dropped on the floor. The relay 'op' event drops it too and additionally drops fingerprint/revision (it forwards op/path/source/bytes/duration_ms/mount_prefix only; OpRecord.fingerprint/revision/is_cache never leave the process). Attribution is done by length-diffing ws.ops.records, not by consuming ExecutionNode.records. Consequence: path->step/run links must be reconstructed by EVENT ORDERING (the ops emitted between a TOOL_CALL_START and the next one belong to that exec) and must be labeled INFERRED until tool_call_id (+ source/duration_ms/fingerprint/revision) are stamped at emission. Path->command/op is solid; path->step/run is inferred.\n\nThe workspace-vfs metadata.py also defines a RelationshipEntry (.relationships) model for cross-SOURCE joins (source_a.column_a <-> source_b.column_b), which would let the explorer bridge data-to-data, but it is an unimplemented stub.",
+    "gotchas": [
+      "VFS browse is string-parsed `ls -la`/`cat` (server.py:1856 _parse_ls_output, 1884/1898). It captures ONLY name/type/size \u2014 modified-time, fingerprint, revision, mode, consistency are all parsed away even though FileStat/OpRecord carry them. Preview/diff fidelity is text-only: no binary detection, no truncation marker, no byte range \u2014 large/binary files will be mangled and must be labeled 'preview only'.",
+      "DataBrowser.tsx is NOT a data-source explorer. It calls /api/tickets, /api/finance/*, /api/customers/* etc. (mock REST seed data) and renders tables, while labeling them 'Mounted via Arcadia VFS'. It never calls vfsList/vfsFile or catalog-proxy. The only real VFS browser is VFSExplorer.tsx.",
+      "catalog-proxy is 100% NotImplementedError: CatalogProxy.resolve/execute_query, and every IcebergAdapter/McpAdapter/BaseAdapter method. SourceRegistry.list_sources works but only returns [{id,type}]. There is NO Snowflake or Postgres adapter file \u2014 only iceberg.py, mcp.py, base.py. Treat all 'queryable catalog' capability as aspirational.",
+      "workspace-vfs is also stub-level: WorkspaceTree.readdir/getattr raise NotImplementedError. Its value today is the SCHEMA contract \u2014 QuerySpec (sql|glob|similarity|search), and the .schema/.policy/.relationships/.stats/.manifest Pydantic models \u2014 not runnable behavior.",
+      "The shipped demo's 'Postgres', 'Datadog', 'S3', 'Slack' are Fake*Resource(DiskResource) doubles in packages/eval/mirage_eval/fixtures/. So 'tables/rows/schema' and 'logs/metrics' are just JSON files on disk; there is no live query, no live ETag/revision, and no real backend connection. An explorer built on the demo will show disk dirs dressed up as exotic sources.",
+      "No datadog resource backend exists in vendor/.../resource/ at all (the observability backend that ships is langfuse). 'Datadog dashboards' is purely the fake disk layout (logs/*.jsonl + metrics/*.json).",
+      "fingerprint/revision flow only for backends with SUPPORTS_SNAPSHOT=True. Only S3Resource sets it True (ETag). disk/ram/the fakes default False, so for the demo, fingerprint is at best disk mtime (DiskResource.fingerprint) and revision is None \u2014 drift/version UI cannot be populated from the demo data.",
+      "Cache state surfaces only as a derived signal: OpRecord.is_cache == (source=='ram'). A genuine cache hit emits no separate OpRecord, so 'served from cache' must be derived (is_cache / absence of a network op), per the reframe. Don't present it as a first-class recorded event.",
+      "The op-event firehose is a 2000-entry RAM ring (per reframe) and the console caches overlay/effects/trajectory in-memory on the ConsoleWorkspace; a dev console watching ALL workspace ops must paginate/persist via arcadia_store, not rely on these."
+    ],
+    "notableFiles": [
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/server.py (vfs_list L1876, vfs_file L1890, _parse_ls_output L1856, _execute_in_workspace_detailed L984 with op-delta emission L1004-1018, AG-UI vfs_op CUSTOM emission L1383-1412, console mounts/overlay/effects/trajectory _console_mounts_detail L2199 / _console_overlay L2267 / _console_effects L2222 / _console_trajectory L2308, _effect_class_for_mount L2147, _build_console_workspace L2168)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/pages/VFSExplorer.tsx (the only real VFS browser; vfsList/vfsFile, hardcoded MOUNT_COLORS, text-only preview)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/pages/DataBrowser.tsx (mock REST tables, NOT VFS-backed despite label)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/api/client.ts (vfsList L258, vfsFile L267, fetchTickets/fetchExpenses/etc L136-198)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/workspace/mount/mount.py (Mount: prefix, resource, mode, consistency, revisions; execute_cmd/execute_op dispatch)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/workspace/workspace.py (Workspace.mounts() L198, .revisions L201, snapshot L320)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/observe/record.py (OpRecord: op/path/source/bytes/timestamp/duration_ms/mount_prefix/fingerprint/revision, is_cache, rel_path)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/observe/log_entry.py (LogEntry.from_op_record \u2014 note it drops fingerprint/revision too)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/types.py (FileStat L52, MountMode, ConsistencyPolicy, WRITE_OPS, ResourceName) and vendor/.../vfp/types.py (richer FileStat/Entry/Mount/MountType incl OBSERVABILITY/DATABASE/MESSAGING)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/resource/base.py (BaseResource: is_remote, SUPPORTS_SNAPSHOT, fingerprint())",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/resource/s3/s3.py (is_remote=True, SUPPORTS_SNAPSHOT=True, ETag fingerprint \u2014 the only drift-capable demo-relevant backend)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/resource/postgres/postgres.py + ops/postgres/{read,readdir,stat}.py (postgres exposed as filesystem ops, not SQL)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/catalog-proxy/catalog_proxy/{proxy.py,registry.py,adapters/base.py,adapters/iceberg.py,adapters/mcp.py} (all NotImplementedError; no snowflake adapter)",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/workspace-vfs/workspace_vfs/{query.py (QuerySpec sql|glob|similarity|search),metadata.py (.schema/.policy/.relationships/.stats/.manifest models),tree.py (WorkspaceTree readdir/getattr NotImplemented)}",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/eval/scenarios/northhill_corp/mounts.py (build_l1_workspace \u2014 the actual mount set) and packages/eval/mirage_eval/fixtures/fake_{postgres,datadog,s3,slack}.py (all DiskResource subclasses defining the table/log/channel layouts)"
+    ]
+  },
+  {
+    "pillar": "Event Log + Time-Travel (Redux-DevTools centerpiece)",
+    "summary": "Today there is NOT one unified action stream \u2014 there are TWO parallel streams with two different ordering keys. (1) The relay firehose: `server.py` `_emit_event`/`_console_emit` \u2192 `_persist_and_broadcast`, which stamps a global monotonic `seq` (`_next_stream_seq`) + `timestamp`, appends to a 5000-deque + `stream_events` table, and fans out on the `/events` SSE consumed by `useEventStream`. It only carries `command`, `op`, `agent_status`, `agent_thinking`, and `console_*` events. (2) The AG-UI run stream: `_run_conversation_turn_stream` yields RUN/STEP/THINKING/TEXT/TOOL_CALL_*/CUSTOM(vfs_op) events that go ONLY to the per-session SSE (`/api/sessions/{id}/message/stream`), are reduced by `aguiEventReducer.ts` into `sessionRunStore`, and are coalesced+persisted to `agui_events` with a per-SESSION `seq` via `StreamCoalescer`. These AG-UI events never hit `_persist_and_broadcast`, so they carry NO global `seq` \u2014 only a millisecond `timestamp`. So the \"everything in the workspace\" stream the reframe wants does not exist yet; it must be assembled client-side by merging the global firehose (seq-ordered) with per-session agui_events (per-session-seq-ordered) on `timestamp`, which is lossy at sub-ms granularity. Time-travel state reconstruction is PARTIAL: the per-op trajectory, RAM-overlay write set, reads-so-far, and pending effects are all derivable op-by-op from `ws.ops.records` (the OpRecord ground-truth leaf) and the existing `_console_overlay`/`_console_trajectory`/`_console_effects` endpoints; but full-FS state at action N is NOT reconstructable because written-mount backing is pinned only at stand-up (one `ws.snapshot()` tar) and cache hits emit no OpRecord. STATE_SNAPSHOT/STATE_DELTA exist as enum names ONLY \u2014 never emitted, reduced, coalesced, or stored. The closest existing UI is the console `StatePage` (overlay diff + backing/effective browser), `TrajectoryPage` (filterable op log + JSON export), and `RunPage` (live run trace) \u2014 none has a time-travel cursor, per-action diff, jump-to/skip, or future-dimming.",
+    "capabilities": [
+      {
+        "name": "Global relay firehose with stable seq ordering",
+        "whatItShows": "Flat, monotonic-seq-ordered union of command/op/agent_status/agent_thinking/console_* events across the whole server. seq is the stable Redux 'action index'; timestamp is the wall clock. Replayable from any point via /events?after=N (RAM ring first, then _replay_stream_from_db).",
+        "dataSource": "server.py _persist_and_broadcast/_next_stream_seq/_event_generator (L237-359); stream_events table (models.py L117-128); useEventStream.ts",
+        "maturity": "shipped"
+      },
+      {
+        "name": "AG-UI run/step/reasoning/tool-call event stream",
+        "whatItShows": "Per-turn RUN_STARTED/FINISHED, STEP_STARTED/FINISHED, THINKING_*, TEXT_MESSAGE_*, TOOL_CALL_START/ARGS/RESULT/END, CUSTOM(vfs_op). Correlation ids on the wire: run_id, step_id, thinking_id, message_id, tool_call_id. Reduced into runs/steps/toolCalls/vfsOps maps.",
+        "dataSource": "server.py _run_conversation_turn_stream (L1209-1479); aguiEventReducer.ts; types/agui.ts",
+        "maturity": "shipped"
+      },
+      {
+        "name": "Coalesced persistence into queryable run/step/tool_call/vfs_op rows",
+        "whatItShows": "StreamCoalescer folds delta events into one consolidated event at each END boundary (replays byte-identically because the reducer rebuilds content as buffer+delta from empty) and emits derived RunRow/StepRow/ToolCallRow/VfsOpRow keyed by run_id/step_id/tool_call_id. agui_events gets a per-session seq.",
+        "dataSource": "packages/store coalescer.py; buffer.py; sql_store.write_batch (L57-96); models.py runs/steps/tool_calls/vfs_ops/agui_events",
+        "maturity": "shipped"
+      },
+      {
+        "name": "Per-op trajectory / overlay / effects reconstruction (op-indexed)",
+        "whatItShows": "Ordered list of every read/write/meta op with idx (== position in ws.ops.records), op/path/source/bytes/duration_ms/mount_prefix/timestamp/effect_class/capture_state; the write-overlay grouped per mount with stable change keys (idx:op:path); pending-effect set. This is the spine for 'state at action N'.",
+        "dataSource": "server.py _console_trajectory/_console_overlay/_console_effects (L2222-2350); /api/console/workspaces/{id}/{trajectory,overlay,effects}; TrajectoryPage.tsx; OverlayDiff.tsx; LiveWorldPanel.tsx",
+        "maturity": "partial"
+      },
+      {
+        "name": "Workspace snapshot/branch/reset as coarse time-travel anchors",
+        "whatItShows": "Full-FS tar snapshot of mounts (RAM+disk content), cache entries, history, jobs, read-fingerprints at snapshot time; copy() forks the overlay (branch); reset() rebuilds pristine. These are whole-state checkpoints, not per-action ticks.",
+        "dataSource": "vendor mirage snapshot/{api.py,state.py to_state_dict,manifest.py}; server.py console_standup/branch/snapshot/reset (L2538-2660)",
+        "maturity": "partial"
+      },
+      {
+        "name": "Export of the action/op log",
+        "whatItShows": "TrajectoryPage exports the full ordered op list as JSON (workspace name + entries). This is the seed of Redux DevTools import/export; there is no import/load-state counterpart yet.",
+        "dataSource": "TrajectoryPage.tsx exportJson (L104-114)",
+        "maturity": "partial"
+      },
+      {
+        "name": "Time-travel cursor + per-action state diff + jump/skip + future-dimming",
+        "whatItShows": "Selecting action N and rendering reconstructed workspace state with diff highlight of what changed at N; jump-to/skip-action; dimming not-yet-executed actions; import/replay a saved session. The Redux-DevTools centerpiece.",
+        "dataSource": "No backing code \u2014 StatePage backing layer is labeled 'reconstruction \u2026 deferred'; TrajectoryPage Replay button is disabled ('deferred \u2014 needs read-from-pin wiring')",
+        "maturity": "aspirational"
+      },
+      {
+        "name": "STATE_SNAPSHOT / STATE_DELTA Redux-style state events",
+        "whatItShows": "AG-UI-native full-state snapshot + JSON-patch deltas that would make per-action state diffing first-class.",
+        "dataSource": "types/agui.ts enum L17-18 ONLY \u2014 never emitted by server, never handled in aguiEventReducer switch, never coalesced, never stored",
+        "maturity": "aspirational"
+      },
+      {
+        "name": "Unified single action stream (AG-UI + relay + VfsOps + mock_requests interleaved with one ordering key)",
+        "whatItShows": "One chronological filterable log of EVERYTHING in a workspace under a single stable cursor.",
+        "dataSource": "Does not exist: AG-UI events lack global seq; relay seq and per-session agui_events seq are independent counters; merge is timestamp-only. mock_request/mcp_tool_call come only from packages/eval/mirage_eval/mcp_server.py via /ingest, not the platform agent.",
+        "maturity": "aspirational"
+      }
+    ],
+    "perTypeNotes": "HOW EACH EVENT TYPE FLOWS + ITS ORDERING KEY / CORRELATION IDS:\n\nRELAY FIREHOSE (global `seq`, ms `timestamp`; carries `agent`,`session`/`session_id`):\n- `command{command,exit_code,stdout,cwd?,agent,session}` \u2014 one per shell exec, emitted in _execute_in_workspace_detailed.\n- `op{op,path,source,bytes,duration_ms,mount_prefix,agent,session}` \u2014 emitted from ws.ops.records DELTA (length-diff `all_records[ops_before:]`, capped at last 20). NOTE: fingerprint/revision/is_cache are DROPPED here even though OpRecord carries them.\n- `agent_status{status,task?,error?}`, `agent_thinking{message}` \u2014 coarse lifecycle.\n- `console_standup|console_branch|console_promote|console_mode|console_reset|console_test_run{workspace_id,\u2026}` \u2014 workspace lifecycle; the ONLY events that carry `workspace_id`. ConsoleLayout refreshes the active workspace when one arrives.\n- `mock_request{service,method,path,status_code,response_bytes,duration_ms}` and `mcp_tool_call{tool,arguments,result,result_bytes,duration_ms,error}` \u2014 documented (eval/AGENTS.md) and produced by packages/eval/mirage_eval/mcp_server.py; they only enter the platform via POST /ingest, NOT from the in-process agent.\n\nAG-UI RUN STREAM (per-session SSE only; per-SESSION `seq` assigned at persistence by StreamCoalescer; ms `timestamp`; NO global seq):\n- RUN_STARTED/RUN_FINISHED/RUN_ERROR{thread_id=session.id, run_id} \u2014 run-{uuid} is the trace root.\n- STEP_STARTED/STEP_FINISHED{step_id, step_name} \u2014 step-N; reducer attaches to currentRunId.\n- THINKING_START/CONTENT/END{thinking_id, step_id?}; TEXT_MESSAGE_START/CONTENT/END{message_id, role}.\n- TOOL_CALL_START{tool_call_id, tool_name='exec'}/ARGS{delta=raw shell}/RESULT{result,exit_code}/END \u2014 one TOOL_CALL == one ws.execute().\n- CUSTOM{name='vfs_op', value:{op,path,bytes,mount_prefix}} \u2014 the data-plane leaf, but value is TRIMMED to 4 fields (source/duration_ms/fingerprint/revision/is_cache dropped) and carries NO tool_call_id.\n\nINTERLEAVING REALITY: the reframe's premise that AG-UI + relay StreamEvents + VfsOps + mock_requests already interleave in one seq-ordered firehose is FALSE today. AG-UI events and relay `op`/`command` events are emitted from the SAME code path (_execute_in_workspace_detailed emits relay op/command via _emit_event; the surrounding _run_conversation_turn_stream yields the AG-UI TOOL_CALL/CUSTOM) but land on DIFFERENT transports with DIFFERENT counters. To build the unified log you must merge: (a) /events firehose by global seq, (b) per-session agui_events (GET /api/sessions/{id}/trace, ordered by its own seq), joining on `session`/`thread_id` and `timestamp`. There is no single monotonic key spanning both.\n\nCLIENT-SIDE CORRELATION: correlateEvents.ts buckets firehose StreamEvents into steps purely by TIMESTAMP windows (started_at..ended_at) and filters by `session` \u2014 it is the existing, explicitly-`inferred` op\u2192step attribution; it does NOT use run_id/step_id/tool_call_id (those aren't on relay op events).",
+    "bridge": "MAPPING ONTO REDUX DEVTOOLS:\n\n- ACTION LIST \u2190 the merged stream. Best stable index = relay `seq` for firehose events; per-session `agui_events.seq` for run events. Each row's 'action type' = event `.type`; payload = the event dict. The op-indexed trajectory (`idx` == position in ws.ops.records) is a parallel, gap-free action index specifically for data-plane ops and is the cleanest cursor for state reconstruction.\n\n- STATE TREE INSPECTOR \u2190 reconstructed workspace state. Buildable NOW by folding trajectory entries[0..N]: effective VFS overlay (per-mount write set from _console_overlay, change key idx:op:path), mounts (prefix/resource/mode/effect_class from _console_mounts_detail), reads-so-far set (read ops up to N), pending effects (writes not in promoted_keys), last-known per-path bytes. RunStep/ToolCall maps from the reducer give the reasoning/tool sub-tree.\n\n- PER-ACTION STATE DIFF \u2190 diff(stateAt(N-1), stateAt(N)). For data-plane this is exact and trivial: action N is exactly OpRecord[N], so the diff is that single op (path, +bytes, op kind) \u2014 already what OverlayDiff renders per change. For run-level, diff successive reducer snapshots (new message delta, new tool call, new step). No diff engine exists yet; it must be added but the inputs are present.\n\n- JUMP-TO / SKIP-ACTION \u2190 recompute stateAt(N) by re-folding entries[0..N] (jump) or entries[0..N] minus the skipped idx (skip). Pure client-side over the trajectory array; the existing replayAguiEvents() already proves deterministic fold-from-empty for the run sub-tree.\n\n- FUTURE-DIMMING \u2190 trivial: dim every action with index > cursor in the action list.\n\n- IMPORT / EXPORT \u2190 export EXISTS (TrajectoryPage exportJson dumps entries). Import/replay does not; the raw material for true replay is the agui_events trace (GET /api/sessions/{id}/trace \u2192 replayAguiEvents) plus the pinned snapshot tar (Workspace.load via build_mount_args/apply_state_dict).\n\nHONEST LIMITS THE BRIDGE MUST RESPECT:\n1. RECONSTRUCTABLE at action N: VFS write-overlay, mounts, reads-so-far, pending/captured effects, run/step/reasoning/tool sub-tree, last STATE_SNAPSHOT (none today) \u2014 all op-by-op derivable.\n2. NOT RECONSTRUCTABLE: byte-exact full filesystem of WRITTEN mounts before/at N (backing is pinned ONCE at stand-up as a single tar; there is no per-tick snapshot). StatePage already labels the Backing layer 'Pinned at stand-up \u2026 pre-overlay reconstruction \u2026 deferred'. Cache-hit reads emit NO OpRecord (OpRecord.is_cache==source=='ram'), so 'served from cache' is DERIVED, not an action \u2014 the action list will have gaps vs. true I/O.\n3. The two-counter problem: jump-to across the *combined* AG-UI+relay log can only order by timestamp; same-ms events have undefined relative order. A true single seq requires Phase-0 plumbing (route AG-UI events through _persist_and_broadcast too, stamp run_id/step_id/tool_call_id on relay op events, and fill vfs_ops.tool_call_id in the coalescer).",
+    "gotchas": [
+      "TWO STREAMS, TWO COUNTERS: AG-UI run events (RUN/STEP/THINKING/TEXT/TOOL_CALL/CUSTOM) NEVER pass through _persist_and_broadcast, so they have NO global seq \u2014 only ms timestamp. The /events firehose (useEventStream) and the per-session AG-UI stream (useAgentStream/sessionRunStore) are independent transports; the reframe's 'unified seq-ordered firehose of everything' does not exist yet.",
+      "STATE_SNAPSHOT / STATE_DELTA are dead enum names only (types/agui.ts L17-18). Never emitted, never in the aguiEventReducer switch, never coalesced, never stored. Do not present Redux-style state events as real.",
+      "VfsOp emission is doubly lossy: (a) relay `op` events and the AG-UI CUSTOM(vfs_op) value both DROP fingerprint/revision/is_cache (OpRecord HAS them); the CUSTOM value keeps only op/path/bytes/mount_prefix. (b) The coalescer writes VfsOpRow with run_id but NEVER sets tool_call_id (defaults None) even though the column exists \u2014 exactly the reframe Phase-0 gap. op\u2192tool_call attribution is currently impossible from stored rows.",
+      "Relay `op` events are computed by length-diffing ws.ops.records (all_records[ops_before:]) and CAPPED at the last 20 ops per command (server.py L1006) \u2014 high-fan-out commands silently lose ops from the firehose. The AG-UI CUSTOM path (new_ops) is uncapped, so the two streams can disagree on op count.",
+      "correlateEvents.ts attributes firehose events to steps purely by TIMESTAMP windows and a session filter \u2014 it does NOT use run_id/step_id/tool_call_id. This is the explicitly-'inferred' correlation; overlapping/zero-duration steps mis-bucket.",
+      "Derived tables runs/steps/tool_calls/vfs_ops are WRITE-ONLY today: sql_store exposes get_trace (raw agui_events payloads) but NO read method for vfs_ops/runs/steps/tool_calls. Time-travel that wants the persisted op log must add queries or recompute from the live workspace (/trajectory endpoint, which needs a live ws \u2014 lost after restart unless re-stood-up).",
+      "Backing/full-FS time travel is impossible per-action: a single snapshot tar is pinned at stand-up (console_standup), not per tick. Written-mount pre-state cannot be byte-reconstructed; StatePage and TrajectoryPage both already carry 'deferred' labels for this.",
+      "Cache hits emit no OpRecord (is_cache == source=='ram'), so the action stream has gaps vs. real I/O; 'served from cache' must be rendered as derived, never as a missing/failed read.",
+      "mock_request and mcp_tool_call are produced only by packages/eval/mirage_eval/mcp_server.py and reach the platform solely via POST /ingest \u2014 the in-process console agent never emits them, so a workspace-scoped console will usually show zero unless an external eval agent is feeding /ingest.",
+      "The console firehose is GLOBAL, not workspace-scoped: ConsoleLayout calls useEventStream('/events') with no workspace/session filter; only console_* events carry workspace_id. Scoping 'all events in THIS workspace' requires client-side filtering by session-of-workspace, but relay op/command events use the agent session id, not the console workspace id.",
+      "Persistence degrades silently to in-memory (_setup_persistence) \u2014 when off, agui_events/stream_events are not durable, so trace replay and any time-travel-after-restart return empty; the UI must distinguish 'clean' from 'not persisted'.",
+      "Two ordering subtleties in the firehose: stream_events seq is assigned in _persist_and_broadcast and is process-global (survives restart via max_stream_seq), but agui_events seq is per-session (next_seq = max+1 per session_id). Never assume one global index across both tables."
+    ],
+    "notableFiles": [
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/server.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/hooks/useEventStream.ts",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/hooks/useAgentStream.ts",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/lib/aguiEventReducer.ts",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/lib/correlateEvents.ts",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/lib/sessionRunStore.ts",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/types/agui.ts",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/types/console.ts",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/console/StatePage.tsx",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/console/TrajectoryPage.tsx",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/console/RunPage.tsx",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/console/ConsoleLayout.tsx",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/components/console/OverlayDiff.tsx",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/components/console/LiveWorldPanel.tsx",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/frontends/platform/src/components/run/RunTracePanel.tsx",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/store/arcadia_store/coalescer.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/store/arcadia_store/models.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/store/arcadia_store/types.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/store/arcadia_store/sql_store.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/store/arcadia_store/buffer.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/observe/record.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/workspace/snapshot/state.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/workspace/snapshot/drift.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/vendor/mirage/python/mirage/workspace/snapshot/api.py",
+      "/Users/patrickzhang/Documents/GitHub/Arcadia_Enterprise/packages/eval/mirage_eval/mcp_server.py"
+    ]
+  }
+]

@@ -4,16 +4,19 @@ version = "0.1.0"
 description = "The governed data access layer for autonomous agents."
 requires-python = ">=3.12"
 dependencies = [
+    "mirage-ai",
     "arcadia-eval",
     "arcadia-catalog-proxy",
     "arcadia-credential-broker",
     "arcadia-lineage",
     "arcadia-policy-engine",
     "arcadia-workspace-vfs",
+    "arcadia-store",
 ]
 
 [tool.uv.workspace]
 members = ["packages/*"]
+exclude = ["packages/ds-testing"]
 
 [tool.uv.sources]
 mirage-ai = { path = "vendor/mirage/python", editable = true }
@@ -23,6 +26,7 @@ arcadia-credential-broker = { workspace = true }
 arcadia-lineage = { workspace = true }
 arcadia-policy-engine = { workspace = true }
 arcadia-workspace-vfs = { workspace = true }
+arcadia-store = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -31,6 +35,6 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["packages/eval/tests", "packages/eval/scenarios"]
+testpaths = ["packages/eval/tests", "packages/eval/scenarios", "frontends/platform/tests", "packages/store/tests"]
 addopts = "-q --import-mode=importlib"
 asyncio_mode = "auto"

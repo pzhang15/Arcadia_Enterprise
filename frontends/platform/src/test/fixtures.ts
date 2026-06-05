@@ -257,6 +257,7 @@ export const QUICK_ACTIONS = [
 ];
 
 export const SESSIONS = [
-  { id: "abc123", status: "ready", services: ["it", "hr"], created_at: Date.now() / 1000 - 300, message_count: 4, last_message: "Here are the open tickets..." },
-  { id: "def456", status: "ready", services: ["finance"], created_at: Date.now() / 1000 - 3600, message_count: 2, last_message: "Pending expenses reviewed." },
+  { id: "abc123", status: "ready", services: ["it", "hr"], created_at: Date.now() / 1000 - 300, message_count: 4, last_message: "Here are the open tickets...", has_workspace: true },
+  { id: "def456", status: "ready", services: ["finance"], created_at: Date.now() / 1000 - 3600, message_count: 2, last_message: "Pending expenses reviewed.", has_workspace: true },
+  { id: "ghi789", status: "ready", services: [], created_at: Date.now() / 1000 - 7200, message_count: 1, last_message: "No workspace attached.", has_workspace: false },
 ];

@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arcadia-ds-testing"
+version = "0.1.0"
+description = "Deterministic-simulation testing harness for mirage."
+requires-python = ">=3.12"
+dependencies = [
+    "mirage-ai",
+    "hypothesis>=6.140",
+    "networkx>=3.3",
+]
+
+[tool.setuptools.packages.find]
+include = ["mirage_dstest*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "-q --import-mode=importlib"
+testpaths = ["tests"]
+
+[tool.uv]
+managed = true
+
+[tool.uv.sources]
+mirage-ai = { path = "/Users/patrickzhang/Documents/GitHub/mirage/python", editable = true }

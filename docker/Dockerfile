@@ -16,6 +16,7 @@ COPY packages/catalog-proxy/pyproject.toml /app/packages/catalog-proxy/
 COPY packages/credential-broker/pyproject.toml /app/packages/credential-broker/
 COPY packages/policy/pyproject.toml /app/packages/policy/
 COPY packages/workspace-vfs/pyproject.toml /app/packages/workspace-vfs/
+COPY packages/store/pyproject.toml /app/packages/store/
 
 WORKDIR /app/packages/eval
 RUN uv sync --no-dev
@@ -26,6 +27,7 @@ COPY packages/catalog-proxy /app/packages/catalog-proxy
 COPY packages/credential-broker /app/packages/credential-broker
 COPY packages/policy /app/packages/policy
 COPY packages/workspace-vfs /app/packages/workspace-vfs
+COPY packages/store /app/packages/store
 RUN uv sync --no-dev
 
 WORKDIR /app

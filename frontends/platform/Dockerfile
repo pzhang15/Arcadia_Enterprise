@@ -14,6 +14,9 @@ WORKDIR /app
 COPY vendor/mirage/python /tmp/mirage
 RUN pip install /tmp/mirage && rm -rf /tmp/mirage
 
+COPY packages/store /tmp/store
+RUN pip install /tmp/store && rm -rf /tmp/store
+
 COPY frontends/platform/server.py .
 COPY --from=frontend /app/dist ./dist
 
